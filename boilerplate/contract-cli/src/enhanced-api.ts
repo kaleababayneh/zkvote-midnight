@@ -1,6 +1,6 @@
-// Enhanced API wrapper for Zkv Contract
-// Generated on: 2025-06-09T11:11:21.464Z
-// Auto-generated from zkv.compact
+// Enhanced API wrapper for Zkvr Contract
+// Generated on: 2025-06-09T11:39:11.234Z
+// Auto-generated from zkvr.compact
 
 import { type Logger } from 'pino';
 import { ContractAnalyzer } from './contract-analyzer.js';
@@ -81,6 +81,12 @@ export class EnhancedContractAPI {
     return await (originalApi as any).increase_by(...args);
   }
   /**
+   * Execute very_mega_boost function
+   */
+  async very_mega_boost(...args: any[]): Promise<any> {
+    return await (originalApi as any).very_mega_boost(...args);
+  }
+  /**
    * Execute another_increase function
    */
   async another_increase(...args: any[]): Promise<any> {
@@ -117,21 +123,32 @@ export class EnhancedContractAPI {
     return await (originalApi as any).get_vote_count(...args);
   }
   /**
-   * Execute public_key_vote function
+   * Execute public_key_voter function
    */
-  async public_key_vote(...args: any[]): Promise<any> {
-    return await (originalApi as any).public_key_vote(...args);
+  async public_key_voter(...args: any[]): Promise<any> {
+    return await (originalApi as any).public_key_voter(...args);
   }
 }
 
 // Export contract metadata for reference
 export const CONTRACT_METADATA = {
-  name: 'Zkv Contract',
-  fileName: 'zkv.compact',
-  generatedAt: '2025-06-09T11:11:21.464Z',
+  name: 'Zkvr Contract',
+  fileName: 'zkvr.compact',
+  generatedAt: '2025-06-09T11:39:11.235Z',
   functions: [
   {
     "name": "increase_by",
+    "parameters": [
+      {
+        "name": "value",
+        "type": "Uint<16>"
+      }
+    ],
+    "returnType": "[]",
+    "readOnly": false
+  },
+  {
+    "name": "very_mega_boost",
     "parameters": [
       {
         "name": "value",
@@ -203,7 +220,7 @@ export const CONTRACT_METADATA = {
     "readOnly": true
   },
   {
-    "name": "public_key_vote",
+    "name": "public_key_voter",
     "parameters": [
       {
         "name": "sk",

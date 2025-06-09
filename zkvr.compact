@@ -11,6 +11,10 @@ export circuit increase_by(value: Uint<16>): [] {
   round.increment(value);
 }
 
+export circuit very_mega_boost(value: Uint<16>): [] {
+  round.increment(value);
+}
+
 export circuit another_increase(value: Uint<16>): [] {
   round.increment(value);
 }
@@ -33,15 +37,15 @@ export circuit vote_for(index: Uint<8>): [] {
   const instance = "000";
  
 
-  assert !items.member(public_key_vote(secret_key, instance)) "Already voted";
+  assert !items.member(public_key_voter(secret_key, instance)) "Already voted";
 
-  items.insert(public_key_vote(secret_key, instance));
+  items.insert(public_key_voter(secret_key, instance));
 
   if (index == 0) {
-    items.insert(public_key_vote(secret_key, instance));
+    items.insert(public_key_voter(secret_key, instance));
     votesA.increment(1);
   } else if (index == 1) {
-    items.insert(public_key_vote(secret_key, instance));
+    items.insert(public_key_voter(secret_key, instance));
     votesB.increment(1);
   }
 }
@@ -56,6 +60,6 @@ export circuit get_vote_count(index: Uint<8>): Uint<64> {
   }
 }
 
-export circuit public_key_vote(sk: Bytes<3>, instance: Bytes<3>): Bytes<32> {
+export circuit public_key_voter(sk: Bytes<3>, instance: Bytes<3>): Bytes<32> {
     return persistent_hash<Vector<3, Bytes<3>>>([pad(3, "pk:"), instance, sk]);
 }

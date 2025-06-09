@@ -448,7 +448,7 @@ export const configureProviders = async (wallet: Wallet & Resource, config: Conf
       privateStateStoreName: contractConfig.privateStateStoreName,
     }),
     publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
-    zkConfigProvider: new NodeZkConfigProvider<'increase_by' | 'another_increase' | 'increase_by_square' | 'decrease_by' | 'vote_for'>(contractConfig.zkConfigPath),
+    zkConfigProvider: new NodeZkConfigProvider<'increase_by' | 'very_mega_boost' | 'another_increase' | 'increase_by_square' | 'decrease_by' | 'vote_for'>(contractConfig.zkConfigPath),
     proofProvider: httpClientProofProvider(config.proofServer),
     walletProvider: walletAndMidnightProvider,
     midnightProvider: walletAndMidnightProvider,

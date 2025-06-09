@@ -23,7 +23,6 @@ class CompactCLIAutoGenerator {
     try {
       await this.generateCLI('Manual generation');
       console.log('✅ Auto-generation complete!');
-      console.log('💡 The CLI now dynamically adapts to your contract functions.');
     } catch (error) {
       console.error('❌ Auto-generation failed:', error);
       process.exit(1);
@@ -45,6 +44,9 @@ class CompactCLIAutoGenerator {
     try {
       console.log(`\n🔄 Starting generation: ${reason}`);
       console.log('⏰', new Date().toLocaleTimeString());
+
+      // Step 0: Sync .compact files from root directory to contract/src/
+      await this.syncFromRoot();
 
       // Step 1: Parse the contract to extract information
       const contractInfo = await this.parseContract();
@@ -71,6 +73,74 @@ class CompactCLIAutoGenerator {
     } finally {
       this.isGenerating = false;
     }
+  }
+
+  async syncFromRoot() {
+    // Get the root directory (two levels up from scripts/)
+    const rootDir = path.resolve(__dirname, '..', '..');
+    
+    console.log('🔍 Checking for .compact files in root directory...');
+    
+    if (!fs.existsSync(rootDir)) {
+      console.log('⚠️  Root directory not found, skipping root sync');
+      return false;
+    }
+
+    // Look for .compact files in root
+    const rootFiles = fs.readdirSync(rootDir);
+    const rootCompactFiles = rootFiles.filter(file => file.endsWith('.compact'));
+    
+    if (rootCompactFiles.length === 0) {
+      console.log('📁 No .compact files found in root directory');
+      return false;
+    }
+
+    console.log(`📋 Found ${rootCompactFiles.length} .compact file(s) in root: ${rootCompactFiles.join(', ')}`);
+    
+    // Ensure contract source directory exists
+    if (!fs.existsSync(this.config.contractSourceDir)) {
+      fs.mkdirSync(this.config.contractSourceDir, { recursive: true });
+    }
+
+    // Clean up: Remove all existing .compact files from contract/src/
+    const existingFiles = fs.readdirSync(this.config.contractSourceDir);
+    const existingCompactFiles = existingFiles.filter(file => file.endsWith('.compact'));
+    
+    if (existingCompactFiles.length > 0) {
+      console.log(`🧹 Cleaning up ${existingCompactFiles.length} existing .compact file(s): ${existingCompactFiles.join(', ')}`);
+      for (const oldFile of existingCompactFiles) {
+        const oldPath = path.join(this.config.contractSourceDir, oldFile);
+        try {
+          fs.unlinkSync(oldPath);
+          console.log(`🗑️  Deleted: ${oldFile}`);
+        } catch (error) {
+          console.error(`❌ Failed to delete ${oldFile}:`, error.message);
+        }
+      }
+    }
+
+    // Copy each .compact file from root to contract/src/
+    let copiedFiles = [];
+    for (const compactFile of rootCompactFiles) {
+      const sourcePath = path.join(rootDir, compactFile);
+      const targetPath = path.join(this.config.contractSourceDir, compactFile);
+      
+      try {
+        const content = fs.readFileSync(sourcePath, 'utf8');
+        fs.writeFileSync(targetPath, content, 'utf8');
+        copiedFiles.push(compactFile);
+        console.log(`📄 ✅ Copied: ${compactFile} → contract/src/`);
+      } catch (error) {
+        console.error(`❌ Failed to copy ${compactFile}:`, error.message);
+      }
+    }
+
+    if (copiedFiles.length > 0) {
+      console.log(`🎉 Successfully synced ${copiedFiles.length} contract file(s) from root to contract/src/`);
+      return true;
+    }
+
+    return false;
   }
 
   detectContractFile() {
