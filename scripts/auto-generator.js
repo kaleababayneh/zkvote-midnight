@@ -1,9 +1,3 @@
-#!/usr/bin/env node
-
-// Auto-generation system for Compact contract CLI tools
-// Copyright (C) 2025 Midnight Foundation
-// SPDX-License-Identifier: Apache-2.0
-
 import fs from 'node:fs';
 import path from 'node:path';
 import { spawn } from 'node:child_process';
@@ -17,12 +11,9 @@ class CompactCLIAutoGenerator {
     this.config = config;
     this.isGenerating = false;
     this.lastGenerationTime = 0;
-    this.debounceMs = 2000; // 2 second debounce
+    this.debounceMs = 2000; 
   }
 
-  /**
-   * Start the auto-generation process (one-time run)
-   */
   async start() {
     console.log('🚀 Starting Compact Contract CLI Auto-Generator...');
     console.log('📁 Contract source:', this.config.contractSourceDir);
@@ -39,9 +30,6 @@ class CompactCLIAutoGenerator {
     }
   }
 
-  /**
-   * Generate CLI from contract (with debouncing)
-   */
   async generateCLI(reason) {
     const now = Date.now();
     if (this.isGenerating || (now - this.lastGenerationTime) < this.debounceMs) {
@@ -85,10 +73,6 @@ class CompactCLIAutoGenerator {
     }
   }
 
-  /**
-   * Auto-detect the contract file in the contract directory
-   * Since there's always exactly one .compact file, this is simple
-   */
   detectContractFile() {
     const contractDir = this.config.contractSourceDir;
     
@@ -115,23 +99,17 @@ class CompactCLIAutoGenerator {
     return detectedFile;
   }
 
-  /**
-   * Parse the Compact contract to extract function and state information
-   */
   async parseContract() {
-    // Auto-detect contract file if not explicitly set or if the set file doesn't exist
     let contractFileName = this.config.contractFileName;
-    
+
     if (!contractFileName) {
       contractFileName = this.detectContractFile();
-      // Update config for consistency
       this.config.contractFileName = contractFileName;
     } else {
       const explicitPath = path.join(this.config.contractSourceDir, contractFileName);
       if (!fs.existsSync(explicitPath)) {
         console.log(`⚠️  Specified contract file not found: ${contractFileName}`);
         contractFileName = this.detectContractFile();
-        // Update config for consistency
         this.config.contractFileName = contractFileName;
       }
     }
@@ -144,14 +122,11 @@ class CompactCLIAutoGenerator {
 
     const contractContent = await fs.promises.readFile(contractPath, 'utf-8');
     
-    // Parse the contract using regex (simple parser)
     const parser = new CompactContractParser();
     return parser.parse(contractContent, contractFileName);
   }
 
-  /**
-   * Compile the Compact contract
-   */
+
   async compileContract() {
     console.log('🔨 Compiling contract...');
     
@@ -167,9 +142,7 @@ class CompactCLIAutoGenerator {
     console.log('✅ Contract compiled');
   }
 
-  /**
-   * Build the contract TypeScript
-   */
+
   async buildContract() {
     console.log('🔧 Building contract TypeScript...');
     
@@ -179,9 +152,6 @@ class CompactCLIAutoGenerator {
     console.log('✅ Contract built');
   }
 
-  /**
-   * Generate CLI files based on contract analysis
-   */
   async generateCLIFiles(contractInfo) {
     console.log('📝 Generating CLI files...');
 
@@ -191,18 +161,12 @@ class CompactCLIAutoGenerator {
     // Generate updated CLI module
     await this.generateCLIModule(contractInfo);
 
-    // Generate dynamic CLI documentation
-    await this.generateDocumentation(contractInfo);
-
     // Update core API file
     await this.updateCoreAPI(contractInfo);
 
     console.log('✅ CLI files generated');
   }
 
-  /**
-   * Build the CLI
-   */
   async buildCLI() {
     console.log('🔧 Building CLI...');
     
@@ -211,9 +175,6 @@ class CompactCLIAutoGenerator {
     console.log('✅ CLI built');
   }
 
-  /**
-   * Generate enhanced API wrapper file
-   */
   async generateAPIWrapper(contractInfo) {
     const contractName = path.basename(this.config.contractFileName, '.compact');
     const content = `// Enhanced API wrapper for ${contractInfo.contractName}
@@ -321,255 +282,13 @@ export const CONTRACT_METADATA = {
     const content = `// Enhanced CLI module for ${contractInfo.contractName}
 // Generated on: ${new Date().toISOString()}
 // Auto-generated from ${this.config.contractFileName}
-
-import { type Resource } from '@midnight-ntwrk/wallet';
-import { type Wallet } from '@midnight-ntwrk/wallet-api';
-import { stdin as input, stdout as output } from 'node:process';
-import { createInterface, type Interface } from 'node:readline/promises';
-import { type Logger } from 'pino';
-import { type CounterProviders, type DeployedCounterContract } from './common-types.js';
-import { type Config } from './config.js';
-import { EnhancedContractAPI, type ContractInfo } from './enhanced-api.js';
-import * as api from './api.js';
-
-/**
- * Menu item interface
- */
-interface MenuItem {
-  id: string;
-  label: string;
-  action: (providers: CounterProviders, contract: DeployedCounterContract, rli: Interface) => Promise<void>;
-}
-
-/**
- * Enhanced CLI that dynamically adapts to contract functions
- */
-export class EnhancedCLI {
-  private api: EnhancedContractAPI;
-  private logger: Logger;
-  private contract: DeployedCounterContract | null = null;
-
-  constructor(logger: Logger) {
-    this.logger = logger;
-    this.api = new EnhancedContractAPI(logger);
-  }
-
-  async initialize(): Promise<void> {
-    await this.api.initialize();
-    this.logger.info('🎯 Enhanced CLI initialized with dynamic contract analysis');
-  }
-
-  async runEnhancedCLI(providers: CounterProviders, rli: Interface): Promise<void> {
-    const contractInfo = this.api.getContractInfo();
-    if (!contractInfo) {
-      throw new Error('Contract info not available');
-    }
-    
-    this.logger.info(\`=== \${contractInfo.contractName} CLI ===\`);
-    this.logger.info(\`📊 Available functions: \${contractInfo.functions.map(f => f.name).join(', ')}\`);
-    
-    // Use the dynamic CLI generator for the main loop
-    const menuItems = this.api.generateMenuItems();
-    
-    while (true) {
-      const question = this.api.generateMenuQuestion(menuItems);
-      const choice = await rli.question(question);
-      
-      try {
-        const choiceNum = parseInt(choice, 10) - 1;
-        
-        if (choiceNum >= 0 && choiceNum < menuItems.length) {
-          const selectedItem = menuItems[choiceNum];
-          
-          if (selectedItem.id === 'exit') {
-            this.logger.info('👋 Goodbye!');
-            break;
-          }
-          
-          // Execute the selected action
-          if (this.contract) {
-            await selectedItem.action(providers, this.contract, rli);
-          } else {
-            this.logger.error('❌ Contract not available');
-          }
-        } else {
-          this.logger.error(\`❌ Invalid choice: \${choice}\`);
-        }
-      } catch (error) {
-        if (error instanceof Error) {
-          this.logger.error(\`❌ Operation failed: \${error.message}\`);
-          if (error.message.includes('member')) {
-            this.logger.warn('💡 This might be because you have already voted. Each wallet can only vote once.');
-          }
-        } else {
-          this.logger.error(\`❌ Unknown error occurred: \${error}\`);
-        }
-        this.logger.info('You can try another operation or exit.');
-      }
-    }
-  }
-
-  async deployOrJoin(providers: CounterProviders, rli: Interface): Promise<DeployedCounterContract | null> {
-    // Use original deploy/join logic but enhanced with dynamic feedback
-    const contractInfo = this.api.getContractInfo();
-    if (!contractInfo) {
-      throw new Error('Contract info not available');
-    }
-    
-    const question = \`
-You can do one of the following:
-  1. Deploy a new \${contractInfo.contractName}
-  2. Join an existing \${contractInfo.contractName}
-  3. Exit
-Which would you like to do? \`;
-
-    while (true) {
-      const choice = await rli.question(question);
-      switch (choice) {
-        case '1':
-          this.contract = await api.deploy(providers, { privateCounter: 0 });
-          this.logger.info(\`🎉 Successfully deployed \${contractInfo.contractName}!\`);
-          return this.contract;
-        case '2':
-          const contractAddress = await rli.question('What is the contract address (in hex)? ');
-          this.contract = await api.joinContract(providers, contractAddress);
-          this.logger.info(\`🔗 Successfully joined \${contractInfo.contractName}!\`);
-          return this.contract;
-        case '3':
-          this.logger.info('Exiting...');
-          return null;
-        default:
-          this.logger.error(\`Invalid choice: \${choice}\`);
-      }
-    }
-  }
-
-  // Delegate to original CLI run function but with enhancements
-  async run(config: Config, logger: Logger, dockerEnv?: boolean): Promise<void> {
-    await this.initialize();
-    
-    // Set up the CLI environment using original logic
-    const rli = createInterface({ input, output, terminal: true });
-    
-    try {
-      // Use API wallet and provider setup
-      const wallet = await api.buildFreshWallet(config);
-      if (wallet !== null) {
-        const providers = await api.configureProviders(wallet, config);
-        
-        // Deploy or join contract
-        const contract = await this.deployOrJoin(providers, rli);
-        if (contract !== null) {
-          this.contract = contract;
-          // Run enhanced CLI loop
-          await this.runEnhancedCLI(providers, rli);
-        }
-      }
-    } catch (error) {
-      this.logger.error(\`CLI error: \${error instanceof Error ? error.message : String(error)}\`);
-    } finally {
-      rli.close();
-    }
-  }
-}
-
-// Export for backward compatibility
-export const runEnhanced = async (config: Config, logger: Logger, dockerEnv?: boolean): Promise<void> => {
-  const enhancedCli = new EnhancedCLI(logger);
-  await enhancedCli.run(config, logger, dockerEnv);
-};
-
-// Also export original run function
-export { run as runOriginal } from './cli.js';
 `;
 
     const outputPath = path.join(this.config.cliSourceDir, 'src', 'enhanced-cli.ts');
     await fs.promises.writeFile(outputPath, content, 'utf-8');
   }
 
-  /**
-   * Generate documentation
-   */
-  async generateDocumentation(contractInfo) {
-    const content = `# Dynamic CLI for ${contractInfo.contractName}
 
-*Auto-generated on: ${new Date().toISOString()}*
-
-## 🚀 Quick Start
-
-The CLI now automatically adapts to your smart contract! Simply run:
-
-\`\`\`bash
-cd contract-cli
-npm run build
-npm run testnet-remote  # or standalone, testnet-local, etc.
-\`\`\`
-
-## 📊 Contract Analysis
-
-**Contract:** ${contractInfo.contractName}  
-**Source File:** ${this.config.contractFileName}  
-**Functions:** ${contractInfo.functions.length}  
-**State Variables:** ${contractInfo.ledgerState.length}  
-
-## 🛠️ Available Functions
-
-${contractInfo.functions.map((func, index) => `
-### ${index + 1}. ${func.name}
-
-- **Description:** ${func.description}
-- **Parameters:** ${func.parameters.length === 0 ? 'None' : func.parameters.map(p => `${p.name} (${p.type})`).join(', ')}
-- **Return Type:** ${func.returnType}
-- **Read-Only:** ${func.readOnly ? 'Yes' : 'No'}
-`).join('')}
-
-## 📊 Contract State
-
-${contractInfo.ledgerState.map((state) => `- **${state.name}** (${state.type})`).join('\n')}
-
-## ⚡ Auto-Generation
-
-When you modify your contract (\`${this.config.contractFileName}\`), run the auto-generator:
-
-\`\`\`bash
-node scripts/auto-generator.js
-\`\`\`
-
-This will:
-1. 🔍 Analyze your contract
-2. 🔨 Compile the contract 
-3. 🔧 Build TypeScript
-4. 📝 Generate CLI code
-5. 🎯 Update all functions dynamically
-
-## 🎨 Features
-
-- **Dynamic Menus:** Menu options are generated from your contract functions
-- **Type Safety:** Automatic parameter type conversion
-- **Error Handling:** Comprehensive error messages and suggestions
-- **State Display:** View all contract state variables
-- **Transaction Tracking:** See transaction IDs and block confirmations
-
-## 🔧 Customization
-
-To customize the auto-generation:
-
-1. **Function Descriptions:** Edit \`contract-analyzer.ts\`
-2. **Special Parameters:** Modify \`dynamic-cli-generator.ts\`
-3. **UI Enhancements:** Update \`enhanced-cli.ts\`
-
-## 📝 Manual Override
-
-If you need to override auto-generated functions, create them in:
-- \`src/api.ts\` - For API functions
-- \`src/cli.ts\` - For CLI interactions
-
-The enhanced CLI will prefer manual implementations over auto-generated ones.
-`;
-
-    const outputPath = path.join(path.dirname(this.config.cliSourceDir), 'DYNAMIC_CLI_GUIDE.md');
-    await fs.promises.writeFile(outputPath, content, 'utf-8');
-  }
 
   /**
    * Update the core API file to match contract functions
@@ -760,7 +479,6 @@ class CompactContractParser {
         parameters,
         returnType: returnType.trim(),
         readOnly,
-        description: this.generateDescription(name, parameters)
       });
     }
 
@@ -771,29 +489,7 @@ class CompactContractParser {
     };
   }
 
-  generateDescription(name, parameters) {
-    const descriptions = {
-      'incrementosas': 'Increments the counter/round by 1',
-      'increment': 'Increments the counter by 1',
-      'incrementCounter': 'Increments the counter by 1',
-      'incrementMainCounter': 'Increments the main counter by 1',
-      'boostCounter': 'Boosts the counter by 1',
-      'superBoostCounter': 'Super boosts the counter by 1',
-      'vote_for': 'Vote for an option (0 for A, 1 for B)',
-      'get_vote_count': 'Get the vote count for an option (0 for A, 1 for B)',
-      'get_round': 'Get the current round/counter value',
-      'public_key_vote': 'Generate a public key for voting'
-    };
-    
-    // Handle variations of increment/boost/counter functions
-    if (name.toLowerCase().includes('increment') || 
-        name.toLowerCase().includes('boost') || 
-        name.toLowerCase().includes('counter')) {
-      return 'Increments the counter/round by 1';
-    }
-    
-    return descriptions[name] || `Execute ${name} function with ${parameters.length} parameter(s)`;
-  }
+
 }
 
 // CLI entry point

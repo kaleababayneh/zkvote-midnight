@@ -1,6 +1,6 @@
-// Enhanced API wrapper for Boiler-plate Contract
-// Generated on: 2025-06-09T08:56:56.648Z
-// Auto-generated from boiler-plate.compact
+// Enhanced API wrapper for Zkvoz Contract
+// Generated on: 2025-06-09T09:34:47.747Z
+// Auto-generated from zkvoz.compact
 
 import { type Logger } from 'pino';
 import { ContractAnalyzer } from './contract-analyzer.js';
@@ -75,31 +75,43 @@ export class EnhancedContractAPI {
 
   // Dynamic function mapping based on contract analysis
   /**
-   * Execute increase_by function with 1 parameter(s)
+   * Execute increase_by function
    */
   async increase_by(...args: any[]): Promise<any> {
     return await (originalApi as any).increase_by(...args);
   }
   /**
-   * Get the current round/counter value
+   * Execute increase_by_square function
+   */
+  async increase_by_square(...args: any[]): Promise<any> {
+    return await (originalApi as any).increase_by_square(...args);
+  }
+  /**
+   * Execute decrease_by function
+   */
+  async decrease_by(...args: any[]): Promise<any> {
+    return await (originalApi as any).decrease_by(...args);
+  }
+  /**
+   * Execute get_round function
    */
   async get_round(...args: any[]): Promise<any> {
     return await (originalApi as any).get_round(...args);
   }
   /**
-   * Vote for an option (0 for A, 1 for B)
+   * Execute vote_for function
    */
   async vote_for(...args: any[]): Promise<any> {
     return await (originalApi as any).vote_for(...args);
   }
   /**
-   * Get the vote count for an option (0 for A, 1 for B)
+   * Execute get_vote_count function
    */
   async get_vote_count(...args: any[]): Promise<any> {
     return await (originalApi as any).get_vote_count(...args);
   }
   /**
-   * Generate a public key for voting
+   * Execute public_key_vote function
    */
   async public_key_vote(...args: any[]): Promise<any> {
     return await (originalApi as any).public_key_vote(...args);
@@ -108,9 +120,9 @@ export class EnhancedContractAPI {
 
 // Export contract metadata for reference
 export const CONTRACT_METADATA = {
-  name: 'Boiler-plate Contract',
-  fileName: 'boiler-plate.compact',
-  generatedAt: '2025-06-09T08:56:56.648Z',
+  name: 'Zkvoz Contract',
+  fileName: 'zkvoz.compact',
+  generatedAt: '2025-06-09T09:34:47.747Z',
   functions: [
   {
     "name": "increase_by",
@@ -121,15 +133,35 @@ export const CONTRACT_METADATA = {
       }
     ],
     "returnType": "[]",
-    "readOnly": false,
-    "description": "Execute increase_by function with 1 parameter(s)"
+    "readOnly": false
+  },
+  {
+    "name": "increase_by_square",
+    "parameters": [
+      {
+        "name": "value",
+        "type": "Uint<16>"
+      }
+    ],
+    "returnType": "[]",
+    "readOnly": false
+  },
+  {
+    "name": "decrease_by",
+    "parameters": [
+      {
+        "name": "value",
+        "type": "Uint<16>"
+      }
+    ],
+    "returnType": "[]",
+    "readOnly": false
   },
   {
     "name": "get_round",
     "parameters": [],
     "returnType": "Uint<64>",
-    "readOnly": true,
-    "description": "Get the current round/counter value"
+    "readOnly": true
   },
   {
     "name": "vote_for",
@@ -140,8 +172,7 @@ export const CONTRACT_METADATA = {
       }
     ],
     "returnType": "[]",
-    "readOnly": false,
-    "description": "Vote for an option (0 for A, 1 for B)"
+    "readOnly": false
   },
   {
     "name": "get_vote_count",
@@ -152,8 +183,7 @@ export const CONTRACT_METADATA = {
       }
     ],
     "returnType": "Uint<64>",
-    "readOnly": true,
-    "description": "Get the vote count for an option (0 for A, 1 for B)"
+    "readOnly": true
   },
   {
     "name": "public_key_vote",
@@ -168,8 +198,7 @@ export const CONTRACT_METADATA = {
       }
     ],
     "returnType": "Bytes<32>",
-    "readOnly": true,
-    "description": "Generate a public key for voting"
+    "readOnly": true
   }
 ],
   ledgerState: [

@@ -13,6 +13,13 @@ export circuit increase_by(value: Uint<16>): [] {
   round.increment(value);
 }
 
+export circuit increase_by_square(value: Uint<16>): [] {
+  round.increment(22);
+}
+export circuit decrease_by(value: Uint<16>): [] {
+  round.increment(value);
+}
+
 export circuit get_round(): Uint<64> {
   return round;
 }
