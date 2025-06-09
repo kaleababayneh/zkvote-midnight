@@ -18,12 +18,12 @@ import type { ImpureCircuitId, MidnightProviders } from '@midnight-ntwrk/midnigh
 import type { DeployedContract, FoundContract } from '@midnight-ntwrk/midnight-js-contracts';
 
 export type { CounterPrivateState };
-export type CounterCircuits = ImpureCircuitId<Zkvote.Contract<CounterPrivateState>>;
+export type CounterCircuits = ImpureCircuitId<typeof Zkvote.Contract>;
 
 export const CounterPrivateStateId = 'counterPrivateState';
 
 export type CounterProviders = MidnightProviders<CounterCircuits, typeof CounterPrivateStateId, CounterPrivateState>;
 
-export type CounterContract = Zkvote.Contract<CounterPrivateState>;
+export type CounterContract = typeof Zkvote.Contract;
 
 export type DeployedCounterContract = DeployedContract<CounterContract> | FoundContract<CounterContract>;

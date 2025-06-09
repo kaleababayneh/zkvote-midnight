@@ -7,8 +7,20 @@ export ledger votesA: Counter;
 export ledger votesB: Counter;
 export ledger items: Set<Bytes<32>>;
 
-export circuit increment(): [] {
+export circuit megaBoostCounterxx(): [] {
   round.increment(1);
+}
+
+export circuit awesome_function_first(): Uint<64> {
+  // This function is just a placeholder to demonstrate the structure
+  // It does not perform any meaningful operation
+  round.increment(1);
+  return 77;
+}
+
+
+export circuit get_round(): Uint<64> {
+  return round;
 }
 
 export circuit vote_for(index: Uint<8>): [] {

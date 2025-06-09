@@ -6,6 +6,7 @@ import { type Logger } from 'pino';
 import { type StartedDockerComposeEnvironment, type DockerComposeEnvironment } from 'testcontainers';
 import { type CounterProviders, type DeployedCounterContract } from './common-types';
 import { type Config, StandaloneConfig } from './config';
+import { DynamicCLIGenerator } from './dynamic-cli-generator.js';
 import * as api from './api';
 
 let logger: Logger;
@@ -18,19 +19,9 @@ const GENESIS_MINT_WALLET_SEED = '0000000000000000000000000000000000000000000000
 
 const DEPLOY_OR_JOIN_QUESTION = `
 You can do one of the following:
-  1. Deploy a new counter/voting contract
-  2. Join an existing counter/voting contract
+  1. Deploy a new contract
+  2. Join an existing contract
   3. Exit
-Which would you like to do? `;
-
-const MAIN_LOOP_QUESTION = `
-You can do one of the following:
-  1. Increment
-  2. Display current counter value
-  3. Vote for Option A
-  4. Vote for Option B
-  5. Display voting results
-  6. Exit
 Which would you like to do? `;
 
 const join = async (providers: CounterProviders, rli: Interface): Promise<DeployedCounterContract> => {
@@ -61,46 +52,39 @@ const mainLoop = async (providers: CounterProviders, rli: Interface): Promise<vo
     return;
   }
   
-  logger.info('=== Counter & Voting Contract CLI ===');
+  // Initialize dynamic CLI generator
+  const cliGenerator = new DynamicCLIGenerator(logger);
+  await cliGenerator.initialize();
+  
+  const menuItems = cliGenerator.generateMenuItems();
+  const menuQuestion = cliGenerator.generateMenuQuestion(menuItems);
+  
+  logger.info('=== Dynamic Contract CLI ===');
   logger.info(`Contract Address: ${counterContract.deployTxData.public.contractAddress}`);
-  logger.info('You can now increment the counter or vote for options A/B');
+  logger.info('Available functions have been automatically detected from your contract!');
   
   while (true) {
-    const choice = await rli.question(MAIN_LOOP_QUESTION);
+    const choice = await rli.question(menuQuestion);
+    const choiceIndex = parseInt(choice, 10) - 1;
+    
+    if (choiceIndex < 0 || choiceIndex >= menuItems.length) {
+      logger.error(`Invalid choice: ${choice}`);
+      continue;
+    }
+    
+    const selectedItem = menuItems[choiceIndex];
+    
+    // Special handling for exit
+    if (selectedItem.id === 'exit') {
+      logger.info('Exiting...');
+      return;
+    }
+    
     try {
-      switch (choice) {
-        case '1':
-          await api.increment(counterContract);
-          logger.info('✅ Counter incremented successfully!');
-          break;
-        case '2':
-          await api.displayCounterValue(providers, counterContract);
-          break;
-        case '3':
-          logger.info('🗳️  Casting vote for Option A...');
-          await api.voteForOptionA(counterContract);
-          logger.info('✅ Vote for Option A cast successfully!');
-          break;
-        case '4':
-          logger.info('🗳️  Casting vote for Option B...');
-          await api.voteForOptionB(counterContract);
-          logger.info('✅ Vote for Option B cast successfully!');
-          break;
-        case '5':
-          await api.displayVotingResults(providers, counterContract);
-          break;
-        case '6':
-          logger.info('Exiting...');
-          return;
-        default:
-          logger.error(`Invalid choice: ${choice}`);
-      }
+      await selectedItem.action(providers, counterContract, rli);
     } catch (error: unknown) {
       if (error instanceof Error) {
         logger.error(`❌ Operation failed: ${error.message}`);
-        if (error.message.includes('member')) {
-          logger.warn('💡 This might be because you have already voted. Each wallet can only vote once.');
-        }
       } else {
         logger.error(`❌ Unknown error occurred: ${error}`);
       }

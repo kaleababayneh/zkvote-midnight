@@ -14,12 +14,57 @@
 // limitations under the License.
 
 import path from 'node:path';
+import fs from 'node:fs';
 import { NetworkId, setNetworkId } from '@midnight-ntwrk/midnight-js-network-id';
 export const currentDir = path.resolve(new URL(import.meta.url).pathname, '..');
 
+/**
+ * Auto-detect the contract directory from the managed directory
+ */
+function detectContractPath(): string {
+  const managedDir = path.resolve(currentDir, '..', '..', 'contract', 'src', 'managed');
+  
+  if (!fs.existsSync(managedDir)) {
+    throw new Error(`Managed directory not found: ${managedDir}`);
+  }
+
+  // Look for any contract directory in the managed folder
+  const dirs = fs.readdirSync(managedDir, { withFileTypes: true })
+    .filter(dirent => dirent.isDirectory())
+    .map(dirent => dirent.name);
+  
+  if (dirs.length === 0) {
+    throw new Error(`No contract directories found in ${managedDir}`);
+  }
+  
+  // Prefer directories that have both contract/index.d.cts AND keys directory
+  for (const dir of dirs) {
+    const contractTypesPath = path.join(managedDir, dir, 'contract', 'index.d.cts');
+    const keysPath = path.join(managedDir, dir, 'keys');
+    if (fs.existsSync(contractTypesPath) && fs.existsSync(keysPath)) {
+      console.log(`🔍 Config: Auto-detected contract path: ${dir} (with keys)`);
+      return path.join(managedDir, dir);
+    }
+  }
+  
+  // Fall back to directories that have just contract types
+  for (const dir of dirs) {
+    const contractTypesPath = path.join(managedDir, dir, 'contract', 'index.d.cts');
+    if (fs.existsSync(contractTypesPath)) {
+      console.log(`🔍 Config: Auto-detected contract path: ${dir} (without keys)`);
+      return path.join(managedDir, dir);
+    }
+  }
+  
+  // If no valid contract found, use the first directory and let it fail gracefully
+  const fallbackPath = path.join(managedDir, dirs[0]);
+  console.log(`⚠️  Config: No valid contract types found, using: ${dirs[0]}`);
+  return fallbackPath;
+}
+
 export const contractConfig = {
   privateStateStoreName: 'counter-private-state',
-  zkConfigPath: path.resolve(currentDir, '..', '..', 'contract', 'src', 'managed', 'zkvote'),
+  zkConfigPath: detectContractPath(),
 };
 
 export interface Config {

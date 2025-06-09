@@ -123,23 +123,74 @@ export const deploy = async (
 
 export const increment = async (counterContract: DeployedCounterContract): Promise<FinalizedTxData> => {
   logger.info('Incrementing...');
-  const finalizedTxData = await counterContract.callTx.increment();
+  const finalizedTxData = await (counterContract.callTx as any).megaBoostCounterxx();
   logger.info(`Transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
   return finalizedTxData.public;
 };
 
+// New functions to match contract functions
+export const incrementMainCounter = async (counterContract: DeployedCounterContract): Promise<FinalizedTxData> => {
+  return await increment(counterContract);
+};
+
+export const incrementCounter = async (counterContract: DeployedCounterContract): Promise<FinalizedTxData> => {
+  return await increment(counterContract);
+};
+
+export const incrementosas = async (counterContract: DeployedCounterContract): Promise<FinalizedTxData> => {
+  return await increment(counterContract);
+};
+
+export const incrementosa = async (counterContract: DeployedCounterContract): Promise<FinalizedTxData> => {
+  return await increment(counterContract);
+};
+
+export const get_round = async (counterContract: DeployedCounterContract, providers: CounterProviders): Promise<bigint | null> => {
+  const contractAddress = counterContract.deployTxData.public.contractAddress;
+  return await getCounterLedgerState(providers, contractAddress);
+};
+
+export const vote_for = async (counterContract: DeployedCounterContract, index: number): Promise<FinalizedTxData> => {
+  if (index === 0) {
+    return await voteForOptionA(counterContract);
+  } else if (index === 1) {
+    return await voteForOptionB(counterContract);
+  } else {
+    throw new Error('Invalid vote index. Use 0 for Option A or 1 for Option B');
+  }
+};
+
+export const get_vote_count = async (counterContract: DeployedCounterContract, providers: CounterProviders, index: number): Promise<bigint> => {
+  const contractAddress = counterContract.deployTxData.public.contractAddress;
+  const results = await getVotingResults(providers, contractAddress);
+  
+  if (index === 0) {
+    return results.votesA || 0n;
+  } else if (index === 1) {
+    return results.votesB || 0n;
+  } else {
+    return 0n;
+  }
+};
+
+export const public_key_vote = async (sk: string, instance: string): Promise<string> => {
+  // This function generates a public key hash based on secret key and instance
+  // For now, return a mock implementation that matches the contract behavior
+  logger.info(`Generating public key for voting with secret key and instance`);
+  return `pk_${sk}_${instance}_hash`;
+};
 
 
 export const voteForOptionA = async (counterContract: DeployedCounterContract): Promise<FinalizedTxData> => {
   logger.info('Voting for Option A...');
-  const finalizedTxData = await counterContract.callTx.vote_for(0n);
+  const finalizedTxData = await (counterContract.callTx as any).vote_for(0n);
   logger.info(`Vote A transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
   return finalizedTxData.public;
 };
 
 export const voteForOptionB = async (counterContract: DeployedCounterContract): Promise<FinalizedTxData> => {
   logger.info('Voting for Option B...');
-  const finalizedTxData = await counterContract.callTx.vote_for(1n);
+  const finalizedTxData = await (counterContract.callTx as any).vote_for(1n);
   logger.info(`Vote B transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
   return finalizedTxData.public;
 };
@@ -381,7 +432,7 @@ export const configureProviders = async (wallet: Wallet & Resource, config: Conf
       privateStateStoreName: contractConfig.privateStateStoreName,
     }),
     publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
-    zkConfigProvider: new NodeZkConfigProvider<'increment' | 'vote_for'>(contractConfig.zkConfigPath),
+    zkConfigProvider: new NodeZkConfigProvider<'megaBoostCounterxx' | 'vote_for'>(contractConfig.zkConfigPath),
     proofProvider: httpClientProofProvider(config.proofServer),
     walletProvider: walletAndMidnightProvider,
     midnightProvider: walletAndMidnightProvider,
