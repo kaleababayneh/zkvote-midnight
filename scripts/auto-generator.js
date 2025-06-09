@@ -500,7 +500,7 @@ export { run as runOriginal } from './cli.js';
 The CLI now automatically adapts to your smart contract! Simply run:
 
 \`\`\`bash
-cd counter-cli
+cd contract-cli
 npm run build
 npm run testnet-remote  # or standalone, testnet-local, etc.
 \`\`\`
@@ -801,7 +801,7 @@ if (import.meta.url === `file://${process.argv[1]}`) {
   const config = {
     contractSourceDir: path.resolve(__dirname, '..', 'contract', 'src'),
     contractBuildDir: path.resolve(__dirname, '..', 'contract', 'dist'),
-    cliSourceDir: path.resolve(__dirname, '..', 'counter-cli'),
+    cliSourceDir: path.resolve(__dirname, '..', 'contract-cli'),
     contractFileName: null, // Auto-detect any .compact file
     verbose: process.argv.includes('--verbose') || process.argv.includes('-v')
   };
