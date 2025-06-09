@@ -1,6 +1,6 @@
-// Enhanced CLI module for Boiler Contract
-// Generated on: 2025-06-09T08:06:46.494Z
-// Auto-generated from boiler.compact
+// Enhanced CLI module for Boiler-plate Contract
+// Generated on: 2025-06-09T08:42:41.575Z
+// Auto-generated from boiler-plate.compact
 
 import { type Resource } from '@midnight-ntwrk/wallet';
 import { type Wallet } from '@midnight-ntwrk/wallet-api';

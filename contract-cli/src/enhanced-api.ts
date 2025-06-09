@@ -1,6 +1,6 @@
-// Enhanced API wrapper for Boiler Contract
-// Generated on: 2025-06-09T08:06:46.494Z
-// Auto-generated from boiler.compact
+// Enhanced API wrapper for Boiler-plate Contract
+// Generated on: 2025-06-09T08:42:41.575Z
+// Auto-generated from boiler-plate.compact
 
 import { type Logger } from 'pino';
 import { ContractAnalyzer } from './contract-analyzer.js';
@@ -108,9 +108,9 @@ export class EnhancedContractAPI {
 
 // Export contract metadata for reference
 export const CONTRACT_METADATA = {
-  name: 'Boiler Contract',
-  fileName: 'boiler.compact',
-  generatedAt: '2025-06-09T08:06:46.494Z',
+  name: 'Boiler-plate Contract',
+  fileName: 'boiler-plate.compact',
+  generatedAt: '2025-06-09T08:42:41.575Z',
   functions: [
   {
     "name": "increase_by",

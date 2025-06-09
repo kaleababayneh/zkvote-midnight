@@ -619,7 +619,6 @@ The enhanced CLI will prefer manual implementations over auto-generated ones.
       .join(' | ');
     
     if (impureFunctionNames) {
-      console.log(`🔧 Updating zkConfigProvider types: ${impureFunctionNames}`);
       
       // Find and replace the NodeZkConfigProvider type parameter more precisely
       apiContent = apiContent.replace(
