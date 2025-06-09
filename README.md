@@ -1,16 +1,26 @@
 # 🌙 Midnight Compact Contract CLI Generator
 
+**The fastest way to develop Midnight contracts.** Write your `.compact` contract and instantly get:
+- 🚀 Auto-generated CLI with all your functions
+- 🌐 One-command testnet deployment  
+- 🔄 Dynamic updates when you change your contract
+- 📦 Complete development environment
+
+**No setup required.** No manual updates. Just pure contract development.
+
 [![Midnight Network](https://img.shields.io/badge/Midnight-Network-blue)](https://midnight.network)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)](https://typescriptlang.org)
 [![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
 
-A powerful automated CLI generation system for writing, testing, and deploying **Midnight Compact contracts**. This project provides a complete development workflow that automatically adapts to your contract changes without requiring any manual code updates.
+A powerful automated CLI generation system for writing, testing, and deploying **Midnight Compact contracts**. This project provides a complete development workflow that automatically adapts to your contract changes without requiring any manual code updates. The developer has to write just the contract the rest will be handled by the cli
 
 All you need to start your new project is 
    ```bash
 
-https://github.com/kaleababayneh/scaffold-midnight.git
+git clone https://github.com/kaleababayneh/scaffold-midnight.git
 touch my-contract.compact
+npm install
+npm run 
  ```
 
 ## 🚀 Features
@@ -60,7 +70,7 @@ example-counter/
 1. **Clone and Install**
    ```bash
    git clone <your-repo>
-   cd example-counter
+   touch my-contract.compact
    npm install
    ```
 
@@ -85,7 +95,7 @@ example-counter/
 
 3. **Generate CLI**
    ```bash
-   npm run auto-generate
+   npm run dev
    ```
 
 4. **Test on Testnet**
@@ -98,12 +108,12 @@ example-counter/
 ### 1. **Edit Contract** (Root Level)
 ```bash
 # Edit your contract file in the project root
-vim counter.compact  # or use any editor
+nano counter.compact  # or use any editor
 ```
 
 ### 2. **Auto-Generate Everything**
 ```bash
-npm run auto-generate
+npm run dev
 ```
 
 This single command:
@@ -124,8 +134,8 @@ Interactive CLI will start:
 📊 Available functions: increment, get_count
 
 You can do one of the following:
-  1. Deploy a new Counter Contract
-  2. Join an existing Counter Contract
+  1. Deploy a new Your Contract
+  2. Join an existing yOUR Contract
   3. Exit
 Which would you like to do?
 ```
@@ -134,10 +144,9 @@ Which would you like to do?
 
 | Command | Description |
 |---------|-------------|
-| `npm run auto-generate` | 🔄 Regenerate CLI from contract |
+| `npm run def` | 🔄 Regenerate CLI from contract |
 | `npm run wallet` | 🌐 Launch testnet CLI |
-| `npm run build` | 🔨 Build all workspaces |
-| `npm test` | 🧪 Run all tests |
+
 
 ## 🏗️ How It Works
 

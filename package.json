@@ -11,8 +11,6 @@
   ],
   "scripts": {
     "dev":  "node boilerplate/scripts/auto-generator.js",
-    "auto-generate": "node boilerplate/scripts/auto-generator.js",
-    "auto-generate-ts": "node boilerplate/scripts/typescript-auto-generator.js",
     "auto-generate-verbose": "node boilerplate/scripts/typescript-auto-generator.js --verbose",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",

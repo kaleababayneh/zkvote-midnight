@@ -1,5 +1,5 @@
 // Enhanced API wrapper for Counter Contract
-// Generated on: 2025-06-09T12:11:55.777Z
+// Generated on: 2025-06-09T13:35:14.600Z
 // Auto-generated from counter.compact
 
 import { type Logger } from 'pino';
@@ -86,7 +86,7 @@ export class EnhancedContractAPI {
 export const CONTRACT_METADATA = {
   name: 'Counter Contract',
   fileName: 'counter.compact',
-  generatedAt: '2025-06-09T12:11:55.777Z',
+  generatedAt: '2025-06-09T13:35:14.600Z',
   functions: [
   {
     "name": "increment",
