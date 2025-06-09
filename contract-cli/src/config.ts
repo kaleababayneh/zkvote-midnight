@@ -19,47 +19,40 @@ import { NetworkId, setNetworkId } from '@midnight-ntwrk/midnight-js-network-id'
 export const currentDir = path.resolve(new URL(import.meta.url).pathname, '..');
 
 /**
- * Auto-detect the contract directory from the managed directory
+ * Auto-detect the contract directory from the source .compact file
+ * This ensures we always use the current contract, not old managed directories
  */
 function detectContractPath(): string {
-  const managedDir = path.resolve(currentDir, '..', '..', 'contract', 'src', 'managed');
+  const contractSourceDir = path.resolve(currentDir, '..', '..', 'contract', 'src');
+  const managedDir = path.join(contractSourceDir, 'managed');
   
-  if (!fs.existsSync(managedDir)) {
-    throw new Error(`Managed directory not found: ${managedDir}`);
+  if (!fs.existsSync(contractSourceDir)) {
+    throw new Error(`Contract source directory not found: ${contractSourceDir}`);
   }
 
-  // Look for any contract directory in the managed folder
-  const dirs = fs.readdirSync(managedDir, { withFileTypes: true })
-    .filter(dirent => dirent.isDirectory())
-    .map(dirent => dirent.name);
+  // Look for .compact files in the source directory
+  const files = fs.readdirSync(contractSourceDir);
+  const compactFiles = files.filter(file => file.endsWith('.compact'));
   
-  if (dirs.length === 0) {
-    throw new Error(`No contract directories found in ${managedDir}`);
+  if (compactFiles.length === 0) {
+    throw new Error(`No .compact files found in ${contractSourceDir}`);
   }
   
-  // Prefer directories that have both contract/index.d.cts AND keys directory
-  for (const dir of dirs) {
-    const contractTypesPath = path.join(managedDir, dir, 'contract', 'index.d.cts');
-    const keysPath = path.join(managedDir, dir, 'keys');
-    if (fs.existsSync(contractTypesPath) && fs.existsSync(keysPath)) {
-      console.log(`🔍 Config: Auto-detected contract path: ${dir} (with keys)`);
-      return path.join(managedDir, dir);
-    }
+  // Get the contract name from the .compact file (without extension)
+  const contractFileName = compactFiles[0];
+  const contractName = path.basename(contractFileName, '.compact');
+  const expectedManagedPath = path.join(managedDir, contractName);
+  
+  console.log(`🔍 Config: Auto-detected contract from source: ${contractName} (from ${contractFileName})`);
+  
+  // Verify the managed directory exists
+  if (!fs.existsSync(expectedManagedPath)) {
+    console.log(`⚠️  Config: Managed directory not found: ${expectedManagedPath}`);
+    console.log(`💡 You may need to run: npm run auto-generate`);
+    // Return path anyway so it can be created
   }
   
-  // Fall back to directories that have just contract types
-  for (const dir of dirs) {
-    const contractTypesPath = path.join(managedDir, dir, 'contract', 'index.d.cts');
-    if (fs.existsSync(contractTypesPath)) {
-      console.log(`🔍 Config: Auto-detected contract path: ${dir} (without keys)`);
-      return path.join(managedDir, dir);
-    }
-  }
-  
-  // If no valid contract found, use the first directory and let it fail gracefully
-  const fallbackPath = path.join(managedDir, dirs[0]);
-  console.log(`⚠️  Config: No valid contract types found, using: ${dirs[0]}`);
-  return fallbackPath;
+  return expectedManagedPath;
 }
 
 export const contractConfig = {

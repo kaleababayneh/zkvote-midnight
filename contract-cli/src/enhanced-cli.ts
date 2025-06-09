@@ -1,3 +1,3 @@
-// Enhanced CLI module for Zkvoz Contract
-// Generated on: 2025-06-09T09:34:47.747Z
-// Auto-generated from zkvoz.compact
+// Enhanced CLI module for Voting Contract
+// Generated on: 2025-06-09T09:52:08.688Z
+// Auto-generated from voting.compact

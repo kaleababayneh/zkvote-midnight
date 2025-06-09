@@ -7,9 +7,11 @@ export ledger votesA: Counter;
 export ledger votesB: Counter;
 export ledger items: Set<Bytes<32>>;
 
-
-
 export circuit increase_by(value: Uint<16>): [] {
+  round.increment(value);
+}
+
+export circuit another_increase(value: Uint<16>): [] {
   round.increment(value);
 }
 

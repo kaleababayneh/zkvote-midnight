@@ -1,6 +1,6 @@
-// Enhanced API wrapper for Zkvoz Contract
-// Generated on: 2025-06-09T09:34:47.747Z
-// Auto-generated from zkvoz.compact
+// Enhanced API wrapper for Voting Contract
+// Generated on: 2025-06-09T09:52:08.687Z
+// Auto-generated from voting.compact
 
 import { type Logger } from 'pino';
 import { ContractAnalyzer } from './contract-analyzer.js';
@@ -81,6 +81,12 @@ export class EnhancedContractAPI {
     return await (originalApi as any).increase_by(...args);
   }
   /**
+   * Execute another_increase function
+   */
+  async another_increase(...args: any[]): Promise<any> {
+    return await (originalApi as any).another_increase(...args);
+  }
+  /**
    * Execute increase_by_square function
    */
   async increase_by_square(...args: any[]): Promise<any> {
@@ -120,12 +126,23 @@ export class EnhancedContractAPI {
 
 // Export contract metadata for reference
 export const CONTRACT_METADATA = {
-  name: 'Zkvoz Contract',
-  fileName: 'zkvoz.compact',
-  generatedAt: '2025-06-09T09:34:47.747Z',
+  name: 'Voting Contract',
+  fileName: 'voting.compact',
+  generatedAt: '2025-06-09T09:52:08.687Z',
   functions: [
   {
     "name": "increase_by",
+    "parameters": [
+      {
+        "name": "value",
+        "type": "Uint<16>"
+      }
+    ],
+    "returnType": "[]",
+    "readOnly": false
+  },
+  {
+    "name": "another_increase",
     "parameters": [
       {
         "name": "value",
