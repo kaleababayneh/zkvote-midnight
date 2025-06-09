@@ -6,6 +6,13 @@
 
 A powerful automated CLI generation system for writing, testing, and deploying **Midnight Compact contracts**. This project provides a complete development workflow that automatically adapts to your contract changes without requiring any manual code updates.
 
+All you need to start your new project is 
+   ```bash
+
+https://github.com/kaleababayneh/scaffold-midnight.git
+touch my-contract.compact
+ ```
+
 ## 🚀 Features
 
 ### ✨ **Automated CLI Generation**
