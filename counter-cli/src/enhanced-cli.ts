@@ -1,6 +1,6 @@
-// Enhanced CLI module for Zkvotrs Contract
-// Generated on: 2025-06-09T07:26:26.893Z
-// Auto-generated from zkvotrs.compact
+// Enhanced CLI module for Boiler Contract
+// Generated on: 2025-06-09T08:06:46.494Z
+// Auto-generated from boiler.compact
 
 import { type Resource } from '@midnight-ntwrk/wallet';
 import { type Wallet } from '@midnight-ntwrk/wallet-api';

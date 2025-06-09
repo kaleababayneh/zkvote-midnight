@@ -94,8 +94,12 @@ export class ContractAnalyzer {
       const functions = this.parseFunctions(typesContent);
       const ledgerState = this.parseLedgerState(typesContent);
       
+      // Extract contract name from the contract path
+      const contractBaseName = path.basename(this.contractPath);
+      const contractName = `${contractBaseName.charAt(0).toUpperCase() + contractBaseName.slice(1)} Contract`;
+      
       return {
-        contractName: 'ZkVote Contract',
+        contractName,
         functions,
         ledgerState
       };

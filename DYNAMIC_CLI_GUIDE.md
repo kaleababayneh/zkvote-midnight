@@ -1,6 +1,6 @@
-# Dynamic CLI for Zkvotrs Contract
+# Dynamic CLI for Boiler Contract
 
-*Auto-generated on: 2025-06-09T07:26:26.894Z*
+*Auto-generated on: 2025-06-09T08:06:46.495Z*
 
 ## 🚀 Quick Start
 
@@ -14,50 +14,43 @@ npm run testnet-remote  # or standalone, testnet-local, etc.
 
 ## 📊 Contract Analysis
 
-**Contract:** Zkvotrs Contract  
-**Source File:** zkvotrs.compact  
-**Functions:** 6  
+**Contract:** Boiler Contract  
+**Source File:** boiler.compact  
+**Functions:** 5  
 **State Variables:** 4  
 
 ## 🛠️ Available Functions
 
 
-### 1. megaBoostCounterxx
+### 1. increase_by
 
-- **Description:** Increments the counter/round by 1
-- **Parameters:** None
+- **Description:** Execute increase_by function with 1 parameter(s)
+- **Parameters:** value (Uint<16>)
 - **Return Type:** []
 - **Read-Only:** No
 
-### 2. awesome_function_first
-
-- **Description:** Execute awesome_function_first function with 0 parameter(s)
-- **Parameters:** None
-- **Return Type:** Uint<64>
-- **Read-Only:** Yes
-
-### 3. get_round
+### 2. get_round
 
 - **Description:** Get the current round/counter value
 - **Parameters:** None
 - **Return Type:** Uint<64>
 - **Read-Only:** Yes
 
-### 4. vote_for
+### 3. vote_for
 
 - **Description:** Vote for an option (0 for A, 1 for B)
 - **Parameters:** index (Uint<8>)
 - **Return Type:** []
 - **Read-Only:** No
 
-### 5. get_vote_count
+### 4. get_vote_count
 
 - **Description:** Get the vote count for an option (0 for A, 1 for B)
 - **Parameters:** index (Uint<8>)
 - **Return Type:** Uint<64>
 - **Read-Only:** Yes
 
-### 6. public_key_vote
+### 5. public_key_vote
 
 - **Description:** Generate a public key for voting
 - **Parameters:** sk (Bytes<3>), instance (Bytes<3>)
@@ -74,7 +67,7 @@ npm run testnet-remote  # or standalone, testnet-local, etc.
 
 ## ⚡ Auto-Generation
 
-When you modify your contract (`zkvotrs.compact`), run the auto-generator:
+When you modify your contract (`boiler.compact`), run the auto-generator:
 
 ```bash
 node scripts/auto-generator.js

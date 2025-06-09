@@ -634,7 +634,7 @@ The enhanced CLI will prefer manual implementations over auto-generated ones.
       );
     }
     
-    // Remove any CounterCircuits import since we're using inline types
+    // Remove any CounterCircuits import since we're using inline types and dynamic imports
     apiContent = apiContent.replace(
       /import { type CounterProviders, type DeployedCounterContract, type CounterCircuits } from '\.\/common-types\.js';/g,
       `import { type CounterProviders, type DeployedCounterContract } from './common-types.js';`
@@ -645,6 +645,40 @@ The enhanced CLI will prefer manual implementations over auto-generated ones.
       /, type CounterCircuits/g,
       ''
     );
+    
+    // Remove any hardcoded Zkvote references and replace with dynamic imports
+    apiContent = apiContent.replace(
+      /import { Zkvote, witnesses }/g,
+      'import { contracts, witnesses }'
+    );
+    
+    // Replace Zkvote usage with dynamic contract access
+    apiContent = apiContent.replace(
+      /Zkvote\./g,
+      'contractModule.'
+    );
+    
+    // Add dynamic contract module accessor if not present
+    if (!apiContent.includes('const contractModule = ') && !apiContent.includes('getContractModule')) {
+      const importSection = apiContent.match(/(import[\s\S]*?from[^;]+;)\s*\n/g);
+      if (importSection) {
+        const lastImport = importSection[importSection.length - 1];
+        const insertPoint = apiContent.indexOf(lastImport) + lastImport.length;
+        const dynamicHelperCode = `
+// Get the dynamic contract module
+const getContractModule = () => {
+  const contractNames = Object.keys(contracts);
+  if (contractNames.length === 0) {
+    throw new Error('No contract found in contracts object');
+  }
+  return contracts[contractNames[0]];
+};
+
+const contractModule = getContractModule();
+`;
+        apiContent = apiContent.slice(0, insertPoint) + dynamicHelperCode + apiContent.slice(insertPoint);
+      }
+    }
     
     // Write the updated API file
     await fs.promises.writeFile(apiPath, apiContent, 'utf-8');

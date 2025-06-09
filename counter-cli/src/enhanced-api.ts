@@ -1,6 +1,6 @@
-// Enhanced API wrapper for Zkvotrs Contract
-// Generated on: 2025-06-09T07:26:26.893Z
-// Auto-generated from zkvotrs.compact
+// Enhanced API wrapper for Boiler Contract
+// Generated on: 2025-06-09T08:06:46.494Z
+// Auto-generated from boiler.compact
 
 import { type Logger } from 'pino';
 import { ContractAnalyzer } from './contract-analyzer.js';
@@ -75,16 +75,10 @@ export class EnhancedContractAPI {
 
   // Dynamic function mapping based on contract analysis
   /**
-   * Increments the counter/round by 1
+   * Execute increase_by function with 1 parameter(s)
    */
-  async megaBoostCounterxx(...args: any[]): Promise<any> {
-    return await (originalApi as any).megaBoostCounterxx(...args);
-  }
-  /**
-   * Execute awesome_function_first function with 0 parameter(s)
-   */
-  async awesome_function_first(...args: any[]): Promise<any> {
-    return await (originalApi as any).awesome_function_first(...args);
+  async increase_by(...args: any[]): Promise<any> {
+    return await (originalApi as any).increase_by(...args);
   }
   /**
    * Get the current round/counter value
@@ -114,23 +108,21 @@ export class EnhancedContractAPI {
 
 // Export contract metadata for reference
 export const CONTRACT_METADATA = {
-  name: 'Zkvotrs Contract',
-  fileName: 'zkvotrs.compact',
-  generatedAt: '2025-06-09T07:26:26.893Z',
+  name: 'Boiler Contract',
+  fileName: 'boiler.compact',
+  generatedAt: '2025-06-09T08:06:46.494Z',
   functions: [
   {
-    "name": "megaBoostCounterxx",
-    "parameters": [],
+    "name": "increase_by",
+    "parameters": [
+      {
+        "name": "value",
+        "type": "Uint<16>"
+      }
+    ],
     "returnType": "[]",
     "readOnly": false,
-    "description": "Increments the counter/round by 1"
-  },
-  {
-    "name": "awesome_function_first",
-    "parameters": [],
-    "returnType": "Uint<64>",
-    "readOnly": true,
-    "description": "Execute awesome_function_first function with 0 parameter(s)"
+    "description": "Execute increase_by function with 1 parameter(s)"
   },
   {
     "name": "get_round",

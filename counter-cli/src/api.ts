@@ -1,5 +1,5 @@
 import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
-import { Zkvote, witnesses } from '@midnight-ntwrk/counter-contract';
+import { contracts, witnesses } from '@midnight-ntwrk/counter-contract';
 import { type CoinInfo, nativeToken, Transaction, type TransactionId } from '@midnight-ntwrk/ledger';
 import { deployContract, findDeployedContract } from '@midnight-ntwrk/midnight-js-contracts';
 import { httpClientProofProvider } from '@midnight-ntwrk/midnight-js-http-client-proof-provider';
@@ -25,6 +25,7 @@ import * as Rx from 'rxjs';
 import { WebSocket } from 'ws';
 import * as fsAsync from 'node:fs/promises';
 import * as fs from 'node:fs';
+import { ContractAnalyzer } from './contract-analyzer.js';
 import {
   type CounterContract,
   type CounterPrivateState,
@@ -33,6 +34,17 @@ import {
   type DeployedCounterContract,
 } from './common-types';
 import { type Config, contractConfig } from './config';
+
+// Get the dynamic contract module
+const getContractModule = () => {
+  const contractNames = Object.keys(contracts);
+  if (contractNames.length === 0) {
+    throw new Error('No contract found in contracts object');
+  }
+  return contracts[contractNames[0]];
+};
+
+const contractModule = getContractModule();
 
 let logger: Logger;
 // Instead of setting globalThis.crypto which is read-only, we'll ensure crypto is available
@@ -48,7 +60,7 @@ export const getCounterLedgerState = async (
   logger.info('Checking contract ledger state...');
   const state = await providers.publicDataProvider
     .queryContractState(contractAddress)
-    .then((contractState) => (contractState != null ? Zkvote.ledger(contractState.data).round : null))
+    .then((contractState) => (contractState != null ? contractModule.ledger(contractState.data).round : null))
   logger.info(`Ledger state: ${state}`);
   return state;
 };
@@ -61,7 +73,7 @@ export const getVotesA = async (
   logger.info('Checking votes A...');
   const votes = await providers.publicDataProvider
     .queryContractState(contractAddress)
-    .then((contractState) => (contractState != null ? Zkvote.ledger(contractState.data).votesA : null))
+    .then((contractState) => (contractState != null ? contractModule.ledger(contractState.data).votesA : null))
   logger.info(`Votes A: ${votes}`);
   return votes;
 };
@@ -74,7 +86,7 @@ export const getVotesB = async (
   logger.info('Checking votes B...');
   const votes = await providers.publicDataProvider
     .queryContractState(contractAddress)
-    .then((contractState) => (contractState != null ? Zkvote.ledger(contractState.data).votesB : null))
+    .then((contractState) => (contractState != null ? contractModule.ledger(contractState.data).votesB : null))
   logger.info(`Votes B: ${votes}`);
   return votes;
 };
@@ -91,7 +103,7 @@ export const getVotingResults = async (
   return { votesA, votesB, total };
 };
 
-export const counterContractInstance: CounterContract = new Zkvote.Contract(witnesses);
+export const counterContractInstance: CounterContract = new contractModule.Contract(witnesses);
 
 export const joinContract = async (
   providers: CounterProviders,
@@ -111,7 +123,11 @@ export const deploy = async (
   providers: CounterProviders,
   privateState: CounterPrivateState,
 ): Promise<DeployedCounterContract> => {
-  logger.info('Deploying counter contract...');
+  // Get dynamic contract name
+  const analyzer = new ContractAnalyzer();
+  const analysis = await analyzer.analyzeContract();
+  
+  logger.info(`Deploying ${analysis.contractName.toLowerCase()}...`);
   const counterContract = await deployContract(providers, {
     contract: counterContractInstance,
     privateStateId: 'counterPrivateState',
@@ -432,7 +448,7 @@ export const configureProviders = async (wallet: Wallet & Resource, config: Conf
       privateStateStoreName: contractConfig.privateStateStoreName,
     }),
     publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
-    zkConfigProvider: new NodeZkConfigProvider<'megaBoostCounterxx' | 'vote_for'>(contractConfig.zkConfigPath),
+    zkConfigProvider: new NodeZkConfigProvider<'increase_by' | 'vote_for'>(contractConfig.zkConfigPath),
     proofProvider: httpClientProofProvider(config.proofServer),
     walletProvider: walletAndMidnightProvider,
     midnightProvider: walletAndMidnightProvider,
