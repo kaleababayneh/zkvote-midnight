@@ -1,6 +1,6 @@
-// Enhanced API wrapper for Voting Contract
-// Generated on: 2025-06-09T09:52:08.687Z
-// Auto-generated from voting.compact
+// Enhanced API wrapper for Zkv Contract
+// Generated on: 2025-06-09T11:11:21.464Z
+// Auto-generated from zkv.compact
 
 import { type Logger } from 'pino';
 import { ContractAnalyzer } from './contract-analyzer.js';
@@ -126,9 +126,9 @@ export class EnhancedContractAPI {
 
 // Export contract metadata for reference
 export const CONTRACT_METADATA = {
-  name: 'Voting Contract',
-  fileName: 'voting.compact',
-  generatedAt: '2025-06-09T09:52:08.687Z',
+  name: 'Zkv Contract',
+  fileName: 'zkv.compact',
+  generatedAt: '2025-06-09T11:11:21.464Z',
   functions: [
   {
     "name": "increase_by",

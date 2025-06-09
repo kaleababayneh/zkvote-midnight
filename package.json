@@ -5,16 +5,17 @@
   "private": true,
   "type": "module",
   "workspaces": [
-    "counter-cli",
-    "counter-dapp",
-    "contract"
+    "boilerplate/contract",
+    "boilerplate/contract-cli",
+    "boilerplate/scripts"
   ],
   "scripts": {
-    "auto-generate": "node scripts/auto-generator.js",
-    "auto-generate-ts": "node scripts/typescript-auto-generator.js",
-    "auto-generate-verbose": "node scripts/typescript-auto-generator.js --verbose",
+    "auto-generate": "node boilerplate/scripts/auto-generator.js",
+    "auto-generate-ts": "node boilerplate/scripts/typescript-auto-generator.js",
+    "auto-generate-verbose": "node boilerplate/scripts/typescript-auto-generator.js --verbose",
     "build": "npm run build --workspaces --if-present",
-    "test": "npm run test --workspaces --if-present"
+    "test": "npm run test --workspaces --if-present",
+    "wallet": "npm run testnet-remote --workspace=boilerplate/contract-cli"
   },
   "devDependencies": {
     "@eslint/js": "^9.28.0",

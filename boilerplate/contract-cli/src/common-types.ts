@@ -13,7 +13,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-import { contracts, type CounterPrivateState } from '@midnight-ntwrk/counter-contract';
+import { contracts, type CounterPrivateState } from '@midnight-ntwrk/contract';
 import type { ImpureCircuitId, MidnightProviders } from '@midnight-ntwrk/midnight-js-types';
 import type { DeployedContract, FoundContract } from '@midnight-ntwrk/midnight-js-contracts';
 
