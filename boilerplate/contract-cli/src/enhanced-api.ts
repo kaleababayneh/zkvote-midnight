@@ -1,6 +1,6 @@
-// Enhanced API wrapper for Zkvr Contract
-// Generated on: 2025-06-09T11:39:11.234Z
-// Auto-generated from zkvr.compact
+// Enhanced API wrapper for Counter Contract
+// Generated on: 2025-06-09T12:11:55.777Z
+// Auto-generated from counter.compact
 
 import { type Logger } from 'pino';
 import { ContractAnalyzer } from './contract-analyzer.js';
@@ -75,182 +75,30 @@ export class EnhancedContractAPI {
 
   // Dynamic function mapping based on contract analysis
   /**
-   * Execute increase_by function
+   * Execute increment function
    */
-  async increase_by(...args: any[]): Promise<any> {
-    return await (originalApi as any).increase_by(...args);
-  }
-  /**
-   * Execute very_mega_boost function
-   */
-  async very_mega_boost(...args: any[]): Promise<any> {
-    return await (originalApi as any).very_mega_boost(...args);
-  }
-  /**
-   * Execute another_increase function
-   */
-  async another_increase(...args: any[]): Promise<any> {
-    return await (originalApi as any).another_increase(...args);
-  }
-  /**
-   * Execute increase_by_square function
-   */
-  async increase_by_square(...args: any[]): Promise<any> {
-    return await (originalApi as any).increase_by_square(...args);
-  }
-  /**
-   * Execute decrease_by function
-   */
-  async decrease_by(...args: any[]): Promise<any> {
-    return await (originalApi as any).decrease_by(...args);
-  }
-  /**
-   * Execute get_round function
-   */
-  async get_round(...args: any[]): Promise<any> {
-    return await (originalApi as any).get_round(...args);
-  }
-  /**
-   * Execute vote_for function
-   */
-  async vote_for(...args: any[]): Promise<any> {
-    return await (originalApi as any).vote_for(...args);
-  }
-  /**
-   * Execute get_vote_count function
-   */
-  async get_vote_count(...args: any[]): Promise<any> {
-    return await (originalApi as any).get_vote_count(...args);
-  }
-  /**
-   * Execute public_key_voter function
-   */
-  async public_key_voter(...args: any[]): Promise<any> {
-    return await (originalApi as any).public_key_voter(...args);
+  async increment(...args: any[]): Promise<any> {
+    return await (originalApi as any).increment(...args);
   }
 }
 
 // Export contract metadata for reference
 export const CONTRACT_METADATA = {
-  name: 'Zkvr Contract',
-  fileName: 'zkvr.compact',
-  generatedAt: '2025-06-09T11:39:11.235Z',
+  name: 'Counter Contract',
+  fileName: 'counter.compact',
+  generatedAt: '2025-06-09T12:11:55.777Z',
   functions: [
   {
-    "name": "increase_by",
-    "parameters": [
-      {
-        "name": "value",
-        "type": "Uint<16>"
-      }
-    ],
-    "returnType": "[]",
-    "readOnly": false
-  },
-  {
-    "name": "very_mega_boost",
-    "parameters": [
-      {
-        "name": "value",
-        "type": "Uint<16>"
-      }
-    ],
-    "returnType": "[]",
-    "readOnly": false
-  },
-  {
-    "name": "another_increase",
-    "parameters": [
-      {
-        "name": "value",
-        "type": "Uint<16>"
-      }
-    ],
-    "returnType": "[]",
-    "readOnly": false
-  },
-  {
-    "name": "increase_by_square",
-    "parameters": [
-      {
-        "name": "value",
-        "type": "Uint<16>"
-      }
-    ],
-    "returnType": "[]",
-    "readOnly": false
-  },
-  {
-    "name": "decrease_by",
-    "parameters": [
-      {
-        "name": "value",
-        "type": "Uint<16>"
-      }
-    ],
-    "returnType": "[]",
-    "readOnly": false
-  },
-  {
-    "name": "get_round",
+    "name": "increment",
     "parameters": [],
-    "returnType": "Uint<64>",
-    "readOnly": true
-  },
-  {
-    "name": "vote_for",
-    "parameters": [
-      {
-        "name": "index",
-        "type": "Uint<8>"
-      }
-    ],
     "returnType": "[]",
     "readOnly": false
-  },
-  {
-    "name": "get_vote_count",
-    "parameters": [
-      {
-        "name": "index",
-        "type": "Uint<8>"
-      }
-    ],
-    "returnType": "Uint<64>",
-    "readOnly": true
-  },
-  {
-    "name": "public_key_voter",
-    "parameters": [
-      {
-        "name": "sk",
-        "type": "Bytes<3>"
-      },
-      {
-        "name": "instance",
-        "type": "Bytes<3>"
-      }
-    ],
-    "returnType": "Bytes<32>",
-    "readOnly": true
   }
 ],
   ledgerState: [
   {
     "name": "round",
     "type": "Counter"
-  },
-  {
-    "name": "votesA",
-    "type": "Counter"
-  },
-  {
-    "name": "votesB",
-    "type": "Counter"
-  },
-  {
-    "name": "items",
-    "type": "Set<Bytes<32>>"
   }
 ]
 } as const;

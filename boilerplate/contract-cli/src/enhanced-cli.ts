@@ -1,3 +1,3 @@
-// Enhanced CLI module for Zkvr Contract
-// Generated on: 2025-06-09T11:39:11.235Z
-// Auto-generated from zkvr.compact
+// Enhanced CLI module for Counter Contract
+// Generated on: 2025-06-09T12:11:55.777Z
+// Auto-generated from counter.compact
