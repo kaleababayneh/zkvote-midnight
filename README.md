@@ -1,0 +1,273 @@
+# 🌙 Midnight Compact Contract CLI Generator
+
+[![Midnight Network](https://img.shields.io/badge/Midnight-Network-blue)](https://midnight.network)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)](https://typescriptlang.org)
+[![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
+
+A powerful automated CLI generation system for writing, testing, and deploying **Midnight Compact contracts**. This project provides a complete development workflow that automatically adapts to your contract changes without requiring any manual code updates.
+
+## 🚀 Features
+
+### ✨ **Automated CLI Generation**
+- **Source-Driven**: Automatically detects and analyzes your `.compact` contract files
+- **Dynamic Function Discovery**: Finds all contract functions and generates CLI commands
+- **Zero Manual Updates**: Change function names → run auto-generator → everything updates automatically
+- **Smart Contract Detection**: Works with any contract name and any number of functions
+
+### 🔧 **Developer-Friendly Workflow**
+- **Root-Level Editing**: Edit contracts in the project root for easy access
+- **Auto-Sync**: Automatically copies root contracts to the correct build directories
+- **Clean Builds**: Removes old contract files before copying new ones
+- **Comprehensive Compilation**: Handles ZK key generation and TypeScript building
+
+### 🌐 **Testnet Integration**
+- **One-Command Deployment**: Deploy contracts to Midnight testnet with `npm run wallet`
+- **Interactive CLI**: User-friendly interface for calling contract functions
+- **Wallet Management**: Built-in wallet creation and balance management
+- **Transaction Support**: Full transaction lifecycle management
+
+## 📁 Project Structure
+
+```
+example-counter/
+├── counter.compact              # 📝 Edit your contract here (root level)
+├── package.json                 # 📦 Main project configuration
+├── boilerplate/
+│   ├── contract/               # 🔨 Contract compilation
+│   │   └── src/               # 📄 Auto-synced contracts
+│   ├── contract-cli/          # 🖥️ Generated CLI application
+│   │   └── src/              # 🎯 Dynamic CLI code
+│   └── scripts/              # ⚙️ Auto-generation scripts
+└── README.md                   # 📖 This file
+```
+
+## 🎯 Quick Start
+
+### Prerequisites
+- Node.js 18+
+- npm or yarn
+- Midnight Compact compiler (`compactc`)
+
+### Installation
+
+1. **Clone and Install**
+   ```bash
+   git clone <your-repo>
+   cd example-counter
+   npm install
+   ```
+
+2. **Write Your Contract**
+   
+   Edit the `.compact` file in the project root:
+   ```compact
+   pragma language_version 0.15;
+   
+   import CompactStandardLibrary;
+   
+   export ledger counter: Counter;
+   
+   export circuit increment(value: Uint<16>): [] {
+     counter.increment(value);
+   }
+   
+   export circuit get_count(): Uint<64> {
+     return counter;
+   }
+   ```
+
+3. **Generate CLI**
+   ```bash
+   npm run auto-generate
+   ```
+
+4. **Test on Testnet**
+   ```bash
+   npm run wallet
+   ```
+
+## 🔄 Development Workflow
+
+### 1. **Edit Contract** (Root Level)
+```bash
+# Edit your contract file in the project root
+vim counter.compact  # or use any editor
+```
+
+### 2. **Auto-Generate Everything**
+```bash
+npm run auto-generate
+```
+
+This single command:
+- 🔄 Syncs your root contract to `boilerplate/contract/src/`
+- 🔨 Compiles the contract and generates ZK keys
+- 📝 Updates TypeScript types and API functions
+- 🖥️ Rebuilds the CLI with new contract functions
+- ✅ Everything is ready to use!
+
+### 3. **Deploy & Test**
+```bash
+npm run wallet
+```
+
+Interactive CLI will start:
+```
+✅ Auto-detected contract from source: counter (from counter.compact)
+📊 Available functions: increment, get_count
+
+You can do one of the following:
+  1. Deploy a new Counter Contract
+  2. Join an existing Counter Contract
+  3. Exit
+Which would you like to do?
+```
+
+## 🎛️ Available Commands
+
+| Command | Description |
+|---------|-------------|
+| `npm run auto-generate` | 🔄 Regenerate CLI from contract |
+| `npm run wallet` | 🌐 Launch testnet CLI |
+| `npm run build` | 🔨 Build all workspaces |
+| `npm test` | 🧪 Run all tests |
+
+## 🏗️ How It Works
+
+### **Auto-Detection System**
+The system automatically:
+
+1. **Scans** the root directory for `.compact` files
+2. **Copies** them to the contract source directory (replacing old ones)
+3. **Analyzes** contract functions and ledger state
+4. **Generates** TypeScript types and API functions
+5. **Builds** a dynamic CLI that adapts to your contract
+
+### **Function Discovery**
+```javascript
+// Automatically detected from your contract:
+export circuit increment(value: Uint<16>): [] { ... }
+export circuit get_count(): Uint<64> { ... }
+
+// Becomes CLI options:
+// 1. Increment (1 param)
+// 2. Get Count (read-only)
+```
+
+### **Smart CLI Generation**
+- **Parameter Detection**: Automatically detects function parameters
+- **Type Safety**: Generates TypeScript interfaces
+- **Read-Only Functions**: Identifies and marks query functions
+- **Interactive Menus**: Creates numbered options for all functions
+
+## 🔧 Advanced Configuration
+
+### **Custom Contract Names**
+Just rename your `.compact` file - everything adapts automatically:
+```bash
+mv counter.compact voting.compact
+npm run auto-generate  # CLI now shows "Voting Contract"
+```
+
+### **Multiple Functions**
+Add any number of functions to your contract:
+```compact
+export circuit vote_for(candidate: Uint<8>): [] { ... }
+export circuit get_votes(candidate: Uint<8>): Uint<64> { ... }
+export circuit reset_votes(): [] { ... }
+```
+
+The CLI automatically generates options for all functions.
+
+## 🌐 Testnet Deployment
+
+### **Wallet Setup**
+The CLI handles wallet creation automatically:
+```
+Enter your wallet seed: [generates new seed if empty]
+Your wallet address is: mn_shield-addr_test1...
+Your wallet balance is: 966962817
+```
+
+### **Contract Deployment**
+```
+Deploy a new Counter Contract
+✅ Deployed contract at address: 02000914e67a3e27f4...
+🎉 Successfully deployed Counter Contract!
+```
+
+### **Function Calls**
+Interactive function calling:
+```
+📊 Available functions: increment, get_count
+1. Increment (1 param)
+2. Get Count (read-only)
+
+Which would you like to do? 1
+Enter value (Uint<16>): 5
+✅ Transaction successful!
+```
+
+## 🛠️ Architecture
+
+### **Auto-Generator Pipeline**
+```mermaid
+graph LR
+    A[Root .compact] --> B[Sync to src/]
+    B --> C[Compile Contract]
+    C --> D[Generate ZK Keys]
+    D --> E[Update TypeScript]
+    E --> F[Build CLI]
+    F --> G[Ready to Use!]
+```
+
+### **CLI Components**
+- **Contract Analyzer**: Parses contract functions and types
+- **Dynamic Generator**: Creates CLI menus and handlers
+- **API Layer**: Handles contract interactions
+- **Wallet Integration**: Manages testnet connections
+
+## 🎯 Example Use Cases
+
+### **Voting Contract**
+```compact
+export circuit vote_for(candidate: Uint<8>): [] { ... }
+export circuit get_results(): VoteResults { ... }
+```
+
+### **Token Contract**
+```compact
+export circuit transfer(to: Address, amount: Uint<64>): [] { ... }
+export circuit get_balance(address: Address): Uint<64> { ... }
+```
+
+### **Gaming Contract**
+```compact
+export circuit make_move(player: Uint<8>, move: GameMove): [] { ... }
+export circuit get_game_state(): GameState { ... }
+```
+
+**All generate fully functional CLIs automatically!** 🎉
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
+
+## 🙏 Acknowledgments
+
+- [Midnight Network](https://midnight.network) for the Compact language and runtime
+- The TypeScript and Node.js communities for excellent tooling
+
+---
+
+**Built with ❤️ for the Midnight ecosystem** 🌙
+
+*Simplifying smart contract development, one auto-generation at a time.*
