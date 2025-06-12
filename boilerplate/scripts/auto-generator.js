@@ -477,82 +477,24 @@ export const CONTRACT_METADATA = {
     const apiPath = path.join(this.config.cliSourceDir, 'src', 'api.ts');
     let apiContent = await fs.promises.readFile(apiPath, 'utf-8');
     
-    // Find all functions (prioritize increment-like functions, but handle any function)
-    const allFunctions = contractInfo.functions;
-    const incrementFunctions = allFunctions.filter(f => 
-      f.name.toLowerCase().includes('increment') || 
-      f.name.toLowerCase().includes('boost') || 
-      f.name.toLowerCase().includes('counter')
-    );
-    
-    let primaryFunction = null;
-    if (incrementFunctions.length > 0) {
-      primaryFunction = incrementFunctions[0];
-    } else {
-      // If no increment-like function, use the first non-readonly function
-      primaryFunction = allFunctions.find(f => !f.readOnly);
-    }
-    
-    if (primaryFunction) {
-      console.log(`🎯 Primary function detected: ${primaryFunction.name}`);
-      
-      // Update ALL function calls in the increment function - be more aggressive
-      apiContent = apiContent.replace(
-        /await counterContract\.callTx\.(\w+)\(\);/g,
-        `await counterContract.callTx.${primaryFunction.name}();`
-      );
-      
-      // Also handle any other possible patterns
-      apiContent = apiContent.replace(
-        /counterContract\.callTx\.(\w+)\(\)/g,
-        `counterContract.callTx.${primaryFunction.name}()`
-      );
-    }
-    
-    // Update zkConfigProvider types to use actual function names from contract (impure circuits only)
+    // Update zkConfigProvider types to use actual function names from contract
     const impureFunctionNames = contractInfo.functions
-      .filter(f => !f.readOnly && !f.name.includes('public_key'))
+      .filter(f => !f.readOnly)
       .map(f => `'${f.name}'`)
       .join(' | ');
     
     if (impureFunctionNames) {
-      
-      // Find and replace the NodeZkConfigProvider type parameter more precisely
+      // Update NodeZkConfigProvider type parameter
       apiContent = apiContent.replace(
         /new NodeZkConfigProvider<[^>]+>/g,
         `new NodeZkConfigProvider<${impureFunctionNames}>`
       );
       
-      // Also handle generic type parameters
       apiContent = apiContent.replace(
         /NodeZkConfigProvider<[^>]+>/g,
         `NodeZkConfigProvider<${impureFunctionNames}>`
       );
     }
-    
-    // Remove any CounterCircuits import since we're using inline types and dynamic imports
-    apiContent = apiContent.replace(
-      /import { type CounterProviders, type DeployedCounterContract, type CounterCircuits } from '\.\/common-types\.js';/g,
-      `import { type CounterProviders, type DeployedCounterContract } from './common-types.js';`
-    );
-    
-    // Also remove from other possible import patterns
-    apiContent = apiContent.replace(
-      /, type CounterCircuits/g,
-      ''
-    );
-    
-    // Remove any hardcoded Zkvote references and replace with dynamic imports
-    apiContent = apiContent.replace(
-      /import { Zkvote, witnesses }/g,
-      'import { contracts, witnesses }'
-    );
-    
-    // Replace Zkvote usage with dynamic contract access
-    apiContent = apiContent.replace(
-      /Zkvote\./g,
-      'contractModule.'
-    );
     
     // Add dynamic contract module accessor if not present
     if (!apiContent.includes('const contractModule = ') && !apiContent.includes('getContractModule')) {
@@ -577,7 +519,7 @@ const contractModule = getContractModule();
     }
     
     // Write the updated API file
-    await fs.promises.writeFile(apiPath, apiContent, 'utf-8');
+    await fs.promises.writeFile(apiPath, apiContent, 'utf-7');
     console.log('✅ Core API updated');
   }
 
@@ -647,10 +589,17 @@ class CompactContractParser {
         }
       }
 
-      // Determine if function is read-only
-      const readOnly = returnType.trim() !== '[]' && returnType.trim() !== '' || 
+      // Determine if function is read-only based on return type and naming patterns
+      const readOnly = (returnType.trim() !== '[]' && returnType.trim() !== '') || 
                       name.startsWith('get_') || 
-                      name.includes('public_key');
+                      name.startsWith('query_') || 
+                      name.startsWith('read_') || 
+                      name.startsWith('view_') || 
+                      name.startsWith('check_') || 
+                      name.startsWith('display_') || 
+                      name.startsWith('show_') || 
+                      name.startsWith('fetch_') || 
+                      name.startsWith('retrieve_');
 
       functions.push({
         name,

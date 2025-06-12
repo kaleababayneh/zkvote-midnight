@@ -93,10 +93,7 @@ WALLET_SEED=${seed}`;
       envContent += `
 WALLET_ADDRESS=${address}`;
     }
-    
-    envContent += `
-SYNC_CACHE=./wallet-cache
-`;
+    ;
 
     fs.writeFileSync(this.envPath, envContent);
     console.log(`✅ Updated ${this.envPath} with new wallet configuration`);

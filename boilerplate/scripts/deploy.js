@@ -184,7 +184,6 @@ Requirements:
 
 Environment Variables:
   - WALLET_SEED: Set your wallet seed phrase to skip manual entry
-  - SYNC_CACHE: Directory for wallet state caching
 
 Setup for automated deployment:
   1. Copy .env.example to .env

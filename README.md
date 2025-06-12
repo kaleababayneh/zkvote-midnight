@@ -1,8 +1,72 @@
 # 🌙 Midnight Compact Contract CLI Generator
 
-**The fastest way to develop Midnight contracts.** Write your `.compact` contract anInteractive CLI will start:
+[![Midnight Network](https://img.shields.io/badge/Midnight-Network-blue)](https://midnight.network)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)](https://typescriptlang.org)
+[![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
+
+**The fastest way to develop Midnight contracts.** Write your `.compact` contract and get a complete development environment with zero configuration. The system automatically generates a full-featured CLI, handles deployment, and manages your entire development workflow.
+
+**No setup required. No manual updates. Just pure contract development.**
+
+## 🚀 Quick Start
+
+**Get started with Midnight development in under 2 minutes:**
+
+```bash
+git clone https://github.com/kaleababayneh/scaffold-midnight.git
+cd scaffold-midnight
+touch my-contract.compact
+npm install
+npm run deploy  # One command for complete deployment!
 ```
-✅ Auto-detected contract from source: counter (from counter.compact)
+
+### 📝 **Write Your First Contract**
+
+Edit your `.compact` file in the project root:
+```compact
+pragma language_version 0.15;
+
+import CompactStandardLibrary;
+
+export ledger counter: Counter;
+
+export circuit increment(value: Uint<16>): [] {
+  counter.increment(value);
+}
+
+export circuit get_count(): Uint<64> {
+  return counter;
+}
+```
+
+### 🎯 **Generate Everything Automatically**
+
+```bash
+npm run dev
+```
+
+This single command:
+- 🔄 Syncs your contract to the build system
+- 🔨 Compiles contract and generates ZK keys
+- 📝 Creates TypeScript types and API functions  
+- 🖥️ Builds a dynamic CLI that adapts to your contract
+- ✅ Everything ready to use!
+
+### 🚀 **Deploy & Test**
+
+**For testnet deployment:**
+```bash
+npm run deploy
+```
+
+**For local development:**
+```bash
+npm run wallet
+```
+
+Interactive CLI will launch:
+```
+✅ Auto-detected contract: Counter (from counter.compact)
 📊 Available functions: increment, get_count
 
 You can do one of the following:
@@ -12,207 +76,170 @@ You can do one of the following:
 Which would you like to do?
 ```
 
-## 💡 Development Tips
-
-### **Best Practices**
-- 🔄 **Always run `npm run dev`** after any contract changes
-- 📝 **Use descriptive function names** - they become CLI commands
-- 🧪 **Test functions locally** before deploying to testnet
-- 📊 **Check CLI output** for function parameter hints and validation
-
-### **Debugging**
-- 🔍 **Contract not detected?** Make sure your `.compact` file is in the project root
-- ⚠️ **Compilation errors?** Check that your contract has proper `pragma language_version` directive
-- 🚫 **CLI generation failed?** Ensure all `export circuit` functions have valid syntax
-- 🌐 **Testnet issues?** Verify your wallet has sufficient balance for transactions
-
-### **Development Workflow**
-```bash
-# 1. Edit your contract
-vim my-contract.compact
-
-# 2. Deploy to testnet (automated)
-npm run deploy
-
-# OR: Interactive mode with prompts
-npm run wallet
-
-# 3. Iterate and improve
-```
-
-## 🎛️ Available Commandset:
-- 🚀 Auto-generated CLI with all your functions
-- 🌐 One-command testnet deployment  
-- 🔄 Dynamic updates when you change your contract
-- 📦 Complete development environment
-
-**No setup required.** No manual updates. Just pure contract development.
-
-[![Midnight Network](https://img.shields.io/badge/Midnight-Network-blue)](https://midnight.network)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue)](https://typescriptlang.org)
-[![License](https://img.shields.io/badge/License-Apache%202.0-green.svg)](LICENSE)
-
-A powerful automated CLI generation system for writing, testing, and deploying **Midnight Compact contracts**. This project provides a complete development workflow that automatically adapts to your contract changes without requiring any manual code updates. The developer has to write just the contract the rest will be handled by the cli
-
-All you need to start your new project is 
-   ```bash
-
-git clone https://github.com/kaleababayneh/scaffold-midnight.git
-cd scaffold-midnight
-touch my-contract.compact
-npm install
-npm run deploy  # One command for complete local deployment!
- ```
-
-Or for testnet deployment:
-```bash
-npm run wallet
-```
-
 ## 🚀 Features
 
-### ✨ **Automated CLI Generation**
-- **Source-Driven**: Automatically detects and analyzes your `.compact` contract files
-- **Dynamic Function Discovery**: Finds all contract functions and generates CLI commands
-- **Zero Manual Updates**: Change function names → run auto-generator → everything updates automatically
-- **Smart Contract Detection**: Works with any contract name and any number of functions
-- **Witness Function Support**: Automatically detects and includes witness functions in API/CLI
+### ✨ **Zero-Configuration Development**
+- **Auto-Detection**: Automatically finds and analyzes your `.compact` contracts
+- **Dynamic CLI Generation**: Creates interactive CLI from your contract functions
+- **Zero Manual Updates**: Change functions → regenerate → everything adapts automatically
+- **Smart Contract Analysis**: Works with any contract structure and function names
+- **Witness Function Support**: Automatically detects and includes private state functions
 
-### 🚀 **One-Command Deployment**
-- **Local Development**: `npm run deploy` for complete local deployment workflow
-- **Docker Integration**: Automatically starts local Midnight node via Docker containers
-- **Prerequisites Check**: Validates Docker, contracts, and dependencies before deployment
-- **Interactive CLI**: Launches ready-to-use CLI for contract interaction
-- **Dry Run Support**: `npm run deploy --dry-run` to preview commands without execution
+### 🌐 **Complete Deployment Pipeline**
+- **One-Command Local Deployment**: `npm run deploy` for full local development setup
+- **Docker Integration**: Automatically manages local Midnight node containers
+- **Testnet Deployment**: Seamless testnet integration with `npm run wallet`
+- **Prerequisite Validation**: Checks Docker, dependencies, and contract syntax
+- **Dry Run Support**: Preview deployment with `--dry-run` flag
 
 ### 🔧 **Developer-Friendly Workflow**
-- **Root-Level Editing**: Edit contracts in the project root for easy access
-- **Auto-Sync**: Automatically copies root contracts to the correct build directories
-- **Clean Builds**: Removes old contract files before copying new ones
-- **Comprehensive Compilation**: Handles ZK key generation and TypeScript building
+- **Root-Level Editing**: Edit contracts directly in project root for easy access
+- **Auto-Sync Pipeline**: Automatically syncs contracts to build directories
+- **Clean Builds**: Removes old artifacts before rebuilding
+- **Hot Reload**: Instant updates when contract changes
+- **Comprehensive Compilation**: Handles ZK proof generation and TypeScript building
 
-### 🌐 **Testnet Integration**
-- **One-Command Deployment**: Deploy contracts to Midnight testnet with `npm run wallet`
-- **Interactive CLI**: User-friendly interface for calling contract functions
-- **Wallet Management**: Built-in wallet creation and balance management
-- **Transaction Support**: Full transaction lifecycle management
+### 💰 **Wallet & Balance Management**  
+- **Automatic Wallet Generation**: Creates secure wallets with one command
+- **Balance Checking**: Real-time testnet balance monitoring
+- **Faucet Integration**: Automated and manual token requesting
+- **Transaction Management**: Full transaction lifecycle support
 
 ## 📁 Project Structure
 
 ```
 example-counter/
-├── counter.compact              # 📝 Edit your contract here (root level)
+├── my-contract.compact          # 📝 Edit your contract here (root level)
 ├── package.json                 # 📦 Main project configuration
+├── .env                        # 🔐 Wallet configuration (auto-generated)
 ├── boilerplate/
-│   ├── contract/               # 🔨 Contract compilation
-│   │   └── src/               # 📄 Auto-synced contracts
+│   ├── contract/               # 🔨 Contract compilation workspace
+│   │   └── src/               # 📄 Auto-synced contracts & witnesses
+│   │       ├── my-contract.compact    # ← Synced from root
+│   │       ├── witnesses.ts           # 🔑 Private state functions
+│   │       └── managed/               # 🏗️ Compiled output & ZK keys
 │   ├── contract-cli/          # 🖥️ Generated CLI application
-│   │   └── src/              # 🎯 Dynamic CLI code
-│   └── scripts/              # ⚙️ Auto-generation scripts
-└── README.md                   # 📖 This file
+│   │   ├── src/              # 🎯 Dynamic CLI code
+│   │   │   ├── api.ts        # 🔌 Contract interaction API
+│   │   │   ├── cli.ts        # 🖥️ Interactive CLI interface
+│   │   │   └── enhanced-api.ts # 📊 Contract metadata & analysis
+│   │   └── standalone.yml    # 🐳 Docker configuration for local node
+│   └── scripts/              # ⚙️ Build & deployment automation
+│       ├── auto-generator.js # 🔄 Core auto-generation engine
+│       ├── deploy.js         # 🚀 Deployment orchestrator
+│       ├── check-balance.js  # 💰 Wallet balance checker
+│       └── request-faucet.js # 🚰 Testnet token requests
+└── README.md                   # 📖 This documentation
 ```
 
-## 🎯 Quick Start
+### 🔄 **How the Auto-Sync Works**
 
-### Prerequisites
-- Node.js 18+
-- npm or yarn
-- Midnight Compact compiler (`compactc`)
-
-### Installation
-
-1. **Clone and Install**
-   ```bash
-   git clone <your-repo>
-   touch my-contract.compact
-   npm install
-   ```
-
-2. **Write Your Contract**
-   
-   Edit the `.compact` file in the project root:
-   ```compact
-   pragma language_version 0.15;
-   
-   import CompactStandardLibrary;
-   
-   export ledger counter: Counter;
-   
-   export circuit increment(value: Uint<16>): [] {
-     counter.increment(value);
-   }
-   
-   export circuit get_count(): Uint<64> {
-     return counter;
-   }
-   ```
-
-3. **Generate CLI**
-   ```bash
-   npm run dev
-   ```
-
-4. **Deploy to Local Network**
-   ```bash
-   npm run deploy
-   ```
-
-   Or test on testnet:
-   ```bash
-   npm run wallet
-   ```
+1. **📝 Edit**: Modify your `.compact` contract in the project root
+2. **🔄 Sync**: `npm run dev` copies it to `boilerplate/contract/src/`
+3. **🔨 Compile**: Contract compiles to `managed/` with ZK keys
+4. **📝 Generate**: TypeScript types and API functions auto-generated
+5. **🖥️ Build**: CLI updates with new contract functions
+6. **✅ Ready**: Everything synchronized and ready to use
 
 ## 🔄 Development Workflow
 
-### 1. **Edit Contract** (Root Level)
+### **1. Edit Contract (Root Level)**
 ```bash
-# Edit your contract file in the project root
-nano counter.compact  # or use any editor
+# Edit your contract file in the project root  
+nano my-contract.compact  # Use any editor you prefer
 ```
 
-### 2. **Auto-Generate Everything**
+### **2. Auto-Generate Everything**
 ```bash
 npm run dev
 ```
 
-This single command:
-- 🔄 Syncs your root contract to `boilerplate/contract/src/`
-- 🔨 Compiles the contract and generates ZK keys
+This command automatically:
+- 🔄 Syncs your contract from root to build directory
+- 🔨 Compiles contract with `compactc` and generates ZK keys  
 - 📝 Updates TypeScript types and API functions
-- 🖥️ Rebuilds the CLI with new contract functions
-- ✅ Everything is ready to use!
+- 🖥️ Rebuilds CLI with new contract functions
+- 🔍 Detects witness functions and includes them
+- ✅ Everything synchronized and ready!
 
-### 3. **Deploy & Test**
+### **3. Deploy & Test**
+
+**Local Development (Recommended):**
+```bash
+npm run deploy
+```
+- Starts local Midnight node in Docker
+- Deploys your contract locally
+- Launches interactive CLI for testing
+
+**Testnet Deployment:**
 ```bash
 npm run wallet
 ```
+- Connects to live Midnight testnet
+- Handles wallet creation and funding
+- Deploys to public testnet
 
-Interactive CLI will start:
-```
-✅ Auto-detected contract from source: counter (from counter.compact)
-📊 Available functions: increment, get_count
+### **4. Iterate and Improve**
+```bash
+# Make changes to your contract
+vim my-contract.compact
 
-You can do one of the following:
-  1. Deploy a new Your Contract
-  2. Join an existing yOUR Contract
-  3. Exit
-Which would you like to do?
+# Regenerate CLI (fast)
+npm run dev
+
+# Test changes
+npm run deploy
 ```
+
+## 💡 Development Tips
+
+### **Best Practices**
+- 🔄 **Always run `npm run dev`** after contract changes
+- 📝 **Use descriptive function names** - they become CLI commands
+- 🧪 **Test locally first** with `npm run deploy` before testnet
+- 📊 **Check CLI output** for parameter hints and validation
+
+### **Debugging**
+- 🔍 **Contract not detected?** Ensure `.compact` file is in project root
+- ⚠️ **Compilation errors?** Verify `pragma language_version` directive
+- 🚫 **CLI generation failed?** Check `export circuit` function syntax
+- 🌐 **Testnet issues?** Use `npm run balance` to verify wallet funds
 
 ## 🎛️ Available Commands
 
 | Command | Description |
 |---------|-------------|
-| `npm run dev` | 🔄 Regenerate CLI from contract |
-| `npm run generate-key` | 🔐 Generate new wallet seed and update .env |
-| `npm run request-faucet` | 🚰 Request testnet tokens (shows manual steps due to captcha) |
-| `npm run balance` | 💰 Check current wallet balance from .env configuration |
-| `npm run deploy` | 🌐 Deploy new contract to testnet (automated) |
-| `npm run deploy:new` | 🌐 Deploy new contract to testnet (same as above) |
-| `npm run deploy:join` | 🔗 Join existing contract on testnet (automated) |
-| `npm run wallet` | 🌐 Launch testnet CLI (interactive) |
+| `npm run dev` | 🔄 Regenerate CLI from contract changes |
+| `npm run deploy` | 🚀 Deploy to local Midnight node (full pipeline) |
+| `npm run wallet` | 🌐 Deploy to testnet (interactive mode) |
+| `npm run balance` | 💰 Check current wallet balance |
+| `npm run generate-key` | 🔐 Generate new wallet seed and address |
+| `npm run faucet` | 🚰 Request testnet tokens |
 | `npm run build` | 🔨 Build all workspaces |
-| `npm run test` | 🧪 Run all tests |
+| `npm run test` | 🧪 Run test suite |
+
+### 🚀 **Deployment Options**
+
+```bash
+# Full local deployment with Docker
+npm run deploy
+
+# Deploy new contract automatically (skip prompts)  
+npm run deploy --new
+
+# Join existing contract automatically
+npm run deploy --join
+
+# Preview commands without execution
+npm run deploy --dry-run
+
+# Interactive testnet deployment
+npm run wallet
+
+# Show deployment help
+npm run deploy --help
+```
 
 ### 🚀 **Automated Testnet Deployment**
 
@@ -484,3 +511,108 @@ This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENS
 **Built with ❤️ for the Midnight ecosystem** 🌙
 
 *Simplifying smart contract development, one auto-generation at a time.*
+
+
+# 🚀 Deployment Flags Implementation Complete
+
+This document summarizes the successful implementation of deployment mode flags for the Midnight scaffold project.
+
+## ✅ Completed Features
+
+### 🎯 Command Line Flag Support
+- **`--new`**: Automatically deploy a new contract (default behavior)
+- **`--join`**: Automatically join an existing contract
+- **`--dry-run`**: Preview commands without execution
+- **`--help`**: Show comprehensive help documentation
+
+### 🔧 Implementation Details
+
+#### 1. **Enhanced Deploy Script** (`boilerplate/scripts/deploy.js`)
+- Added command line argument parsing for `--new`, `--join`, `--dry-run`, and `--help`
+- Passes deployment mode via `DEPLOY_MODE` environment variable
+- Maintains backwards compatibility (default behavior unchanged)
+
+#### 2. **Updated CLI Logic** (`cli.ts` and `simple-enhanced-cli.ts`)
+- Both CLI implementations now check `DEPLOY_MODE` environment variable
+- Supports automatic deployment/joining when `AUTO_DEPLOY=true`
+- Maintains interactive mode for manual usage
+
+#### 3. **Documentation Updates** (`README.md`)
+- Added section documenting new deployment flags
+- Included examples of usage for each mode
+- Updated command reference table
+
+## 🎯 Usage Examples
+
+```bash
+# Deploy new contract automatically
+npm run deploy --new
+
+# Join existing contract automatically (prompts for address)
+npm run deploy --join
+
+# Preview what commands will run
+npm run deploy --dry-run
+
+# Show help
+npm run deploy --help
+
+# Default behavior (interactive mode)
+npm run deploy
+```
+
+## 🔍 Testing Verification
+
+### ✅ Verified Working
+- [x] Command line argument parsing
+- [x] Environment variable passing
+- [x] CLI mode detection
+- [x] Witness function detection still functional
+- [x] Help system displays correctly
+- [x] Dry-run mode works
+- [x] Documentation updated
+
+### 🔄 Behavior in Each Mode
+
+#### `--new` Mode
+1. Skips deployment choice prompt
+2. Automatically deploys new contract
+3. Proceeds to interactive CLI
+
+#### `--join` Mode  
+1. Skips deployment choice prompt
+2. Prompts for contract address (as expected)
+3. Joins existing contract
+4. Proceeds to interactive CLI
+
+#### Interactive Mode (default)
+1. Shows deployment choice menu
+2. User selects deploy/join/exit
+3. Standard workflow continues
+
+## 🛠️ Technical Implementation
+
+### Environment Variables Used
+- `AUTO_DEPLOY=true`: Enables automatic mode
+- `DEPLOY_MODE=new|join`: Specifies deployment behavior
+
+### File Changes
+1. **`boilerplate/scripts/deploy.js`**: Added argument parsing and mode passing
+2. **`boilerplate/contract-cli/src/cli.ts`**: Added mode detection logic  
+3. **`boilerplate/contract-cli/src/simple-enhanced-cli.ts`**: Added mode detection logic
+4. **`README.md`**: Added flag documentation
+
+## 🎉 Impact
+
+This implementation provides:
+- **Automation Support**: Enables CI/CD and scripted deployments
+- **Developer Experience**: Clear flags for different deployment scenarios  
+- **Backwards Compatibility**: Existing workflows unchanged
+- **Documentation**: Comprehensive usage examples
+
+The deployment system now supports both automated and interactive workflows while maintaining the robust witness function detection and CLI generation capabilities of the original system.
+
+---
+
+**Status**: ✅ Complete and Ready for Use
+**Next Steps**: The system is fully functional for production use with the new deployment flags.
