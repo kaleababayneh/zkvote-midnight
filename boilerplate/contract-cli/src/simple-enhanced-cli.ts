@@ -2,6 +2,16 @@
 // Generated on: 2025-06-08T21:15:00.000Z
 // Auto-generated from zkvote.compact
 
+import dotenv from 'dotenv';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// Configure dotenv to load from project root
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, '..', '..', '..');
+dotenv.config({ path: path.join(projectRoot, '.env') });
+
 import { type Resource } from '@midnight-ntwrk/wallet';
 import { type Wallet } from '@midnight-ntwrk/wallet-api';
 import { stdin as input, stdout as output } from 'node:process';
@@ -90,6 +100,24 @@ export class SimpleEnhancedCLI {
       throw new Error('Contract info not available');
     }
     
+    // Check if auto-deploy is enabled (set by deployment script)
+    if (process.env.AUTO_DEPLOY === 'true') {
+      const deployMode = process.env.DEPLOY_MODE || 'new';
+      
+      if (deployMode === 'join') {
+        this.logger.info('🔗 Auto-joining existing contract...');
+        const contractAddress = await rli.question('What is the contract address (in hex)? ');
+        this.contract = await api.joinContract(providers, contractAddress);
+        this.logger.info(`🔗 Successfully joined ${this.contractInfo.contractName}!`);
+        return this.contract;
+      } else {
+        this.logger.info('🚀 Auto-deploying new contract...');
+        this.contract = await api.deploy(providers, { privateCounter: 0 });
+        this.logger.info(`🎉 Successfully deployed ${this.contractInfo.contractName}!`);
+        return this.contract;
+      }
+    }
+    
     const question = `
 You can do one of the following:
   1. Deploy a new ${this.contractInfo.contractName}
@@ -127,8 +155,17 @@ Which would you like to do? `;
     const rli = createInterface({ input, output, terminal: true });
     
     try {
-      const wallet = await api.buildWalletAndWaitForFunds(config, 
-        await rli.question('Enter your wallet seed: '), '');
+      // Check for seed phrase in environment variable first
+      let seedPhrase = process.env.WALLET_SEED;
+      
+      if (!seedPhrase) {
+        logger.info('No WALLET_SEED found in environment variables. Please enter manually or add to .env file.');
+        seedPhrase = await rli.question('Enter your wallet seed: ');
+      } else {
+        logger.info('✅ Using wallet seed from environment variable');
+      }
+      
+      const wallet = await api.buildWalletAndWaitForFunds(config, seedPhrase, '');
       if (wallet !== null) {
         const providers = await api.configureProviders(wallet, config);
         

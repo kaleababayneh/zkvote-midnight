@@ -13,11 +13,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+import dotenv from 'dotenv';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// Configure dotenv to load from project root
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, '..', '..', '..');
+dotenv.config({ path: path.join(projectRoot, '.env') });
+
 import { createLogger } from './logger-utils.js';
 import { run } from './cli.js';
 import { currentDir, TestnetRemoteConfig } from './config.js';
 import { DockerComposeEnvironment, Wait } from 'testcontainers';
-import path from 'node:path';
 
 const config = new TestnetRemoteConfig();
 const dockerEnv = new DockerComposeEnvironment(

@@ -31,13 +31,13 @@ Which would you like to do?
 # 1. Edit your contract
 vim my-contract.compact
 
-# 2. Regenerate everything
-npm run dev
+# 2. Deploy to testnet (automated)
+npm run deploy
 
-# 3. Test on testnet
+# OR: Interactive mode with prompts
 npm run wallet
 
-# 4. Iterate and improve
+# 3. Iterate and improve
 ```
 
 ## 🎛️ Available Commandset:
@@ -58,10 +58,16 @@ All you need to start your new project is
    ```bash
 
 git clone https://github.com/kaleababayneh/scaffold-midnight.git
+cd scaffold-midnight
 touch my-contract.compact
 npm install
-npm run 
+npm run deploy  # One command for complete local deployment!
  ```
+
+Or for testnet deployment:
+```bash
+npm run wallet
+```
 
 ## 🚀 Features
 
@@ -70,6 +76,14 @@ npm run
 - **Dynamic Function Discovery**: Finds all contract functions and generates CLI commands
 - **Zero Manual Updates**: Change function names → run auto-generator → everything updates automatically
 - **Smart Contract Detection**: Works with any contract name and any number of functions
+- **Witness Function Support**: Automatically detects and includes witness functions in API/CLI
+
+### 🚀 **One-Command Deployment**
+- **Local Development**: `npm run deploy` for complete local deployment workflow
+- **Docker Integration**: Automatically starts local Midnight node via Docker containers
+- **Prerequisites Check**: Validates Docker, contracts, and dependencies before deployment
+- **Interactive CLI**: Launches ready-to-use CLI for contract interaction
+- **Dry Run Support**: `npm run deploy --dry-run` to preview commands without execution
 
 ### 🔧 **Developer-Friendly Workflow**
 - **Root-Level Editing**: Edit contracts in the project root for easy access
@@ -138,7 +152,12 @@ example-counter/
    npm run dev
    ```
 
-4. **Test on Testnet**
+4. **Deploy to Local Network**
+   ```bash
+   npm run deploy
+   ```
+
+   Or test on testnet:
    ```bash
    npm run wallet
    ```
@@ -184,8 +203,48 @@ Which would you like to do?
 
 | Command | Description |
 |---------|-------------|
-| `npm run def` | 🔄 Regenerate CLI from contract |
-| `npm run wallet` | 🌐 Launch testnet CLI |
+| `npm run dev` | 🔄 Regenerate CLI from contract |
+| `npm run generate-key` | 🔐 Generate new wallet seed and update .env |
+| `npm run deploy` | 🌐 Deploy new contract to testnet (automated) |
+| `npm run deploy:new` | 🌐 Deploy new contract to testnet (same as above) |
+| `npm run deploy:join` | 🔗 Join existing contract on testnet (automated) |
+| `npm run wallet` | 🌐 Launch testnet CLI (interactive) |
+| `npm run build` | 🔨 Build all workspaces |
+| `npm run test` | 🧪 Run all tests |
+
+### 🚀 **Automated Testnet Deployment**
+
+The `npm run deploy` command provides a complete deployment workflow to Midnight testnet:
+
+```bash
+npm run deploy
+```
+
+This will:
+1. 🔨 **Compile** your `.compact` contract and generate CLI
+2. 🌐 **Connect** to Midnight testnet
+3. 📦 **Deploy** your contract automatically  
+4. 🎯 **Launch** interactive CLI for testing
+
+**Requirements:**
+- Node.js 18+
+- `.compact` contract file in project root
+- Wallet with testnet funds (or will be funded automatically)
+
+**Deployment Modes:**
+```bash
+# Deploy a new contract automatically (default)
+npm run deploy
+
+# Join an existing contract automatically  
+npm run deploy:join
+
+# Interactive mode (prompts for choices)
+npm run wallet
+
+# Preview what commands will be executed
+npm run deploy -- --dry-run
+```
 
 
 ## 🏗️ How It Works
@@ -238,12 +297,40 @@ The CLI automatically generates options for all functions.
 ## 🌐 Testnet Deployment
 
 ### **Wallet Setup**
-The CLI handles wallet creation automatically:
+The CLI handles wallet creation automatically. For automated deployment, you can set your wallet seed in the environment:
+
+**Option 1: Auto-generate wallet seed and address (Quickest)**
+```bash
+# Generate a new wallet seed and address automatically
+npm run generate-key
+
+# Deploy automatically without prompts  
+npm run deploy
 ```
-Enter your wallet seed: [generates new seed if empty]
+
+**Option 2: Manual environment setup**
+```bash
+# Copy the example file
+cp .env.example .env
+
+# Edit .env and add your seed phrase
+WALLET_SEED=your-64-character-hex-seed-phrase-here
+
+# Deploy automatically without prompts
+npm run deploy
+```
+
+**Option 3: Interactive mode**
+```
+npm run wallet
+# Will prompt: Enter your wallet seed: [generates new seed if empty]
 Your wallet address is: mn_shield-addr_test1...
 Your wallet balance is: 966962817
 ```
+
+When `WALLET_SEED` is set in your environment, deployment will be fully automated without prompting for the seed phrase.
+
+📋 **See [ENV_CONFIGURATION_GUIDE.md](./ENV_CONFIGURATION_GUIDE.md) for detailed environment variable setup.**
 
 ### **Contract Deployment**
 ```

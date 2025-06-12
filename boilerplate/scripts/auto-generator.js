@@ -221,23 +221,50 @@ class CompactCLIAutoGenerator {
   parseWitnesses(witnessesPath) {
     if (!fs.existsSync(witnessesPath)) return [];
     const content = fs.readFileSync(witnessesPath, 'utf-8');
-    // Debug: print the content being parsed
-    console.log('--- WITNESSES.TS CONTENT ---\n' + content + '\n----------------------------');
-    // More robust multi-line witness regex
-    const witnessRegex = /(\w+):\s*\(\{[^}]*\}\s*:\s*WitnessContext<([\w.]+|typeof [\w.]+),\s*([^>]+)>\)\s*=>\s*\[((?:.|\n)*?)\][\s,}]/g;
+    const lines = content.split('\n');
     const witnesses = [];
+    let inWitnesses = false;
+    let buffer = '';
+    let braceCount = 0;
+    for (let i = 0; i < lines.length; i++) {
+      let line = lines[i];
+      if (!inWitnesses && line.includes('export const witnesses')) {
+        const idx = line.indexOf('{');
+        if (idx !== -1) {
+          inWitnesses = true;
+          // Count braces on this line
+          braceCount += (line.slice(idx).match(/\{/g) || []).length;
+          braceCount -= (line.slice(idx).match(/\}/g) || []).length;
+          buffer += line.slice(idx + 1) + '\n';
+          if (braceCount === 0) break;
+        }
+        continue;
+      }
+      if (inWitnesses) {
+        braceCount += (line.match(/\{/g) || []).length;
+        braceCount -= (line.match(/\}/g) || []).length;
+        if (braceCount < 0) break; // Defensive: shouldn't happen
+        if (braceCount === 0) {
+          // Don't include the closing } line
+          break;
+        }
+        buffer += line + '\n';
+      }
+    }
+    // Now buffer contains all witness lines
+    // Final robust regex: allow any return type annotation before =>, then match => [ ... ]
+    const witnessLineRegex = /(\w+):\s*\(\{[^}]*\}\s*:\s*WitnessContext<([\w.]+|typeof [\w.]+),\s*([^>]+)>\)\s*:\s*[^=]+=>[\s\n]*\[((?:.|\n)*?)\][,\n]?/gs;
     let match;
-    while ((match = witnessRegex.exec(content)) !== null) {
-      console.log('WITNESS MATCH:', match);
+    while ((match = witnessLineRegex.exec(buffer)) !== null) {
       witnesses.push({
         name: match[1],
         ledgerType: match[2],
         privateType: match[3],
-        returns: match[4].split(',').map(s => s.trim()),
+        returns: match[4].split(',').map(s => s.trim()).filter(Boolean),
       });
     }
     if (witnesses.length === 0) {
-      console.log('No witnesses matched.');
+      console.log('No witnesses matched. Buffer was:', buffer);
     }
     return witnesses;
   }

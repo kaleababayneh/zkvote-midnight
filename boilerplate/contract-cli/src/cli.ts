@@ -1,3 +1,13 @@
+import dotenv from 'dotenv';
+import path from 'node:path';
+import { fileURLToPath } from 'node:url';
+
+// Configure dotenv to load from project root
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
+const projectRoot = path.resolve(__dirname, '..', '..', '..');
+dotenv.config({ path: path.join(projectRoot, '.env') });
+
 import { type Resource } from '@midnight-ntwrk/wallet';
 import { type Wallet } from '@midnight-ntwrk/wallet-api';
 import { stdin as input, stdout as output } from 'node:process';
@@ -30,6 +40,20 @@ const join = async (providers: CounterProviders, rli: Interface): Promise<Deploy
 };
 
 const deployOrJoin = async (providers: CounterProviders, rli: Interface): Promise<DeployedCounterContract | null> => {
+  // Check if auto-deploy is enabled (set by deployment script)
+  if (process.env.AUTO_DEPLOY === 'true') {
+    const deployMode = process.env.DEPLOY_MODE || 'new';
+    
+    if (deployMode === 'join') {
+      logger.info('🔗 Auto-joining existing contract...');
+      const contractAddress = await rli.question('What is the contract address (in hex)? ');
+      return await api.joinContract(providers, contractAddress);
+    } else {
+      logger.info('🚀 Auto-deploying new contract...');
+      return await api.deploy(providers, { privateCounter: 0 });
+    }
+  }
+  
   while (true) {
     const choice = await rli.question(DEPLOY_OR_JOIN_QUESTION);
     switch (choice) {
@@ -63,6 +87,31 @@ const mainLoop = async (providers: CounterProviders, rli: Interface): Promise<vo
   logger.info(`Contract Address: ${counterContract.deployTxData.public.contractAddress}`);
   logger.info('Available functions have been automatically detected from your contract!');
   
+  // Check if this is a quick deployment test
+  if (process.env.AUTO_DEPLOY === 'true' && process.env.QUICK_TEST === 'true') {
+    logger.info('🧪 Running quick deployment test...');
+    
+    // Find the first non-exit action and run it
+    const testAction = menuItems.find(item => item.id !== 'exit');
+    if (testAction) {
+      logger.info(`🎯 Testing function: ${testAction.label}`);
+      try {
+        await testAction.action(providers, counterContract, rli);
+        logger.info('✅ Quick test completed successfully!');
+        logger.info('🎉 Contract deployed and tested - ready for use!');
+      } catch (error: unknown) {
+        if (error instanceof Error) {
+          logger.error(`❌ Quick test failed: ${error.message}`);
+        } else {
+          logger.error(`❌ Unknown error during quick test: ${error}`);
+        }
+      }
+    }
+    
+    logger.info('💡 Use `npm run wallet` for full testnet CLI or restart for interactive mode');
+    return;
+  }
+  
   while (true) {
     const choice = await rli.question(menuQuestion);
     const choiceIndex = parseInt(choice, 10) - 1;
@@ -94,8 +143,17 @@ const mainLoop = async (providers: CounterProviders, rli: Interface): Promise<vo
 };
 
 const buildWalletFromSeed = async (config: Config, rli: Interface): Promise<Wallet & Resource> => {
-  const seed = await rli.question('Enter your wallet seed: ');
-  return await api.buildWalletAndWaitForFunds(config, seed, '');
+  // Check for seed phrase in environment variable first
+  let seedPhrase = process.env.WALLET_SEED;
+  
+  if (!seedPhrase) {
+    logger.info('No WALLET_SEED found in environment variables. Please enter manually or add to .env file.');
+    seedPhrase = await rli.question('Enter your wallet seed: ');
+  } else {
+    logger.info('✅ Using wallet seed from environment variable');
+  }
+  
+  return await api.buildWalletAndWaitForFunds(config, seedPhrase, '');
 };
 
 const WALLET_LOOP_QUESTION = `

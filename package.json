@@ -9,16 +9,18 @@
     "boilerplate/contract-cli",
     "boilerplate/scripts"
   ],
-  
   "scripts": {
     "dev": "rm -rf boilerplate/contract/src/managed/* && node boilerplate/scripts/auto-generator.js",
     "auto-generate-verbose": "node boilerplate/scripts/typescript-auto-generator.js --verbose",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
     "wallet": "npm run testnet-remote --workspace=boilerplate/contract-cli",
+    "generate-key": "node boilerplate/scripts/generate-key.js",
+    "deploy": "node boilerplate/scripts/deploy.js --new",
+    "deploy:new": "node boilerplate/scripts/deploy.js --new",
+    "deploy:join": "node boilerplate/scripts/deploy.js --join",
     "check": "node -e \"console.log('✅ Scaffold-midnight is ready!'); console.log('💡 Create a .compact file and run: npm run dev'); process.exit(0)\""
   },
-
   "devDependencies": {
     "@eslint/js": "^9.28.0",
     "@types/node": "^22.15.29",
@@ -45,6 +47,7 @@
     "@midnight-ntwrk/wallet": "5.0.0",
     "@midnight-ntwrk/wallet-api": "5.0.0",
     "@midnight-ntwrk/zswap": "^4.0.0",
+    "dotenv": "^16.5.0",
     "pino": "^9.7.0",
     "pino-pretty": "^13.0.0",
     "ws": "^8.18.2"

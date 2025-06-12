@@ -108,14 +108,43 @@ export class ContractAnalyzer {
       let witnesses: ContractWitness[] = [];
       if (fs.existsSync(witnessesPath)) {
         const content = fs.readFileSync(witnessesPath, 'utf-8');
-        const witnessRegex = /(\w+):\s*\(\{[^}]*\}\s*:\s*WitnessContext<([\w.]+|typeof [\w.]+),\s*([^>]+)>\)\s*=>\s*\[((?:.|\n)*?)\][\s,}]/g;
+        const lines = content.split('\n');
+        let inWitnesses = false;
+        let buffer = '';
+        let braceCount = 0;
+        for (let i = 0; i < lines.length; i++) {
+          const line = lines[i];
+          if (!inWitnesses && line.includes('export const witnesses')) {
+            const idx = line.indexOf('{');
+            if (idx !== -1) {
+              inWitnesses = true;
+              braceCount += (line.slice(idx).match(/\{/g) || []).length;
+              braceCount -= (line.slice(idx).match(/\}/g) || []).length;
+              buffer += line.slice(idx + 1) + '\n';
+              if (braceCount === 0) break;
+            }
+            continue;
+          }
+          if (inWitnesses) {
+            braceCount += (line.match(/\{/g) || []).length;
+            braceCount -= (line.match(/\}/g) || []).length;
+            if (braceCount < 0) break;
+            if (braceCount === 0) {
+              break;
+            }
+            buffer += line + '\n';
+          }
+        }
+        // Now buffer contains all witness lines
+        // Final robust regex: allow any return type annotation before =>, then match => [ ... ]
+        const witnessLineRegex = /(\w+):\s*\(\{[^}]*\}\s*:\s*WitnessContext<([\w.]+|typeof [\w.]+),\s*([^>]+)>\)\s*:\s*[^=]+=>[\s\n]*\[((?:.|\n)*?)\][,\n]?/gs;
         let match;
-        while ((match = witnessRegex.exec(content)) !== null) {
+        while ((match = witnessLineRegex.exec(buffer)) !== null) {
           witnesses.push({
             name: match[1],
             ledgerType: match[2],
             privateType: match[3],
-            returns: match[4].split(',').map(s => s.trim()),
+            returns: match[4].split(',').map(s => s.trim()).filter(Boolean),
           });
         }
       }

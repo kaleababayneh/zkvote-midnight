@@ -1,5 +1,5 @@
 // Enhanced API wrapper for Basic Contract
-// Generated on: 2025-06-12T09:51:44.713Z
+// Generated on: 2025-06-12T12:39:01.521Z
 // Auto-generated from basic.compact
 
 import { type Logger } from 'pino';
@@ -93,10 +93,10 @@ export class EnhancedContractAPI {
     return await (originalApi as any).increment(...args);
   }
   /**
-   * Execute increment_one function
+   * Execute increment_onetos function
    */
-  async increment_one(...args: any[]): Promise<any> {
-    return await (originalApi as any).increment_one(...args);
+  async increment_onetos(...args: any[]): Promise<any> {
+    return await (originalApi as any).increment_onetos(...args);
   }
 }
 
@@ -104,7 +104,7 @@ export class EnhancedContractAPI {
 export const CONTRACT_METADATA = {
   name: 'Basic Contract',
   fileName: 'basic.compact',
-  generatedAt: '2025-06-12T09:51:44.713Z',
+  generatedAt: '2025-06-12T12:39:01.521Z',
   functions: [
   {
     "name": "increment",
@@ -113,7 +113,7 @@ export const CONTRACT_METADATA = {
     "readOnly": false
   },
   {
-    "name": "increment_one",
+    "name": "increment_onetos",
     "parameters": [],
     "returnType": "[]",
     "readOnly": false
@@ -125,5 +125,15 @@ export const CONTRACT_METADATA = {
     "type": "Counter"
   }
 ],
-  witnesses: []
+  witnesses: [
+  {
+    "name": "uncounter_secret_key",
+    "ledgerType": "typeof Ledger",
+    "privateType": "CounterPrivateState",
+    "returns": [
+      "privateState",
+      "// TODO: Replace with actual Uint8Array logic for your use case\n    new Uint8Array([privateState.privateCounter"
+    ]
+  }
+]
 } as const;
