@@ -205,6 +205,7 @@ Which would you like to do?
 |---------|-------------|
 | `npm run dev` | 🔄 Regenerate CLI from contract |
 | `npm run generate-key` | 🔐 Generate new wallet seed and update .env |
+| `npm run request-faucet` | 🚰 Request testnet tokens (shows manual steps due to captcha) |
 | `npm run deploy` | 🌐 Deploy new contract to testnet (automated) |
 | `npm run deploy:new` | 🌐 Deploy new contract to testnet (same as above) |
 | `npm run deploy:join` | 🔗 Join existing contract on testnet (automated) |
@@ -304,6 +305,9 @@ The CLI handles wallet creation automatically. For automated deployment, you can
 # Generate a new wallet seed and address automatically
 npm run generate-key
 
+# Request testnet tokens (provides manual instructions due to captcha requirement)
+npm run request-faucet
+
 # Deploy automatically without prompts  
 npm run deploy
 ```
@@ -331,6 +335,33 @@ Your wallet balance is: 966962817
 When `WALLET_SEED` is set in your environment, deployment will be fully automated without prompting for the seed phrase.
 
 📋 **See [ENV_CONFIGURATION_GUIDE.md](./ENV_CONFIGURATION_GUIDE.md) for detailed environment variable setup.**
+
+### **Requesting Testnet Tokens**
+
+After generating your wallet, you'll need testnet tokens for deployment. Use the faucet request command:
+
+```bash
+npm run request-faucet
+```
+
+**How it works:**
+1. 🔗 Connects to funded genesis wallet (3.2B+ tokens available)
+2. 🔧 Creates proper transfer transaction using Midnight SDK
+3. ⚡ Attempts automated token transfer to your wallet
+4. 🛡️ Provides fallback instructions if proof server has version issues
+
+**Expected outcomes:**
+- ✅ **Success**: Tokens transferred automatically (when proof server compatible)
+- ⚠️ **Version Mismatch**: Manual faucet instructions provided (common in testnet)
+- 📍 **Always**: Your wallet address displayed for easy copy/paste
+
+**Manual faucet (recommended fallback):**
+- Visit: https://midnight.network/testnet-faucet
+- Copy your wallet address from the command output  
+- Complete the captcha verification
+- Request 1000+ tokens (typically arrive within 1-2 minutes)
+
+> **Note**: The automated faucet may encounter proof server version mismatches during testnet development. This is normal and will be resolved in future SDK updates. The manual faucet always works reliably.
 
 ### **Contract Deployment**
 ```

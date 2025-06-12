@@ -33,6 +33,11 @@ This guide explains how to configure environment variables for automated deploym
    npm run deploy:join    # Join existing contract with no prompts
    ```
 
+5. **Request testnet tokens:**
+   ```bash
+   npm run request-faucet # Get tokens for deployment (manual web step required)
+   ```
+
 ## Environment Variables
 
 ### WALLET_SEED
