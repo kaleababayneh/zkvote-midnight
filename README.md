@@ -206,6 +206,7 @@ Which would you like to do?
 | `npm run dev` | 🔄 Regenerate CLI from contract |
 | `npm run generate-key` | 🔐 Generate new wallet seed and update .env |
 | `npm run request-faucet` | 🚰 Request testnet tokens (shows manual steps due to captcha) |
+| `npm run balance` | 💰 Check current wallet balance from .env configuration |
 | `npm run deploy` | 🌐 Deploy new contract to testnet (automated) |
 | `npm run deploy:new` | 🌐 Deploy new contract to testnet (same as above) |
 | `npm run deploy:join` | 🔗 Join existing contract on testnet (automated) |
@@ -335,6 +336,44 @@ Your wallet balance is: 966962817
 When `WALLET_SEED` is set in your environment, deployment will be fully automated without prompting for the seed phrase.
 
 📋 **See [ENV_CONFIGURATION_GUIDE.md](./ENV_CONFIGURATION_GUIDE.md) for detailed environment variable setup.**
+
+### **Checking Wallet Balance**
+
+You can check your current wallet balance anytime using the dedicated balance command:
+
+```bash
+npm run balance
+```
+
+**Output example:**
+```
+🌙 Midnight Wallet Balance Checker
+
+📍 Wallet Address: mn_shield-addr_test1ht0n6y...
+🔗 Connecting to Midnight testnet...
+⏳ Syncing wallet...
+
+💰 Balance Information:
+📍 Address: mn_shield-addr_test1ht0n6y...
+💎 Balance: 1,000.000000 tUsdt  
+🔢 Raw Balance: 1000000000 microTusdt
+
+✅ Wallet has sufficient balance for contract operations!
+
+🎯 Ready for development!
+🚀 Deploy contracts with: npm run deploy
+```
+
+**Balance Status Messages:**
+- 💡 **Zero balance**: Provides faucet instructions
+- ⚠️ **Low balance**: Warns about insufficient funds for deployment
+- ✅ **Sufficient balance**: Confirms readiness for development
+
+**Usage:**
+```bash
+npm run balance              # Check balance
+npm run balance -- --help   # Show help information
+```
 
 ### **Requesting Testnet Tokens**
 

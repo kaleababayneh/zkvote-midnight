@@ -1,5 +1,5 @@
 // Enhanced API wrapper for Basic Contract
-// Generated on: 2025-06-12T16:29:36.097Z
+// Generated on: 2025-06-12T17:56:11.783Z
 // Auto-generated from basic.compact
 
 import { type Logger } from 'pino';
@@ -92,28 +92,16 @@ export class EnhancedContractAPI {
   async increment(...args: any[]): Promise<any> {
     return await (originalApi as any).increment(...args);
   }
-  /**
-   * Execute increment_onetos function
-   */
-  async increment_onetos(...args: any[]): Promise<any> {
-    return await (originalApi as any).increment_onetos(...args);
-  }
 }
 
 // Export contract metadata for reference
 export const CONTRACT_METADATA = {
   name: 'Basic Contract',
   fileName: 'basic.compact',
-  generatedAt: '2025-06-12T16:29:36.097Z',
+  generatedAt: '2025-06-12T17:56:11.783Z',
   functions: [
   {
     "name": "increment",
-    "parameters": [],
-    "returnType": "[]",
-    "readOnly": false
-  },
-  {
-    "name": "increment_onetos",
     "parameters": [],
     "returnType": "[]",
     "readOnly": false

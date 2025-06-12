@@ -262,33 +262,53 @@ export class ContractAnalyzer {
     return typeMap[type] || type;
   }
 
-  /**
-   * Generate human-readable descriptions for functions
-   */
+  // IMPORTANT: if none of the specific patterns match, it falls back to a generic description at the end of the method.
+
   private generateFunctionDescription(name: string, parameters: Array<{name: string, type: string}>): string {
-    const descriptions: {[key: string]: string} = {
-      'increment': 'Increments the counter by 1',
-      'incrementosas': 'Increments the counter/round by 1',
-      'get_round': 'Get the current round/counter value',
-      'vote_for': 'Vote for an option (0 for A, 1 for B)',
-      'get_vote_count': 'Get the vote count for an option (0 for A, 1 for B)',
-      'public_key_vote': 'Generate a public key for voting'
-    };
-    
-    // Handle variations of increment functions
-    if (name.startsWith('increment')) {
-      return 'Increments the counter/round by 1';
+    // Generate generic descriptions based on function name patterns
+    if (name.startsWith('get_') || name.startsWith('query_') || name.startsWith('read_')) {
+      return `Get ${name.replace(/^(get_|query_|read_)/, '').replace(/_/g, ' ')} information`;
     }
     
-    return descriptions[name] || `Execute ${name} function with ${parameters.length} parameter(s)`;
+    if (name.startsWith('set_') || name.startsWith('update_')) {
+      return `Update ${name.replace(/^(set_|update_)/, '').replace(/_/g, ' ')} value`;
+    }
+    
+    if (name.includes('increment') || name.includes('add')) {
+      return `Increment or add to ${name.replace(/_/g, ' ')}`;
+    }
+    
+    if (name.includes('decrement') || name.includes('subtract')) {
+      return `Decrement or subtract from ${name.replace(/_/g, ' ')}`;
+    }
+    
+    // Generic description for any function
+    const paramCount = parameters.length;
+    if (paramCount === 0) {
+      return `Execute ${name.replace(/_/g, ' ')} operation`;
+    } else {
+      return `Execute ${name.replace(/_/g, ' ')} with ${paramCount} parameter${paramCount > 1 ? 's' : ''}`;
+    }
   }
 
   /**
    * Check if a function is a read-only function (doesn't modify state)
    */
   isReadOnlyFunction(functionName: string): boolean {
-    const readOnlyFunctions = ['get_round', 'get_vote_count', 'public_key_vote'];
-    return readOnlyFunctions.includes(functionName);
+    // Identify read-only functions based on common naming patterns
+    const readOnlyPatterns = [
+      /^get_/,           // get_something
+      /^query_/,         // query_something  
+      /^read_/,          // read_something
+      /^view_/,          // view_something
+      /^check_/,         // check_something
+      /^display_/,       // display_something
+      /^show_/,          // show_something
+      /^fetch_/,         // fetch_something
+      /^retrieve_/       // retrieve_something
+    ];
+    
+    return readOnlyPatterns.some(pattern => pattern.test(functionName));
   }
 
   /**

@@ -20,7 +20,7 @@ dotenv.config({ path: envPath });
 
 // Constants
 const GENESIS_SEED = '0000000000000000000000000000000000000000000000000000000000000001';
-const TRANSFER_AMOUNT = 1_000_000_000n; // 1000 tUsdt = 1,000,000,000 microTusdt
+const TRANSFER_AMOUNT = 1_000_000_0n; // 10 tUsdt = 1,000,000,0 microTusdt
 
 // Testnet configuration
 const TESTNET_CONFIG = {
@@ -77,7 +77,7 @@ console.log(`📥 Target: ${targetAddress}`);
       return;
     }
     
-    console.log(`💸 Sending ${TRANSFER_AMOUNT} microTusdt (1000 tUsdt) to your wallet...`);
+    console.log(`💸 Sending ${TRANSFER_AMOUNT} microTusdt (100 tUsdt) to your wallet...`);
     
     // Create a proper transfer transaction using Midnight SDK
     console.log('🔧 Creating transfer transaction...');
@@ -120,7 +120,5 @@ console.log(`📥 Target: ${targetAddress}`);
       console.log('\n🔧 Manual faucet: https://midnight.network/testnet-faucet');
       console.log(`📍 ${targetAddress}`);
     }
-    
-    console.log('\n🚀 Next: npm run deploy');
   }
 })();
