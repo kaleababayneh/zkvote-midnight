@@ -1,6 +1,6 @@
 import fs from 'node:fs';
 import path from 'node:path';
-import { spawn } from 'node:child_process';
+import { spawn, execSync } from 'node:child_process';  // ← Add execSync here
 import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
@@ -14,8 +14,13 @@ class CompactCLIAutoGenerator {
     this.debounceMs = 2000; 
   }
 
+  // TODO  contract syntax validation
+
   async start() {
     console.log('🚀 Starting Compact Contract CLI Auto-Generator...');
+      // Validate environment first
+    this.validateEnvironment();
+
     console.log('📁 Contract source:', this.config.contractSourceDir);
     console.log('🎯 Target CLI:', this.config.cliSourceDir);
     console.log('📄 Contract file:', this.config.contractFileName);
@@ -82,7 +87,9 @@ class CompactCLIAutoGenerator {
     console.log('🔍 Checking for .compact files in root directory...');
     
     if (!fs.existsSync(rootDir)) {
-      console.log('⚠️  Root directory not found, skipping root sync');
+      console.error('❌ Project root directory not found');
+      console.error('💡 Make sure you\'re running this from the project root');
+      console.error('📁 Expected root: ' + rootDir);
       return false;
     }
 
@@ -92,6 +99,9 @@ class CompactCLIAutoGenerator {
     
     if (rootCompactFiles.length === 0) {
       console.log('📁 No .compact files found in root directory');
+      console.log('💡 Create a .compact file in the root to get started:');
+      console.log('   touch my-contract.compact');
+      console.log('📖 See README.md for examples');
       return false;
     }
 
@@ -127,6 +137,15 @@ class CompactCLIAutoGenerator {
       
       try {
         const content = fs.readFileSync(sourcePath, 'utf8');
+        
+        // Basic contract validation
+        if (!content.includes('pragma language_version')) {
+          console.warn(`⚠️  ${compactFile}: Missing pragma language_version directive`);
+        }
+        if (!content.includes('export circuit')) {
+          console.warn(`⚠️  ${compactFile}: No export circuit functions found`);
+        }
+        
         fs.writeFileSync(targetPath, content, 'utf8');
         copiedFiles.push(compactFile);
         console.log(`📄 ✅ Copied: ${compactFile} → contract/src/`);
@@ -141,6 +160,33 @@ class CompactCLIAutoGenerator {
     }
 
     return false;
+  }
+  validateEnvironment() {
+  const errors = [];
+  
+  // Check if we're in the right directory
+  if (!fs.existsSync(path.resolve(process.cwd(), 'package.json'))) {
+    errors.push('❌ No package.json found. Make sure you\'re in the project root directory.');
+  }
+  
+  // Check if boilerplate structure exists
+  if (!fs.existsSync(path.resolve(process.cwd(), 'boilerplate'))) {
+    errors.push('❌ Boilerplate directory not found. This doesn\'t appear to be a scaffold-midnight project.');
+  }
+  
+  // Check for compactc compiler
+  try {
+    execSync('which compactc', { stdio: 'ignore' });
+  } catch (error) {
+    errors.push('❌ Compact compiler (compactc) not found. Please install the Midnight development tools.');
+  }
+  
+  if (errors.length > 0) {
+    console.error('\n🚨 Environment validation failed:\n');
+    errors.forEach(error => console.error(error));
+    console.error('\n💡 Please fix these issues and try again.\n');
+    process.exit(1);
+  }
   }
 
   detectContractFile() {
@@ -169,6 +215,33 @@ class CompactCLIAutoGenerator {
     return detectedFile;
   }
 
+  /**
+   * Parse witness functions from witnesses.ts
+   */
+  parseWitnesses(witnessesPath) {
+    if (!fs.existsSync(witnessesPath)) return [];
+    const content = fs.readFileSync(witnessesPath, 'utf-8');
+    // Debug: print the content being parsed
+    console.log('--- WITNESSES.TS CONTENT ---\n' + content + '\n----------------------------');
+    // More robust multi-line witness regex
+    const witnessRegex = /(\w+):\s*\(\{[^}]*\}\s*:\s*WitnessContext<([\w.]+|typeof [\w.]+),\s*([^>]+)>\)\s*=>\s*\[((?:.|\n)*?)\][\s,}]/g;
+    const witnesses = [];
+    let match;
+    while ((match = witnessRegex.exec(content)) !== null) {
+      console.log('WITNESS MATCH:', match);
+      witnesses.push({
+        name: match[1],
+        ledgerType: match[2],
+        privateType: match[3],
+        returns: match[4].split(',').map(s => s.trim()),
+      });
+    }
+    if (witnesses.length === 0) {
+      console.log('No witnesses matched.');
+    }
+    return witnesses;
+  }
+
   async parseContract() {
     let contractFileName = this.config.contractFileName;
 
@@ -185,15 +258,16 @@ class CompactCLIAutoGenerator {
     }
     
     const contractPath = path.join(this.config.contractSourceDir, contractFileName);
-    
     if (!fs.existsSync(contractPath)) {
       throw new Error(`Contract file not found: ${contractPath}`);
     }
-
     const contractContent = await fs.promises.readFile(contractPath, 'utf-8');
-    
     const parser = new CompactContractParser();
-    return parser.parse(contractContent, contractFileName);
+    const contractInfo = parser.parse(contractContent, contractFileName);
+    // Parse witnesses
+    const witnessesPath = path.join(this.config.contractSourceDir, 'witnesses.ts');
+    contractInfo.witnesses = this.parseWitnesses(witnessesPath);
+    return contractInfo;
   }
 
 
@@ -220,29 +294,6 @@ class CompactCLIAutoGenerator {
     await this.runCommand('npm', ['run', 'build'], contractDir);
 
     console.log('✅ Contract built');
-  }
-
-  async generateCLIFiles(contractInfo) {
-    console.log('📝 Generating CLI files...');
-
-    // Generate updated API wrapper
-    await this.generateAPIWrapper(contractInfo);
-
-    // Generate updated CLI module
-    await this.generateCLIModule(contractInfo);
-
-    // Update core API file
-    await this.updateCoreAPI(contractInfo);
-
-    console.log('✅ CLI files generated');
-  }
-
-  async buildCLI() {
-    console.log('🔧 Building CLI...');
-    
-    await this.runCommand('npm', ['run', 'build'], this.config.cliSourceDir);
-
-    console.log('✅ CLI built');
   }
 
   async generateAPIWrapper(contractInfo) {
@@ -272,6 +323,12 @@ export interface ContractInfo {
     description: string;
   }>;
   ledgerState: Array<{ name: string; type: string }>;
+  witnesses: Array<{
+    name: string;
+    ledgerType: string;
+    privateType: string;
+    returns: string[];
+  }>;
 }
 
 /**
@@ -301,7 +358,13 @@ export class EnhancedContractAPI {
           readOnly: this.analyzer.isReadOnlyFunction(func.name),
           description: func.description || \`Execute \${func.name} function\`
         })),
-        ledgerState: Object.entries(analysis.ledgerState).map(([name, type]) => ({ name, type }))
+        ledgerState: Object.entries(analysis.ledgerState).map(([name, type]) => ({ name, type })),
+        witnesses: analysis.witnesses.map(witness => ({
+          name: witness.name,
+          ledgerType: witness.ledgerType,
+          privateType: witness.privateType,
+          returns: witness.returns
+        }))
       };
       
       return this.contractInfo;
@@ -337,7 +400,8 @@ export const CONTRACT_METADATA = {
   fileName: '${this.config.contractFileName}',
   generatedAt: '${new Date().toISOString()}',
   functions: ${JSON.stringify(contractInfo.functions, null, 2)},
-  ledgerState: ${JSON.stringify(contractInfo.ledgerState, null, 2)}
+  ledgerState: ${JSON.stringify(contractInfo.ledgerState, null, 2)},
+  witnesses: ${JSON.stringify(contractInfo.witnesses, null, 2)}
 } as const;
 `;
 
@@ -345,20 +409,37 @@ export const CONTRACT_METADATA = {
     await fs.promises.writeFile(outputPath, content, 'utf-8');
   }
 
-  /**
-   * Generate enhanced CLI module
-   */
-  async generateCLIModule(contractInfo) {
-    const content = `// Enhanced CLI module for ${contractInfo.contractName}
-// Generated on: ${new Date().toISOString()}
-// Auto-generated from ${this.config.contractFileName}
-`;
+  async generateCLIFiles(contractInfo) {
+    console.log('📝 Generating CLI files...');
 
-    const outputPath = path.join(this.config.cliSourceDir, 'src', 'enhanced-cli.ts');
-    await fs.promises.writeFile(outputPath, content, 'utf-8');
+    // Generate updated API wrapper
+    await this.generateAPIWrapper(contractInfo);
+
+    // Update core API file
+    await this.updateCoreAPI(contractInfo);
+
+    // Optionally, update CLI docs to include witnesses
+    const docPath = path.join(this.config.cliSourceDir, '..', 'DYNAMIC_CLI_GUIDE.md');
+    let docContent = '';
+    if (fs.existsSync(docPath)) {
+      docContent = await fs.promises.readFile(docPath, 'utf-8');
+    }
+    // Add witness section if not present
+    if (!docContent.includes('## Witness Functions')) {
+      docContent += '\n\n## Witness Functions\n';
+    }
+    docContent = docContent.replace(/## Witness Functions[\s\S]*?(?=\n## |$)/, `## Witness Functions\n\n${contractInfo.witnesses.map(w => `- **${w.name}**: WitnessContext<${w.ledgerType}, ${w.privateType}> → [${w.returns.join(', ')}]`).join('\n')}`);
+    await fs.promises.writeFile(docPath, docContent, 'utf-8');
+    console.log('✅ CLI files generated (including witnesses)');
   }
 
+  async buildCLI() {
+    console.log('🔧 Building CLI...');
+    
+    await this.runCommand('npm', ['run', 'build'], this.config.cliSourceDir);
 
+    console.log('✅ CLI built');
+  }
 
   /**
    * Update the core API file to match contract functions

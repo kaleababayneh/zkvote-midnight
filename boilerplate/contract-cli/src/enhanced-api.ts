@@ -1,6 +1,6 @@
-// Enhanced API wrapper for Counter Contract
-// Generated on: 2025-06-09T13:35:14.600Z
-// Auto-generated from counter.compact
+// Enhanced API wrapper for Basic Contract
+// Generated on: 2025-06-12T09:51:44.713Z
+// Auto-generated from basic.compact
 
 import { type Logger } from 'pino';
 import { ContractAnalyzer } from './contract-analyzer.js';
@@ -23,6 +23,12 @@ export interface ContractInfo {
     description: string;
   }>;
   ledgerState: Array<{ name: string; type: string }>;
+  witnesses: Array<{
+    name: string;
+    ledgerType: string;
+    privateType: string;
+    returns: string[];
+  }>;
 }
 
 /**
@@ -52,7 +58,13 @@ export class EnhancedContractAPI {
           readOnly: this.analyzer.isReadOnlyFunction(func.name),
           description: func.description || `Execute ${func.name} function`
         })),
-        ledgerState: Object.entries(analysis.ledgerState).map(([name, type]) => ({ name, type }))
+        ledgerState: Object.entries(analysis.ledgerState).map(([name, type]) => ({ name, type })),
+        witnesses: analysis.witnesses.map(witness => ({
+          name: witness.name,
+          ledgerType: witness.ledgerType,
+          privateType: witness.privateType,
+          returns: witness.returns
+        }))
       };
       
       return this.contractInfo;
@@ -80,16 +92,28 @@ export class EnhancedContractAPI {
   async increment(...args: any[]): Promise<any> {
     return await (originalApi as any).increment(...args);
   }
+  /**
+   * Execute increment_one function
+   */
+  async increment_one(...args: any[]): Promise<any> {
+    return await (originalApi as any).increment_one(...args);
+  }
 }
 
 // Export contract metadata for reference
 export const CONTRACT_METADATA = {
-  name: 'Counter Contract',
-  fileName: 'counter.compact',
-  generatedAt: '2025-06-09T13:35:14.600Z',
+  name: 'Basic Contract',
+  fileName: 'basic.compact',
+  generatedAt: '2025-06-12T09:51:44.713Z',
   functions: [
   {
     "name": "increment",
+    "parameters": [],
+    "returnType": "[]",
+    "readOnly": false
+  },
+  {
+    "name": "increment_one",
     "parameters": [],
     "returnType": "[]",
     "readOnly": false
@@ -100,5 +124,6 @@ export const CONTRACT_METADATA = {
     "name": "round",
     "type": "Counter"
   }
-]
+],
+  witnesses: []
 } as const;

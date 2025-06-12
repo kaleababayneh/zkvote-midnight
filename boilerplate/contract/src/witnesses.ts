@@ -21,13 +21,14 @@ export type CounterPrivateState = {
   readonly privateCounter: number; 
 };
 
-export const createCounterPrivateState = (privateCounter: number) => ({
+export const createUnounterPrivateState = (privateCounter: number) => ({
   privateCounter,
 });
 
 export const witnesses = {
-  // local_secret_key: ({ privateState }: WitnessContext<Ledger, CounterPrivateState>): [CounterPrivateState, Uint8Array] => [
-  //   privateState, 
-  //   privateState.privateCounter, 
-  // ],
+  uncounter_secret_key: ({ privateState }: WitnessContext<typeof Ledger, CounterPrivateState>): [CounterPrivateState, Uint8Array] => [
+    privateState,
+    // TODO: Replace with actual Uint8Array logic for your use case
+    new Uint8Array([privateState.privateCounter])
+  ],
 };

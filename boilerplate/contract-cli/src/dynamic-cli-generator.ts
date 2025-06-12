@@ -1,7 +1,3 @@
-// This file is part of example-counter.
-// Copyright (C) 2025 Midnight Foundation
-// SPDX-License-Identifier: Apache-2.0
-
 import { type Interface } from 'node:readline/promises';
 import { type Logger } from 'pino';
 import { ContractAnalyzer, type ContractAnalysis, type ContractFunction } from './contract-analyzer.js';

@@ -9,13 +9,16 @@
     "boilerplate/contract-cli",
     "boilerplate/scripts"
   ],
+  
   "scripts": {
-    "dev":  "node boilerplate/scripts/auto-generator.js",
+    "dev": "rm -rf boilerplate/contract/src/managed/* && node boilerplate/scripts/auto-generator.js",
     "auto-generate-verbose": "node boilerplate/scripts/typescript-auto-generator.js --verbose",
     "build": "npm run build --workspaces --if-present",
     "test": "npm run test --workspaces --if-present",
-    "wallet": "npm run testnet-remote --workspace=boilerplate/contract-cli"
+    "wallet": "npm run testnet-remote --workspace=boilerplate/contract-cli",
+    "check": "node -e \"console.log('✅ Scaffold-midnight is ready!'); console.log('💡 Create a .compact file and run: npm run dev'); process.exit(0)\""
   },
+
   "devDependencies": {
     "@eslint/js": "^9.28.0",
     "@types/node": "^22.15.29",

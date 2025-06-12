@@ -1,7 +1,3 @@
-// This file is part of example-counter.
-// Copyright (C) 2025 Midnight Foundation
-// SPDX-License-Identifier: Apache-2.0
-
 import fs from 'node:fs';
 import path from 'node:path';
 
@@ -15,12 +11,20 @@ export interface ContractFunction {
   description?: string;
 }
 
+export interface ContractWitness {
+  name: string;
+  ledgerType: string;
+  privateType: string;
+  returns: string[];
+}
+
 export interface ContractAnalysis {
   contractName: string;
   functions: ContractFunction[];
   ledgerState: {
     [key: string]: string;
   };
+  witnesses: ContractWitness[];
 }
 
 /**
@@ -83,7 +87,7 @@ export class ContractAnalyzer {
   }
 
   /**
-   * Analyzes the contract and returns available functions
+   * Analyze the contract and return all info, including witnesses
    */
   async analyzeContract(): Promise<ContractAnalysis> {
     try {
@@ -98,10 +102,29 @@ export class ContractAnalyzer {
       const contractBaseName = path.basename(this.contractPath);
       const contractName = `${contractBaseName.charAt(0).toUpperCase() + contractBaseName.slice(1)} Contract`;
       
+      // Find the witnesses.ts file
+      const contractSourceDir = path.resolve(path.dirname(decodeURIComponent(new URL(import.meta.url).pathname)), '..', '..', 'contract', 'src');
+      const witnessesPath = path.join(contractSourceDir, 'witnesses.ts');
+      let witnesses: ContractWitness[] = [];
+      if (fs.existsSync(witnessesPath)) {
+        const content = fs.readFileSync(witnessesPath, 'utf-8');
+        const witnessRegex = /(\w+):\s*\(\{[^}]*\}\s*:\s*WitnessContext<([\w.]+|typeof [\w.]+),\s*([^>]+)>\)\s*=>\s*\[((?:.|\n)*?)\][\s,}]/g;
+        let match;
+        while ((match = witnessRegex.exec(content)) !== null) {
+          witnesses.push({
+            name: match[1],
+            ledgerType: match[2],
+            privateType: match[3],
+            returns: match[4].split(',').map(s => s.trim()),
+          });
+        }
+      }
+      
       return {
         contractName,
         functions,
-        ledgerState
+        ledgerState,
+        witnesses
       };
     } catch (error) {
       console.error('Error analyzing contract:', error);

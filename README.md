@@ -1,6 +1,46 @@
 # 🌙 Midnight Compact Contract CLI Generator
 
-**The fastest way to develop Midnight contracts.** Write your `.compact` contract and instantly get:
+**The fastest way to develop Midnight contracts.** Write your `.compact` contract anInteractive CLI will start:
+```
+✅ Auto-detected contract from source: counter (from counter.compact)
+📊 Available functions: increment, get_count
+
+You can do one of the following:
+  1. Deploy a new Counter Contract
+  2. Join an existing Counter Contract
+  3. Exit
+Which would you like to do?
+```
+
+## 💡 Development Tips
+
+### **Best Practices**
+- 🔄 **Always run `npm run dev`** after any contract changes
+- 📝 **Use descriptive function names** - they become CLI commands
+- 🧪 **Test functions locally** before deploying to testnet
+- 📊 **Check CLI output** for function parameter hints and validation
+
+### **Debugging**
+- 🔍 **Contract not detected?** Make sure your `.compact` file is in the project root
+- ⚠️ **Compilation errors?** Check that your contract has proper `pragma language_version` directive
+- 🚫 **CLI generation failed?** Ensure all `export circuit` functions have valid syntax
+- 🌐 **Testnet issues?** Verify your wallet has sufficient balance for transactions
+
+### **Development Workflow**
+```bash
+# 1. Edit your contract
+vim my-contract.compact
+
+# 2. Regenerate everything
+npm run dev
+
+# 3. Test on testnet
+npm run wallet
+
+# 4. Iterate and improve
+```
+
+## 🎛️ Available Commandset:
 - 🚀 Auto-generated CLI with all your functions
 - 🌐 One-command testnet deployment  
 - 🔄 Dynamic updates when you change your contract
