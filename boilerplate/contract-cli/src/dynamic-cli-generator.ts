@@ -164,6 +164,20 @@ export class DynamicCLIGenerator {
             case 'votesB':
               value = await api.getVotesB(providers, contract.deployTxData.public.contractAddress);
               break;
+            case 'items':
+              // Handle Set<Bytes<32>> - get the set contents
+              try {
+                const itemsArray = await api.getItemsSet(providers, contract.deployTxData.public.contractAddress);
+                if (itemsArray.length > 0) {
+                  value = `Set with ${itemsArray.length} item(s): [${itemsArray.join(', ')}]`;
+                } else {
+                  value = 'Empty set';
+                }
+              } catch (setError) {
+                this.logger.debug(`Set extraction error: ${setError}`);
+                value = 'Set contents not accessible';
+              }
+              break;
             default:
               value = 'Not available';
           }

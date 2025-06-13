@@ -33,6 +33,8 @@ npm install
 
 # Create your first contract
 touch my-contract.compact
+# set up your wallet env
+mv .env.example .env
 
 # Deploy and test (one command!)
 npm run deploy

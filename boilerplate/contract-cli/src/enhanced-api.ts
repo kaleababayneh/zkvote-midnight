@@ -1,5 +1,5 @@
 // Enhanced API wrapper for Zkv Contract
-// Generated on: 2025-06-13T07:41:20.354Z
+// Generated on: 2025-06-13T08:57:41.322Z
 // Auto-generated from zkv.compact
 
 import { type Logger } from 'pino';
@@ -116,7 +116,7 @@ export class EnhancedContractAPI {
 export const CONTRACT_METADATA = {
   name: 'Zkv Contract',
   fileName: 'zkv.compact',
-  generatedAt: '2025-06-13T07:41:20.355Z',
+  generatedAt: '2025-06-13T08:57:41.323Z',
   functions: [
   {
     "name": "increment",

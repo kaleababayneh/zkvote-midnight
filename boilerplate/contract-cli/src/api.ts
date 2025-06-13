@@ -496,3 +496,39 @@ export const saveState = async (wallet: Wallet, filename: string) => {
     logger.info('Not saving cache as sync cache was not defined');
   }
 };
+
+export const getItemsSet = async (
+  providers: CounterProviders,
+  contractAddress: ContractAddress,
+): Promise<string[]> => {
+  assertIsContractAddress(contractAddress);
+  logger.info('Checking items set...');
+  
+  try {
+    const contractState = await providers.publicDataProvider.queryContractState(contractAddress);
+    if (contractState?.data) {
+      const ledgerData = contractModule.ledger(contractState.data);
+      
+      if (ledgerData.items) {
+        // Convert Set to Array and then to string representations
+        const itemsArray = Array.from(ledgerData.items);
+        logger.info(`Found ${itemsArray.length} items in set`);
+        
+        return itemsArray.map(item => {
+          if (item instanceof Uint8Array) {
+            // Convert bytes to hex string
+            return '0x' + Array.from(item)
+              .map(b => b.toString(16).padStart(2, '0'))
+              .join('');
+          }
+          return String(item);
+        });
+      }
+    }
+    logger.info('Items set is empty or not accessible');
+    return [];
+  } catch (error) {
+    logger.warn(`Failed to extract items set: ${error}`);
+    return [];
+  }
+};
