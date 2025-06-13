@@ -217,6 +217,18 @@ export class DynamicCLIGenerator {
           return new Uint8Array(Buffer.from(input.slice(2), 'hex'));
         }
         return new Uint8Array(Buffer.from(input, 'utf8'));
+      case 'text':
+        // Handle opaque string types by creating proper opaque value
+        const api = await import('./api.js');
+        try {
+          // Create opaque string value - remove quotes if they exist
+          const cleanInput = input.replace(/^["']|["']$/g, '');
+          return api.createOpaqueString(cleanInput);
+        } catch (error) {
+          // Fallback to plain string if opaque creation fails
+          this.logger.debug(`Failed to create opaque string, using plain string: ${error}`);
+          return input.replace(/^["']|["']$/g, '');
+        }
       default:
         return input;
     }

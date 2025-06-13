@@ -1,6 +1,6 @@
-// Enhanced API wrapper for Zkv Contract
-// Generated on: 2025-06-13T08:57:41.322Z
-// Auto-generated from zkv.compact
+// Enhanced API wrapper for Bboard Contract
+// Generated on: 2025-06-13T09:20:03.645Z
+// Auto-generated from bboard.compact
 
 import { type Logger } from 'pino';
 import { ContractAnalyzer } from './contract-analyzer.js';
@@ -87,75 +87,58 @@ export class EnhancedContractAPI {
 
   // Dynamic function mapping based on contract analysis
   /**
-   * Execute increment function
+   * Execute post function
    */
-  async increment(...args: any[]): Promise<any> {
-    return await (originalApi as any).increment(...args);
+  async post(...args: any[]): Promise<any> {
+    return await (originalApi as any).post(...args);
   }
   /**
-   * Execute vote_for function
+   * Execute take_down function
    */
-  async vote_for(...args: any[]): Promise<any> {
-    return await (originalApi as any).vote_for(...args);
+  async take_down(...args: any[]): Promise<any> {
+    return await (originalApi as any).take_down(...args);
   }
   /**
-   * Execute get_vote_count function
+   * Execute public_key function
    */
-  async get_vote_count(...args: any[]): Promise<any> {
-    return await (originalApi as any).get_vote_count(...args);
-  }
-  /**
-   * Execute public_key_vote function
-   */
-  async public_key_vote(...args: any[]): Promise<any> {
-    return await (originalApi as any).public_key_vote(...args);
+  async public_key(...args: any[]): Promise<any> {
+    return await (originalApi as any).public_key(...args);
   }
 }
 
 // Export contract metadata for reference
 export const CONTRACT_METADATA = {
-  name: 'Zkv Contract',
-  fileName: 'zkv.compact',
-  generatedAt: '2025-06-13T08:57:41.323Z',
+  name: 'Bboard Contract',
+  fileName: 'bboard.compact',
+  generatedAt: '2025-06-13T09:20:03.645Z',
   functions: [
   {
-    "name": "increment",
+    "name": "post",
+    "parameters": [
+      {
+        "name": "new_message",
+        "type": "Opaque<\"string\">"
+      }
+    ],
+    "returnType": "[]",
+    "readOnly": false
+  },
+  {
+    "name": "take_down",
     "parameters": [],
-    "returnType": "[]",
-    "readOnly": false
-  },
-  {
-    "name": "vote_for",
-    "parameters": [
-      {
-        "name": "index",
-        "type": "Uint<8>"
-      }
-    ],
-    "returnType": "[]",
-    "readOnly": false
-  },
-  {
-    "name": "get_vote_count",
-    "parameters": [
-      {
-        "name": "index",
-        "type": "Uint<8>"
-      }
-    ],
-    "returnType": "Uint<64>",
+    "returnType": "Opaque<\"string\">",
     "readOnly": true
   },
   {
-    "name": "public_key_vote",
+    "name": "public_key",
     "parameters": [
       {
         "name": "sk",
-        "type": "Bytes<3>"
+        "type": "Bytes<32>"
       },
       {
         "name": "instance",
-        "type": "Bytes<3>"
+        "type": "Bytes<32>"
       }
     ],
     "returnType": "Bytes<32>",
@@ -164,30 +147,31 @@ export const CONTRACT_METADATA = {
 ],
   ledgerState: [
   {
-    "name": "round",
+    "name": "state",
+    "type": "STATE"
+  },
+  {
+    "name": "message",
+    "type": "Maybe<Opaque<\"string\">>"
+  },
+  {
+    "name": "instance",
     "type": "Counter"
   },
   {
-    "name": "votesA",
-    "type": "Counter"
-  },
-  {
-    "name": "votesB",
-    "type": "Counter"
-  },
-  {
-    "name": "items",
-    "type": "Set<Bytes<32>>"
+    "name": "poster",
+    "type": "Bytes<32>"
   }
 ],
   witnesses: [
   {
-    "name": "uncounter_secret_key",
+    "name": "local_secret_key",
     "ledgerType": "typeof Ledger",
-    "privateType": "CounterPrivateState",
+    "privateType": "BBoardPrivateState",
     "returns": [
-      "privateState",
-      "// TODO: Replace with actual Uint8Array logic for your use case\n    new Uint8Array([privateState.privateCounter"
+      "// EXERCISE 2: WHAT ARE THE CORRECT TWO VALUES TO RETURN HERE?\n    privateState",
+      "// EXERCISE ANSWER\n    privateState.secretKey",
+      "// EXERCISE ANSWER"
     ]
   }
 ]

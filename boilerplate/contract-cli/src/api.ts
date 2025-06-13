@@ -47,6 +47,18 @@ const getContractModule = () => {
 const contractModule = getContractModule();
 
 let logger: Logger;
+
+/**
+ * Create an opaque string value from a plain string
+ * This is needed for Opaque<"string"> parameters in Midnight contracts
+ */
+export const createOpaqueString = (value: string): any => {
+  // In Midnight, opaque strings need to be properly encoded as Uint8Array
+  // The contract expects the raw string bytes, not a complex object
+  const encoder = new TextEncoder();
+  return encoder.encode(value);
+};
+
 // Instead of setting globalThis.crypto which is read-only, we'll ensure crypto is available
 // but won't try to overwrite the global property
 // @ts-expect-error: It's needed to enable WebSocket usage through apollo
@@ -428,7 +440,7 @@ export const configureProviders = async (wallet: Wallet & Resource, config: Conf
       privateStateStoreName: contractConfig.privateStateStoreName,
     }),
     publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
-    zkConfigProvider: new NodeZkConfigProvider<'increment' | 'vote_for'>(contractConfig.zkConfigPath),
+    zkConfigProvider: new NodeZkConfigProvider<'post'>(contractConfig.zkConfigPath),
     proofProvider: httpClientProofProvider(config.proofServer),
     walletProvider: walletAndMidnightProvider,
     midnightProvider: walletAndMidnightProvider,
