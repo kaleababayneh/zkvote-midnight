@@ -7,36 +7,17 @@
 
 **The complete development scaffold for Midnight smart contracts.** Write your `.compact` contract and instantly get a full development environment with zero configuration. The system automatically generates a dynamic CLI, handles deployment pipelines, manages wallet operations, and provides a complete testing framework.
 
+
 **🚀 From contract to production in minutes, not hours.**
 
 ## ✨ What You Get
 
 - 🔄 **Auto-generating CLI** that adapts to your contract functions
-- 🐳 **Docker-based local development** with full Midnight node
 - 🌐 **Seamless testnet deployment** with automated wallet management
 - 💰 **Built-in wallet tools** for balance checking and faucet requests
 - 📊 **Smart contract analysis** with automatic type generation
-- 🛠️ **Set ledger support** with enhanced state display
-- 🔧 **Deployment automation** with CI/CD-ready flags
 - 📝 **Comprehensive documentation** and debugging guides
 
-## 📋 Table of Contents
-
-- [Quick Start](#-quick-start)
-- [Features](#-features)
-- [Project Structure](#-project-structure)
-- [Development Workflow](#-development-workflow)
-- [Commands Reference](#-commands-reference)
-- [Deployment Guide](#-deployment-guide)
-- [Wallet Management](#-wallet-management)
-- [Architecture](#️-architecture)
-- [Troubleshooting](#-troubleshooting)
-- [Advanced Configuration](#️-advanced-configuration)
-- [Example Use Cases](#-example-use-cases)
-- [FAQ](#-frequently-asked-questions)
-- [Contributing](#-contributing)
-- [License](#-license)
-- [Additional Resources](#-additional-resources)
 
 ## 🚀 Quick Start
 
@@ -60,16 +41,9 @@ npm run deploy
 ### 📋 Prerequisites
 
 **System Requirements:**
-- **Node.js 18+** - [Download](https://nodejs.org/)
-- **Docker Desktop** - [Download](https://www.docker.com/products/docker-desktop/) (for local development)
-- **Git** - [Download](https://git-scm.com/)
-
-**Quick dependency check:**
-```bash
-node --version    # Should be 18+
-docker --version  # Should be 20+
-git --version     # Any recent version
-```
+- **Node.js 20**
+- **Compact Compiler**
+- **Docker Desktop** 
 
 ### 📝 **Write Your First Contract**
 
@@ -107,31 +81,14 @@ This single command:
 
 **For testnet deployment:**
 ```bash
-npm run deploy
-```
-
-**For local development:**
-```bash
 npm run wallet
-```
-
-Interactive CLI will launch:
-```
-✅ Auto-detected contract: Counter (from counter.compact)
-📊 Available functions: increment, get_count
-
-You can do one of the following:
-  1. Deploy a new Counter Contract
-  2. Join an existing Counter Contract
-  3. Exit
-Which would you like to do?
 ```
 
 ## 🚀 Features
 
 ### ✨ **Zero-Configuration Development**
 - **Auto-Detection**: Automatically finds and analyzes your `.compact` contracts
-- **Dynamic CLI Generation**: Creates interactive CLI from your contract functions
+
 - **Zero Manual Updates**: Change functions → regenerate → everything adapts automatically
 - **Smart Contract Analysis**: Works with any contract structure and function names
 - **Witness Function Support**: Automatically detects and includes private state functions
@@ -140,7 +97,6 @@ Which would you like to do?
 - **One-Command Local Deployment**: `npm run deploy` for full local development setup
 - **Docker Integration**: Automatically manages local Midnight node containers
 - **Testnet Deployment**: Seamless testnet integration with `npm run wallet`
-- **Prerequisite Validation**: Checks Docker, dependencies, and contract syntax
 - **Dry Run Support**: Preview deployment with `--dry-run` flag
 
 ### 🔧 **Developer-Friendly Workflow**
@@ -276,46 +232,29 @@ npm run deploy --dry-run
 docker ps
 ```
 
-### 📞 Getting Help
-
-1. **Check the logs** in `boilerplate/contract-cli/logs/`
-2. **Search issues** on [GitHub](https://github.com/kaleababayneh/scaffold-midnight/issues)
-3. **Join Midnight Discord** for community support
-4. **Create an issue** with error logs and system info
-
 ## 🎛️ Commands Reference
 
 | Command | Purpose | Environment |
 |---------|---------|-------------|
 | `npm run dev` | 🔄 Regenerate CLI from contract changes | Local |
-| `npm run deploy` | 🚀 Deploy to local Midnight node (Docker) | Local |
-| `npm run wallet` | 🌐 Deploy to testnet (interactive) | Testnet |
+| `npm run deploy` | 🚀 Deploy to Midnight testnet | Testnet |
+| `npm run wallet` | 🌐 🔐 Generate new wallet seed and address | Testnet |
 | `npm run balance` | 💰 Check current wallet balance | Testnet |
-| `npm run generate-key` | 🔐 Generate new wallet seed and address | Testnet |
 | `npm run faucet` | 🚰 Request testnet tokens | Testnet |
 | `npm run build` | 🔨 Build all workspaces | Local |
-| `npm run test` | 🧪 Run test suite | Local |
 
 ## 🚀 Deployment Guide
 
-### 🐳 Local Development (Recommended for Testing)
 
-**Quick local deployment:**
+**Quick testnet deployment:**
 ```bash
 npm run deploy
 ```
 
 This command:
 1. 🔨 Compiles your contract and generates CLI
-2. 🐳 Starts local Midnight node in Docker
-3. 📦 Deploys contract to local network
+3. 📦 Deploys contract to midnight testnet network
 4. 🎯 Launches interactive CLI for testing
-
-**Local deployment features:**
-- ⚡ **Fast iteration** - No network delays
-- 🔧 **Full control** - Complete local blockchain
-- 🧪 **Safe testing** - No real tokens required
-- 📊 **Detailed logs** - Full debugging information
 
 ### 🌐 Testnet Deployment
 
@@ -344,18 +283,6 @@ npm run deploy --dry-run
 | `--join` | Auto-join existing contract | Team collaboration |
 | `--dry-run` | Preview commands only | Testing scripts |
 | `--help` | Show detailed help | Documentation |
-
-**Examples:**
-```bash
-# CI/CD deployment
-npm run deploy --new
-
-# Team member joining project
-npm run deploy --join
-
-# Script testing
-npm run deploy --dry-run
-```
 
 
 ## 🏗️ How It Works
@@ -390,22 +317,6 @@ export circuit get_count(): Uint<64> { ... }
 
 ### 🎨 Custom Contract Examples
 
-**Counter Contract:**
-```compact
-pragma language_version 0.15;
-import CompactStandardLibrary;
-
-export ledger counter: Counter;
-
-export circuit increment(value: Uint<16>): [] {
-  counter.increment(value);
-}
-
-export circuit get_count(): Uint<64> {
-  return counter;
-}
-```
-
 **Voting Contract:**
 ```compact
 pragma language_version 0.15;
@@ -422,22 +333,6 @@ export circuit get_results(): VotingResults {
 }
 ```
 
-**Token Contract:**
-```compact
-pragma language_version 0.15;
-import CompactStandardLibrary;
-
-export ledger tokens: TokenLedger;
-
-export circuit transfer(to: Address, amount: Uint<64>): [] {
-  tokens.transfer(to, amount);
-}
-
-export circuit get_balance(address: Address): Uint<64> {
-  return tokens.balanceOf(address);
-}
-```
-
 ### 🔧 Environment Variables
 
 Create a `.env` file for configuration:
@@ -447,57 +342,6 @@ Create a `.env` file for configuration:
 WALLET_SEED=your-64-character-hex-seed-phrase
 WALLET_ADDRESS=your-wallet-address
 
-# Network Configuration  
-MIDNIGHT_NETWORK=testnet
-INDEXER_URL=https://indexer.testnet-02.midnight.network/api/v1/graphql
-NODE_URL=https://rpc.testnet-02.midnight.network
-
-# Development Settings
-AUTO_DEPLOY=false
-DEPLOY_MODE=new
-QUICK_TEST=false
-
-# Cache Settings
-SYNC_CACHE=./cache
-LOG_LEVEL=info
-```
-
-### 🎯 Set Ledger Support
-
-The scaffold now supports **Set ledger variables** with enhanced display:
-
-```compact
-export ledger items: Set<Bytes<32>>;
-```
-
-**In contract state display:**
-```
-=== Contract State ===
-Contract Address: 02000914e67a3e27f4...
-items (Set<data>): [
-  "0x1234567890abcdef...",
-  "0xfedcba0987654321..."
-]
-```
-
-**If Set contents aren't directly enumerable:**
-```
-items (Set<data>): [Set contents not directly enumerable]
-ℹ️  To display Set contents, ensure your contract exposes a read-only function to enumerate or query the Set.
-```
-
-### 🔄 Multiple Contract Support
-
-The system detects and uses the first `.compact` file found. For multiple contracts:
-
-```bash
-# Rename active contract
-mv voting.compact active-contract.compact
-mv counter.compact backup-counter.compact
-
-# Regenerate CLI
-npm run dev
-```
 
 ## 💰 Wallet Management
 
@@ -505,7 +349,7 @@ npm run dev
 
 **Option 1: Auto-generate wallet (Recommended)**
 ```bash
-npm run generate-key
+npm run wallet
 ```
 
 **Option 2: Manual setup**
@@ -517,12 +361,6 @@ cp .env.example .env
 WALLET_SEED=your-64-character-hex-seed-phrase-here
 ```
 
-**Option 3: Interactive creation**
-```bash
-npm run wallet
-# Will prompt for seed or generate new one
-```
-
 ### 💰 Balance Checking
 
 **Check wallet balance:**
@@ -530,41 +368,12 @@ npm run wallet
 npm run balance
 ```
 
-**Output example:**
-```
-🌙 Midnight Wallet Balance Checker
-
-📍 Wallet Address: mn_shield-addr_test1ht0n6y...
-🔗 Connecting to Midnight testnet...
-⏳ Syncing wallet...
-
-💰 Balance Information:
-📍 Address: mn_shield-addr_test1ht0n6y...
-💎 Balance: 1,000.000000 tUsdt  
-🔢 Raw Balance: 1000000000 microTusdt
-
-✅ Wallet has sufficient balance for contract operations!
-```
-
-**Balance status indicators:**
-- 💡 **Zero balance**: Shows faucet instructions
-- ⚠️ **Low balance**: Warns about insufficient funds
-- ✅ **Sufficient balance**: Ready for development
-
 ### 🚰 Getting Testnet Tokens
 
 **Automated faucet request:**
 ```bash
 npm run faucet
 ```
-
-**Manual faucet (recommended fallback):**
-1. Visit: https://midnight.network/testnet-faucet
-2. Copy your wallet address from CLI output
-3. Complete captcha verification
-4. Request 1000+ tokens (usually arrives in 1-2 minutes)
-
-> **Note**: Automated faucet may encounter proof server version mismatches during testnet development. Manual faucet is always reliable.
 
 ## 🛠️ Architecture
 
@@ -585,113 +394,12 @@ graph LR
 - **API Layer**: Handles contract interactions
 - **Wallet Integration**: Manages testnet connections
 
-## 🎯 Example Use Cases
-
-### 🗳️ Decentralized Voting System
-```compact
-pragma language_version 0.15;
-import CompactStandardLibrary;
-
-export ledger votes: VotingState;
-export ledger voters: Set<Address>;
-
-export circuit vote_for(candidate: Uint<8>): [] {
-  assert(!voters.has(msg.sender), "Already voted");
-  voters.add(msg.sender);
-  votes.incrementVotes(candidate);
-}
-
-export circuit get_results(): VotingResults {
-  return votes.getResults();
-}
-```
-
-**Generated CLI features:**
-- Vote for candidates (with duplicate prevention)
-- View real-time results
-- Check voting eligibility
-
-### 💰 Token Management System
-```compact
-pragma language_version 0.15;
-import CompactStandardLibrary;
-
-export ledger balances: Map<Address, Uint<64>>;
-export ledger totalSupply: Uint<64>;
-
-export circuit transfer(to: Address, amount: Uint<64>): [] {
-  balances[msg.sender] -= amount;
-  balances[to] += amount;
-}
-
-export circuit get_balance(address: Address): Uint<64> {
-  return balances[address];
-}
-```
-
-**Generated CLI features:**
-- Transfer tokens between addresses
-- Check account balances
-- View total supply
-
-### 🎮 Gaming State Management
-```compact
-pragma language_version 0.15;
-import CompactStandardLibrary;
-
-export ledger gameState: GameBoard;
-export ledger players: Map<Address, PlayerStats>;
-
-export circuit make_move(x: Uint<8>, y: Uint<8>, piece: GamePiece): [] {
-  gameState.placePiece(x, y, piece);
-  players[msg.sender].incrementMoves();
-}
-
-export circuit get_game_state(): GameBoard {
-  return gameState;
-}
-```
-
-**Generated CLI features:**
-- Make game moves with coordinate input
-- View current game board
-- Check player statistics
-
-**🎉 All examples generate fully functional CLIs automatically!**
 
 ## 🤝 Contributing
 
 We welcome contributions! Here's how to get started:
 
-### 🚀 Quick Contribution Setup
-
-```bash
-# Fork and clone the repository
-git clone https://github.com/yourusername/scaffold-midnight.git
-cd scaffold-midnight
-
-# Install dependencies
-npm install
-
-# Create a feature branch
-git checkout -b feature/amazing-feature
-
-# Make your changes and test
-npm run test
-npm run build
-
-# Commit and push
-git commit -m 'Add amazing feature'
-git push origin feature/amazing-feature
-```
-
 ### 📋 Contribution Guidelines
-
-**Before contributing:**
-- [ ] Read the [Code of Conduct](CODE_OF_CONDUCT.md)
-- [ ] Check existing [issues](https://github.com/kaleababayneh/scaffold-midnight/issues)
-- [ ] Test your changes locally
-- [ ] Update documentation if needed
 
 **Types of contributions welcome:**
 - 🐛 **Bug fixes** - Fix issues with the scaffold
@@ -700,189 +408,6 @@ git push origin feature/amazing-feature
 - 🎨 **UI/UX** - Enhance CLI interface and user experience
 - 🧪 **Tests** - Add test coverage and improve reliability
 
-### 🔧 Development Workflow
-
-```bash
-# Run tests
-npm run test
-
-# Test with a sample contract
-echo 'export circuit test(): [] {}' > test.compact
-npm run dev
-
-# Check code quality
-npm run lint
-
-# Build all packages
-npm run build
-```
-
-### 📝 Pull Request Process
-
-1. **Update documentation** for any new features
-2. **Add tests** for bug fixes or new functionality  
-3. **Follow coding standards** (ESLint/Prettier)
-4. **Write clear commit messages** following [Conventional Commits](https://conventionalcommits.org/)
-5. **Update CHANGELOG.md** if applicable
-
-## 📄 License
-
-This project is licensed under the **Apache License 2.0** - see the [LICENSE](LICENSE) file for full details.
-
-### 📋 License Summary
-
-- ✅ **Commercial use** - Use in commercial projects
-- ✅ **Modification** - Modify and distribute changes
-- ✅ **Distribution** - Distribute original or modified versions
-- ✅ **Patent use** - Express grant of patent rights
-- ⚠️ **Trademark use** - Does not grant trademark rights
-- ⚠️ **Liability** - Disclaimer of liability
-- ⚠️ **Warranty** - No warranty provided
-
-### 🔗 Related Licenses
-
-- **Midnight Network**: Check [Midnight's licensing terms](https://midnight.network/legal)
-- **Dependencies**: See individual package licenses in `node_modules`
-
-## 🙏 Acknowledgments
-
-### 🌟 Special Thanks
-
-- **[Midnight Network](https://midnight.network)** - For the Compact language, runtime, and toolchain
-- **[TypeScript Team](https://typescriptlang.org)** - For excellent type system and tooling
-- **[Node.js Community](https://nodejs.org)** - For the runtime and ecosystem
-- **[Docker Inc.](https://docker.com)** - For containerization technology
-
-### 🏗️ Built With
-
-- **[Compact Language](https://midnight.network)** - Smart contract language
-- **[TypeScript](https://typescriptlang.org)** - Type-safe JavaScript
-- **[Node.js](https://nodejs.org)** - JavaScript runtime
-- **[Docker](https://docker.com)** - Containerization
-- **[ESLint](https://eslint.org)** - Code linting
-- **[Prettier](https://prettier.io)** - Code formatting
-- **[Vitest](https://vitest.dev)** - Testing framework
-
-### 🤝 Community
-
-- **Discord**: [Join Midnight Community](https://discord.gg/midnight)
-- **Twitter**: [@MidnightNtwrk](https://twitter.com/MidnightNtwrk)
-- **GitHub**: [Midnight Network](https://github.com/midnight-ntwrk)
-- **Documentation**: [Midnight Docs](https://docs.midnight.network)
-
-## 📚 Additional Resources
-
-### 📖 Learning Materials
-
-- **[Compact Language Guide](https://docs.midnight.network/compact)** - Official language documentation
-- **[Midnight Developer Docs](https://docs.midnight.network)** - Complete developer resources
-- **[Smart Contract Examples](https://github.com/midnight-ntwrk/examples)** - Example contracts and patterns
-- **[Best Practices](https://docs.midnight.network/best-practices)** - Security and optimization guides
-
-### 🛠️ Tools & Extensions
-
-- **[VS Code Extension](https://marketplace.visualstudio.com/items?itemName=midnight.compact)** - Syntax highlighting for Compact
-- **[Midnight CLI](https://github.com/midnight-ntwrk/cli)** - Official command line tools
-- **[Network Explorer](https://explorer.midnight.network)** - Blockchain explorer
-- **[Testnet Faucet](https://midnight.network/testnet-faucet)** - Get test tokens
-
-### 🔧 API References
-
-- **[Compact Runtime API](https://docs.midnight.network/api/runtime)** - Runtime functions and types
-- **[Wallet API](https://docs.midnight.network/api/wallet)** - Wallet integration
-- **[Network API](https://docs.midnight.network/api/network)** - Network interactions
-- **[Indexer API](https://docs.midnight.network/api/indexer)** - Query blockchain data
-
-## ❓ Frequently Asked Questions
-
-### 🚀 Getting Started
-
-**Q: What is the minimum Node.js version required?**
-A: Node.js 18 or higher is required. Check with `node --version`.
-
-**Q: Do I need Docker for development?**
-A: Docker is required for local development (`npm run deploy`). For testnet only, Docker is optional.
-
-**Q: Can I use this with existing Midnight contracts?**
-A: Yes! Just place your `.compact` file in the project root and run `npm run dev`.
-
-### 🔧 Development Issues
-
-**Q: My contract changes aren't reflected in the CLI**
-A: Always run `npm run dev` after modifying your `.compact` file to regenerate the CLI.
-
-**Q: I get "Contract not detected" errors**
-A: Ensure your `.compact` file is in the project root (not in subdirectories) and has the correct file extension.
-
-**Q: The CLI shows "Function not found" errors**
-A: Verify your function syntax uses `export circuit functionName(params): ReturnType { ... }` format.
-
-**Q: Local deployment fails with Docker errors**
-A: Ensure Docker Desktop is running and you have sufficient system resources (4GB+ RAM recommended).
-
-### 💰 Wallet & Tokens
-
-**Q: How do I get testnet tokens?**
-A: Use `npm run faucet` for automated requests, or visit https://midnight.network/testnet-faucet for manual requests.
-
-**Q: My wallet shows zero balance but I requested tokens**
-A: Tokens can take 1-2 minutes to arrive. Use `npm run balance` to check status. Ensure you're using the correct wallet address.
-
-**Q: Can I use my existing Midnight wallet?**
-A: Yes! Add your `WALLET_SEED` to the `.env` file to use an existing wallet.
-
-**Q: Is it safe to store my wallet seed in `.env`?**
-A: Only for development/testnet. Never commit `.env` files with real wallet seeds to version control.
-
-### 🌐 Network & Deployment
-
-**Q: What's the difference between local and testnet deployment?**
-A: Local deployment (`npm run deploy`) uses Docker for fast testing. Testnet deployment (`npm run wallet`) uses the live Midnight testnet.
-
-**Q: Can I deploy to mainnet?**
-A: This scaffold is designed for development and testnet. For mainnet deployment, use official Midnight tools with proper security practices.
-
-**Q: How do I join someone else's contract?**
-A: Use `npm run deploy --join` and provide the contract address when prompted.
-
-**Q: My testnet deployment is slow**
-A: Testnet performance varies. For faster iteration, use local deployment (`npm run deploy`) during development.
-
-### 🛠️ Advanced Usage
-
-**Q: Can I customize the generated CLI?**
-A: Yes! Modify files in `boilerplate/contract-cli/src/` to customize CLI behavior. The system will preserve your changes.
-
-**Q: How do I add custom witness functions?**
-A: Edit `boilerplate/contract/src/witnesses.ts` to add your private state logic.
-
-**Q: Can I use multiple contracts in one project?**
-A: Currently, the system uses the first `.compact` file found. For multiple contracts, rename files or use separate project directories.
-
-**Q: How do I integrate this with CI/CD?**
-A: Use deployment flags like `npm run deploy --new --dry-run` in your CI scripts. Ensure Docker is available in your CI environment.
-
-### 🔍 Debugging
-
-**Q: Where are the log files located?**
-A: Check `boilerplate/contract-cli/logs/` for detailed execution logs.
-
-**Q: How do I enable debug mode?**
-A: Set `LOG_LEVEL=debug` in your `.env` file for verbose logging.
-
-**Q: My Set ledger variables don't display properly**
-A: The system attempts to display Set contents automatically. If it shows "not enumerable", add a read-only function to query Set contents.
-
-**Q: I get TypeScript compilation errors**
-A: Run `npm run build` to check for syntax errors in your contract or witness functions.
-
----
-
-**Built with ❤️ for the Midnight ecosystem** 🌙
-
-*Empowering developers to build privacy-preserving applications with zero-knowledge proofs.*
-
----
 
 ## 📊 Project Status
 
@@ -891,8 +416,7 @@ A: Run `npm run build` to check for syntax errors in your contract or witness fu
 | ✅ Auto-CLI Generation | Complete | Supports all contract types |
 | ✅ Local Development | Complete | Docker-based Midnight node |
 | ✅ Testnet Deployment | Complete | Automated wallet management |
-| ✅ Set Ledger Support | Complete | Enhanced state display |
-| ✅ Deployment Flags | Complete | CI/CD ready |
+| ✅ Deployment Flags | Complete |  |
 | ✅ Wallet Tools | Complete | Balance checking, faucet |
 | ✅ Documentation | Complete | Comprehensive guides |
 | 🔄 Multi-Contract Support | Planned | Support multiple contracts |
@@ -900,5 +424,6 @@ A: Run `npm run build` to check for syntax errors in your contract or witness fu
 | 🔄 Contract Templates | Planned | Pre-built contract examples |
 
 **Last Updated**: June 13, 2025  
-**Version**: 2.0.0  
-**Stability**: Production Ready 🚀
+Built with ❤️ for the Midnight ecosystem 🌙
+
+Empowering developers to build privacy-preserving applications with zero-knowledge proofs.
