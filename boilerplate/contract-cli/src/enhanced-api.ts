@@ -1,5 +1,5 @@
 // Enhanced API wrapper for Bboard Contract
-// Generated on: 2025-06-13T12:06:30.988Z
+// Generated on: 2025-06-13T19:59:54.667Z
 // Auto-generated from bboard.compact
 
 import { type Logger } from 'pino';
@@ -92,22 +92,64 @@ export class EnhancedContractAPI {
   async increment(...args: any[]): Promise<any> {
     return await (originalApi as any).increment(...args);
   }
+  /**
+   * Execute decrement function
+   */
+  async decrement(...args: any[]): Promise<any> {
+    return await (originalApi as any).decrement(...args);
+  }
+  /**
+   * Execute publicKey function
+   */
+  async publicKey(...args: any[]): Promise<any> {
+    return await (originalApi as any).publicKey(...args);
+  }
 }
 
 // Export contract metadata for reference
 export const CONTRACT_METADATA = {
   name: 'Bboard Contract',
   fileName: 'bboard.compact',
-  generatedAt: '2025-06-13T12:06:30.988Z',
+  generatedAt: '2025-06-13T19:59:54.667Z',
   functions: [
   {
     "name": "increment",
     "parameters": [],
     "returnType": "[]",
     "readOnly": false
+  },
+  {
+    "name": "decrement",
+    "parameters": [
+      {
+        "name": "sk",
+        "type": "Bytes<32>"
+      }
+    ],
+    "returnType": "[]",
+    "readOnly": false
+  },
+  {
+    "name": "publicKey",
+    "parameters": [
+      {
+        "name": "sk",
+        "type": "Bytes<32>"
+      }
+    ],
+    "returnType": "Bytes<32>",
+    "readOnly": true
   }
 ],
   ledgerState: [
+  {
+    "name": "organizer",
+    "type": "Bytes<32>"
+  },
+  {
+    "name": "restrictedCounter",
+    "type": "Counter"
+  },
   {
     "name": "round",
     "type": "Counter"
@@ -115,13 +157,12 @@ export const CONTRACT_METADATA = {
 ],
   witnesses: [
   {
-    "name": "local_secret_key",
+    "name": "secretKey",
     "ledgerType": "typeof Ledger",
-    "privateType": "BBoardPrivateState",
+    "privateType": "ContractPrivate",
     "returns": [
-      "// EXERCISE 2: WHAT ARE THE CORRECT TWO VALUES TO RETURN HERE?\n    privateState",
-      "// EXERCISE ANSWER\n    privateState.secretKey",
-      "// EXERCISE ANSWER"
+      "privateState",
+      "privateState.secretKey"
     ]
   }
 ]

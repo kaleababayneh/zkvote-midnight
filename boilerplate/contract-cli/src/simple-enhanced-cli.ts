@@ -17,7 +17,7 @@ import { type Wallet } from '@midnight-ntwrk/wallet-api';
 import { stdin as input, stdout as output } from 'node:process';
 import { createInterface, type Interface } from 'node:readline/promises';
 import { type Logger } from 'pino';
-import { type CounterProviders, type DeployedCounterContract } from './common-types.js';
+import { type ContractProviders, type DeployedContractContract } from './common-types.js';
 import { type Config } from './config.js';
 import { ContractAnalyzer, type ContractAnalysis } from './contract-analyzer.js';
 import { DynamicCLIGenerator, type MenuItem } from './dynamic-cli-generator.js';
@@ -30,7 +30,7 @@ export class SimpleEnhancedCLI {
   private analyzer: ContractAnalyzer;
   private cliGenerator: DynamicCLIGenerator;
   private contractInfo: ContractAnalysis | null = null;
-  private contract: DeployedCounterContract | null = null;
+  private contract: DeployedContractContract | null = null;
 
   constructor(private logger: Logger) {
     this.analyzer = new ContractAnalyzer();
@@ -48,7 +48,7 @@ export class SimpleEnhancedCLI {
     }
   }
 
-  async runEnhancedCLI(providers: CounterProviders, rli: Interface): Promise<void> {
+  async runEnhancedCLI(providers: ContractProviders, rli: Interface): Promise<void> {
     if (!this.contractInfo) {
       throw new Error('Contract info not available');
     }
@@ -95,7 +95,7 @@ export class SimpleEnhancedCLI {
     }
   }
 
-  async deployOrJoin(providers: CounterProviders, rli: Interface): Promise<DeployedCounterContract | null> {
+  async deployOrJoin(providers: ContractProviders, rli: Interface): Promise<DeployedContractContract | null> {
     if (!this.contractInfo) {
       throw new Error('Contract info not available');
     }
@@ -112,7 +112,10 @@ export class SimpleEnhancedCLI {
         return this.contract;
       } else {
         this.logger.info('🚀 Auto-deploying new contract...');
-        this.contract = await api.deploy(providers, { privateCounter: 0 });
+        // Generate a random 32-byte secret key
+        const secretKey = new Uint8Array(32);
+        crypto.getRandomValues(secretKey);
+        this.contract = await api.deploy(providers, { secretKey });
         this.logger.info(`🎉 Successfully deployed ${this.contractInfo.contractName}!`);
         return this.contract;
       }
@@ -129,7 +132,10 @@ Which would you like to do? `;
       const choice = await rli.question(question);
       switch (choice) {
         case '1':
-          this.contract = await api.deploy(providers, { privateCounter: 0 });
+          // Generate a random 32-byte secret key
+          const secretKey2 = new Uint8Array(32);
+          crypto.getRandomValues(secretKey2);
+          this.contract = await api.deploy(providers, { secretKey: secretKey2 });
           this.logger.info(`🎉 Successfully deployed ${this.contractInfo.contractName}!`);
           return this.contract;
         case '2':

@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { webcrypto as crypto } from 'node:crypto';
 
 // Configure dotenv to load from project root
 const __filename = fileURLToPath(import.meta.url);
@@ -14,7 +15,7 @@ import { stdin as input, stdout as output } from 'node:process';
 import { createInterface, type Interface } from 'node:readline/promises';
 import { type Logger } from 'pino';
 import { type StartedDockerComposeEnvironment, type DockerComposeEnvironment } from 'testcontainers';
-import { type CounterProviders, type DeployedCounterContract } from './common-types';
+import { type ContractProviders, type DeployedContractContract } from './common-types';
 import { type Config, StandaloneConfig } from './config';
 import { DynamicCLIGenerator } from './dynamic-cli-generator.js';
 import * as api from './api';
@@ -34,12 +35,12 @@ You can do one of the following:
   3. Exit
 Which would you like to do? `;
 
-const join = async (providers: CounterProviders, rli: Interface): Promise<DeployedCounterContract> => {
+const join = async (providers: ContractProviders, rli: Interface): Promise<DeployedContractContract> => {
   const contractAddress = await rli.question('What is the contract address (in hex)? ');
   return await api.joinContract(providers, contractAddress);
 };
 
-const deployOrJoin = async (providers: CounterProviders, rli: Interface): Promise<DeployedCounterContract | null> => {
+const deployOrJoin = async (providers: ContractProviders, rli: Interface): Promise<DeployedContractContract | null> => {
   // Check if auto-deploy is enabled (set by deployment script)
   if (process.env.AUTO_DEPLOY === 'true') {
     const deployMode = process.env.DEPLOY_MODE || 'new';
@@ -50,7 +51,10 @@ const deployOrJoin = async (providers: CounterProviders, rli: Interface): Promis
       return await api.joinContract(providers, contractAddress);
     } else {
       logger.info('🚀 Auto-deploying new contract...');
-      return await api.deploy(providers, { privateCounter: 0 });
+      // Generate a random 32-byte secret key
+      const secretKey = new Uint8Array(32);
+      crypto.getRandomValues(secretKey);
+      return await api.deploy(providers, { secretKey });
     }
   }
   
@@ -58,7 +62,10 @@ const deployOrJoin = async (providers: CounterProviders, rli: Interface): Promis
     const choice = await rli.question(DEPLOY_OR_JOIN_QUESTION);
     switch (choice) {
       case '1':
-        return await api.deploy(providers, { privateCounter: 0 });
+        // Generate a random 32-byte secret key
+        const secretKey2 = new Uint8Array(32);
+        crypto.getRandomValues(secretKey2);
+        return await api.deploy(providers, { secretKey: secretKey2 });
       case '2':
         return await join(providers, rli);
       case '3':
@@ -70,7 +77,7 @@ const deployOrJoin = async (providers: CounterProviders, rli: Interface): Promis
   }
 };
 
-const mainLoop = async (providers: CounterProviders, rli: Interface): Promise<void> => {
+const mainLoop = async (providers: ContractProviders, rli: Interface): Promise<void> => {
   const counterContract = await deployOrJoin(providers, rli);
   if (counterContract === null) {
     return;
