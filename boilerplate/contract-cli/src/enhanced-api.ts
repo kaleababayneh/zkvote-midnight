@@ -1,5 +1,5 @@
 // Enhanced API wrapper for Counter Contract
-// Generated on: 2025-06-13T21:21:56.079Z
+// Generated on: 2025-06-13T21:39:18.943Z
 // Auto-generated from counter.compact
 
 import { type Logger } from 'pino';
@@ -93,12 +93,6 @@ export class EnhancedContractAPI {
     return await (originalApi as any).increment(...args);
   }
   /**
-   * Execute setler function
-   */
-  async setler(...args: any[]): Promise<any> {
-    return await (originalApi as any).setler(...args);
-  }
-  /**
    * Execute publicKey function
    */
   async publicKey(...args: any[]): Promise<any> {
@@ -110,24 +104,13 @@ export class EnhancedContractAPI {
 export const CONTRACT_METADATA = {
   name: 'Counter Contract',
   fileName: 'counter.compact',
-  generatedAt: '2025-06-13T21:21:56.079Z',
+  generatedAt: '2025-06-13T21:39:18.943Z',
   functions: [
   {
     "name": "increment",
     "parameters": [],
     "returnType": "[]",
     "readOnly": false
-  },
-  {
-    "name": "setler",
-    "parameters": [
-      {
-        "name": "sk",
-        "type": "Bytes<32>"
-      }
-    ],
-    "returnType": "Bytes<32>",
-    "readOnly": true
   },
   {
     "name": "publicKey",
