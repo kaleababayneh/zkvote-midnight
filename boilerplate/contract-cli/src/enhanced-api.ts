@@ -1,5 +1,5 @@
 // Enhanced API wrapper for Counter Contract
-// Generated on: 2025-06-13T21:39:18.943Z
+// Generated on: 2025-06-13T22:26:19.468Z
 // Auto-generated from counter.compact
 
 import { type Logger } from 'pino';
@@ -92,47 +92,22 @@ export class EnhancedContractAPI {
   async increment(...args: any[]): Promise<any> {
     return await (originalApi as any).increment(...args);
   }
-  /**
-   * Execute publicKey function
-   */
-  async publicKey(...args: any[]): Promise<any> {
-    return await (originalApi as any).publicKey(...args);
-  }
 }
 
 // Export contract metadata for reference
 export const CONTRACT_METADATA = {
   name: 'Counter Contract',
   fileName: 'counter.compact',
-  generatedAt: '2025-06-13T21:39:18.943Z',
+  generatedAt: '2025-06-13T22:26:19.468Z',
   functions: [
   {
     "name": "increment",
     "parameters": [],
     "returnType": "[]",
     "readOnly": false
-  },
-  {
-    "name": "publicKey",
-    "parameters": [
-      {
-        "name": "sk",
-        "type": "Bytes<32>"
-      }
-    ],
-    "returnType": "Bytes<32>",
-    "readOnly": true
   }
 ],
   ledgerState: [
-  {
-    "name": "organizer",
-    "type": "Bytes<32>"
-  },
-  {
-    "name": "restrictedCounter",
-    "type": "Counter"
-  },
   {
     "name": "round",
     "type": "Counter"
