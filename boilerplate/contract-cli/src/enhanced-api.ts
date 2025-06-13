@@ -1,5 +1,5 @@
 // Enhanced API wrapper for Bboard Contract
-// Generated on: 2025-06-13T09:20:03.645Z
+// Generated on: 2025-06-13T09:24:43.078Z
 // Auto-generated from bboard.compact
 
 import { type Logger } from 'pino';
@@ -87,22 +87,10 @@ export class EnhancedContractAPI {
 
   // Dynamic function mapping based on contract analysis
   /**
-   * Execute post function
+   * Execute increment function
    */
-  async post(...args: any[]): Promise<any> {
-    return await (originalApi as any).post(...args);
-  }
-  /**
-   * Execute take_down function
-   */
-  async take_down(...args: any[]): Promise<any> {
-    return await (originalApi as any).take_down(...args);
-  }
-  /**
-   * Execute public_key function
-   */
-  async public_key(...args: any[]): Promise<any> {
-    return await (originalApi as any).public_key(...args);
+  async increment(...args: any[]): Promise<any> {
+    return await (originalApi as any).increment(...args);
   }
 }
 
@@ -110,57 +98,19 @@ export class EnhancedContractAPI {
 export const CONTRACT_METADATA = {
   name: 'Bboard Contract',
   fileName: 'bboard.compact',
-  generatedAt: '2025-06-13T09:20:03.645Z',
+  generatedAt: '2025-06-13T09:24:43.078Z',
   functions: [
   {
-    "name": "post",
-    "parameters": [
-      {
-        "name": "new_message",
-        "type": "Opaque<\"string\">"
-      }
-    ],
+    "name": "increment",
+    "parameters": [],
     "returnType": "[]",
     "readOnly": false
-  },
-  {
-    "name": "take_down",
-    "parameters": [],
-    "returnType": "Opaque<\"string\">",
-    "readOnly": true
-  },
-  {
-    "name": "public_key",
-    "parameters": [
-      {
-        "name": "sk",
-        "type": "Bytes<32>"
-      },
-      {
-        "name": "instance",
-        "type": "Bytes<32>"
-      }
-    ],
-    "returnType": "Bytes<32>",
-    "readOnly": true
   }
 ],
   ledgerState: [
   {
-    "name": "state",
-    "type": "STATE"
-  },
-  {
-    "name": "message",
-    "type": "Maybe<Opaque<\"string\">>"
-  },
-  {
-    "name": "instance",
+    "name": "round",
     "type": "Counter"
-  },
-  {
-    "name": "poster",
-    "type": "Bytes<32>"
   }
 ],
   witnesses: [
