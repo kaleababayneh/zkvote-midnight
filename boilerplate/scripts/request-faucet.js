@@ -20,7 +20,7 @@ dotenv.config({ path: envPath });
 
 // Constants
 const GENESIS_SEED = '0000000000000000000000000000000000000000000000000000000000000001';
-const TRANSFER_AMOUNT = 1_000_000_0n; // 10 tUsdt = 1,000,000,0 microTusdt
+const TRANSFER_AMOUNT = 10_000_000n; // 10 tUsdt = 1,000,000,0 microTusdt
 
 // Testnet configuration
 const TESTNET_CONFIG = {
@@ -37,13 +37,11 @@ if (!targetAddress) {
   process.exit(1);
 }
 
-console.log('🌙 Midnight Custom Faucet');
-console.log('💰 Transferring tokens from genesis wallet to your wallet');
+console.log('🌙 Midnight Faucet');
 console.log(`📥 Target: ${targetAddress}`);
 
 (async () => {
   try {
-    console.log('🔧 Building genesis wallet...');
     
     // Set network to testnet
     setNetworkId(NetworkId.TestNet);
@@ -63,13 +61,11 @@ console.log(`📥 Target: ${targetAddress}`);
 
     
     // Wait for wallet to sync
-    console.log('⏳ Syncing genesis wallet...');
     await new Promise(resolve => setTimeout(resolve, 5000));
     
     const sourceState = await firstValueFrom(sourceWallet.state());
     const sourceBalance = sourceState.balances[nativeToken()] || 0n;
     
-    console.log(`💰 Genesis wallet balance: ${sourceBalance} microTUsdt`);
     
     if (sourceBalance === 0n) {
       console.error('❌ Genesis wallet has no funds!');
@@ -105,8 +101,6 @@ console.log(`📥 Target: ${targetAddress}`);
     await sourceWallet.close();
     
     console.log('🎉 Transfer completed successfully!');
-    console.log('💰 Your wallet should now have testnet tokens');
-    console.log('🚀 Run "npm run deploy" to deploy your contract');
     
   } catch (error) {
     console.error('❌ Transfer failed:', error.message);

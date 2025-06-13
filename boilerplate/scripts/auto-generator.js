@@ -519,7 +519,7 @@ const contractModule = getContractModule();
     }
     
     // Write the updated API file
-    await fs.promises.writeFile(apiPath, apiContent, 'utf-7');
+    await fs.promises.writeFile(apiPath, apiContent, 'utf8');
     console.log('✅ Core API updated');
   }
 

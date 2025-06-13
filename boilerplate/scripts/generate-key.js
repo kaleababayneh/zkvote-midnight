@@ -96,7 +96,6 @@ WALLET_ADDRESS=${address}`;
     ;
 
     fs.writeFileSync(this.envPath, envContent);
-    console.log(`✅ Updated ${this.envPath} with new wallet configuration`);
   }
 
   /**
@@ -121,10 +120,7 @@ WALLET_ADDRESS=${address}`;
       this.updateEnvFile(seed, address);
       
       console.log('🚀 Setup completed!');
-      console.log('\n📋 Next steps:');
-      console.log('1. 🔧 Run: npm run deploy');
-      console.log('2. 💰 Your wallet will be created and funded automatically on testnet');
-      console.log('3. 📦 Your contract will be deployed');
+     
       console.log('\n💡 The seed phrase and address are now saved in your .env file');
       
     } catch (error) {

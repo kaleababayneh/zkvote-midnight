@@ -137,29 +137,9 @@ export const deploy = async (
   return counterContract;
 };
 
-export const increment = async (counterContract: DeployedCounterContract): Promise<FinalizedTxData> => {
-  logger.info('Incrementing...');
-  const finalizedTxData = await (counterContract.callTx as any).megaBoostCounterxx();
-  logger.info(`Transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
-  return finalizedTxData.public;
-};
 
-// New functions to match contract functions
-export const incrementMainCounter = async (counterContract: DeployedCounterContract): Promise<FinalizedTxData> => {
-  return await increment(counterContract);
-};
 
-export const incrementCounter = async (counterContract: DeployedCounterContract): Promise<FinalizedTxData> => {
-  return await increment(counterContract);
-};
 
-export const incrementosas = async (counterContract: DeployedCounterContract): Promise<FinalizedTxData> => {
-  return await increment(counterContract);
-};
-
-export const incrementosa = async (counterContract: DeployedCounterContract): Promise<FinalizedTxData> => {
-  return await increment(counterContract);
-};
 
 export const get_round = async (counterContract: DeployedCounterContract, providers: CounterProviders): Promise<bigint | null> => {
   const contractAddress = counterContract.deployTxData.public.contractAddress;
@@ -448,7 +428,7 @@ export const configureProviders = async (wallet: Wallet & Resource, config: Conf
       privateStateStoreName: contractConfig.privateStateStoreName,
     }),
     publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
-    zkConfigProvider: new NodeZkConfigProvider<'increment'>(contractConfig.zkConfigPath),
+    zkConfigProvider: new NodeZkConfigProvider<'increment' | 'vote_for'>(contractConfig.zkConfigPath),
     proofProvider: httpClientProofProvider(config.proofServer),
     walletProvider: walletAndMidnightProvider,
     midnightProvider: walletAndMidnightProvider,

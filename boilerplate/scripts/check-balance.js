@@ -149,8 +149,7 @@ class WalletBalanceChecker {
         console.log('\n✅ Wallet has sufficient balance for contract operations!');
       }
       
-      console.log('\n🎯 Ready for development!');
-      console.log('🚀 Deploy contracts with: npm run deploy');
+
       
     } catch (error) {
       console.error('\n❌ Balance check failed:', error.message);

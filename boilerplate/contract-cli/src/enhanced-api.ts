@@ -1,6 +1,6 @@
-// Enhanced API wrapper for Basic Contract
-// Generated on: 2025-06-12T17:56:11.783Z
-// Auto-generated from basic.compact
+// Enhanced API wrapper for Zkv Contract
+// Generated on: 2025-06-13T07:41:20.354Z
+// Auto-generated from zkv.compact
 
 import { type Logger } from 'pino';
 import { ContractAnalyzer } from './contract-analyzer.js';
@@ -92,25 +92,92 @@ export class EnhancedContractAPI {
   async increment(...args: any[]): Promise<any> {
     return await (originalApi as any).increment(...args);
   }
+  /**
+   * Execute vote_for function
+   */
+  async vote_for(...args: any[]): Promise<any> {
+    return await (originalApi as any).vote_for(...args);
+  }
+  /**
+   * Execute get_vote_count function
+   */
+  async get_vote_count(...args: any[]): Promise<any> {
+    return await (originalApi as any).get_vote_count(...args);
+  }
+  /**
+   * Execute public_key_vote function
+   */
+  async public_key_vote(...args: any[]): Promise<any> {
+    return await (originalApi as any).public_key_vote(...args);
+  }
 }
 
 // Export contract metadata for reference
 export const CONTRACT_METADATA = {
-  name: 'Basic Contract',
-  fileName: 'basic.compact',
-  generatedAt: '2025-06-12T17:56:11.783Z',
+  name: 'Zkv Contract',
+  fileName: 'zkv.compact',
+  generatedAt: '2025-06-13T07:41:20.355Z',
   functions: [
   {
     "name": "increment",
     "parameters": [],
     "returnType": "[]",
     "readOnly": false
+  },
+  {
+    "name": "vote_for",
+    "parameters": [
+      {
+        "name": "index",
+        "type": "Uint<8>"
+      }
+    ],
+    "returnType": "[]",
+    "readOnly": false
+  },
+  {
+    "name": "get_vote_count",
+    "parameters": [
+      {
+        "name": "index",
+        "type": "Uint<8>"
+      }
+    ],
+    "returnType": "Uint<64>",
+    "readOnly": true
+  },
+  {
+    "name": "public_key_vote",
+    "parameters": [
+      {
+        "name": "sk",
+        "type": "Bytes<3>"
+      },
+      {
+        "name": "instance",
+        "type": "Bytes<3>"
+      }
+    ],
+    "returnType": "Bytes<32>",
+    "readOnly": true
   }
 ],
   ledgerState: [
   {
     "name": "round",
     "type": "Counter"
+  },
+  {
+    "name": "votesA",
+    "type": "Counter"
+  },
+  {
+    "name": "votesB",
+    "type": "Counter"
+  },
+  {
+    "name": "items",
+    "type": "Set<Bytes<32>>"
   }
 ],
   witnesses: [
