@@ -27,11 +27,11 @@ import * as fsAsync from 'node:fs/promises';
 import * as fs from 'node:fs';
 import { ContractAnalyzer } from './contract-analyzer.js';
 import {
-  type ContractContract,
-  type ContractPrivate,
-  type ContractPrivateStateId,
-  type ContractProviders,
-  type DeployedContractContract,
+  type CounterContract,
+  type CounterPrivateState,
+  type CounterPrivateStateId,
+  type CounterProviders,
+  type DeployedCounterContract,
 } from './common-types';
 import { type Config, contractConfig } from './config';
 
@@ -65,7 +65,7 @@ export const createOpaqueString = (value: string): any => {
 globalThis.WebSocket = WebSocket;
 
 export const getCounterLedgerState = async (
-  providers: ContractProviders,
+  providers: CounterProviders,
   contractAddress: ContractAddress,
 ): Promise<bigint | null> => {
   assertIsContractAddress(contractAddress);
@@ -78,7 +78,7 @@ export const getCounterLedgerState = async (
 };
 
 export const getVotesA = async (
-  providers: ContractProviders,
+  providers: CounterProviders,
   contractAddress: ContractAddress,
 ): Promise<bigint | null> => {
   assertIsContractAddress(contractAddress);
@@ -91,7 +91,7 @@ export const getVotesA = async (
 };
 
 export const getVotesB = async (
-  providers: ContractProviders,
+  providers: CounterProviders,
   contractAddress: ContractAddress,
 ): Promise<bigint | null> => {
   assertIsContractAddress(contractAddress);
@@ -104,7 +104,7 @@ export const getVotesB = async (
 };
 
 export const getVotingResults = async (
-  providers: ContractProviders,
+  providers: CounterProviders,
   contractAddress: ContractAddress,
 ): Promise<{ votesA: bigint | null; votesB: bigint | null; total: bigint }> => {
   const votesA = await getVotesA(providers, contractAddress);
@@ -115,12 +115,12 @@ export const getVotingResults = async (
   return { votesA, votesB, total };
 };
 
-export const counterContractInstance: ContractContract = new contractModule.Contract(witnesses);
+export const counterContractInstance: CounterContract = new contractModule.Contract(witnesses);
 
 export const joinContract = async (
-  providers: ContractProviders,
+  providers: CounterProviders,
   contractAddress: string,
-): Promise<DeployedContractContract> => {
+): Promise<DeployedCounterContract> => {
   const counterContract = await findDeployedContract(providers, {
     contractAddress,
     contract: counterContractInstance,
@@ -132,9 +132,9 @@ export const joinContract = async (
 };
 
 export const deploy = async (
-  providers: ContractProviders,
-  privateState: ContractPrivate,
-): Promise<DeployedContractContract> => {
+  providers: CounterProviders,
+  privateState: CounterPrivateState,
+): Promise<DeployedCounterContract> => {
   // Get dynamic contract name
   const analyzer = new ContractAnalyzer();
   const analysis = await analyzer.analyzeContract();
@@ -153,12 +153,12 @@ export const deploy = async (
 
 
 
-export const get_round = async (counterContract: DeployedContractContract, providers: ContractProviders): Promise<bigint | null> => {
+export const get_round = async (counterContract: DeployedCounterContract, providers: CounterProviders): Promise<bigint | null> => {
   const contractAddress = counterContract.deployTxData.public.contractAddress;
   return await getCounterLedgerState(providers, contractAddress);
 };
 
-export const vote_for = async (counterContract: DeployedContractContract, index: number): Promise<FinalizedTxData> => {
+export const vote_for = async (counterContract: DeployedCounterContract, index: number): Promise<FinalizedTxData> => {
   if (index === 0) {
     return await voteForOptionA(counterContract);
   } else if (index === 1) {
@@ -168,7 +168,7 @@ export const vote_for = async (counterContract: DeployedContractContract, index:
   }
 };
 
-export const get_vote_count = async (counterContract: DeployedContractContract, providers: ContractProviders, index: number): Promise<bigint> => {
+export const get_vote_count = async (counterContract: DeployedCounterContract, providers: CounterProviders, index: number): Promise<bigint> => {
   const contractAddress = counterContract.deployTxData.public.contractAddress;
   const results = await getVotingResults(providers, contractAddress);
   
@@ -189,14 +189,14 @@ export const public_key_vote = async (sk: string, instance: string): Promise<str
 };
 
 
-export const voteForOptionA = async (counterContract: DeployedContractContract): Promise<FinalizedTxData> => {
+export const voteForOptionA = async (counterContract: DeployedCounterContract): Promise<FinalizedTxData> => {
   logger.info('Voting for Option A...');
   const finalizedTxData = await (counterContract.callTx as any).vote_for(0n);
   logger.info(`Vote A transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
   return finalizedTxData.public;
 };
 
-export const voteForOptionB = async (counterContract: DeployedContractContract): Promise<FinalizedTxData> => {
+export const voteForOptionB = async (counterContract: DeployedCounterContract): Promise<FinalizedTxData> => {
   logger.info('Voting for Option B...');
   const finalizedTxData = await (counterContract.callTx as any).vote_for(1n);
   logger.info(`Vote B transaction ${finalizedTxData.public.txId} added in block ${finalizedTxData.public.blockHeight}`);
@@ -205,8 +205,8 @@ export const voteForOptionB = async (counterContract: DeployedContractContract):
 
 
 export const displayCounterValue = async (
-  providers: ContractProviders,
-  counterContract: DeployedContractContract,
+  providers: CounterProviders,
+  counterContract: DeployedCounterContract,
 ): Promise<{ counterValue: bigint | null; contractAddress: string }> => {
   const contractAddress = counterContract.deployTxData.public.contractAddress;
   const counterValue = await getCounterLedgerState(providers, contractAddress);
@@ -219,8 +219,8 @@ export const displayCounterValue = async (
 };
 
 export const displayVotingResults = async (
-  providers: ContractProviders,
-  counterContract: DeployedContractContract,
+  providers: CounterProviders,
+  counterContract: DeployedCounterContract,
 ): Promise<{ votesA: bigint | null; votesB: bigint | null; total: bigint; contractAddress: string }> => {
   const contractAddress = counterContract.deployTxData.public.contractAddress;
   const results = await getVotingResults(providers, contractAddress);
@@ -436,7 +436,7 @@ export const buildFreshWallet = async (config: Config): Promise<Wallet & Resourc
 export const configureProviders = async (wallet: Wallet & Resource, config: Config) => {
   const walletAndMidnightProvider = await createWalletAndMidnightProvider(wallet);
   return {
-    privateStateProvider: levelPrivateStateProvider<typeof ContractPrivateStateId>({
+    privateStateProvider: levelPrivateStateProvider<typeof CounterPrivateStateId>({
       privateStateStoreName: contractConfig.privateStateStoreName,
     }),
     publicDataProvider: indexerPublicDataProvider(config.indexer, config.indexerWS),
@@ -510,7 +510,7 @@ export const saveState = async (wallet: Wallet, filename: string) => {
 };
 
 export const getItemsSet = async (
-  providers: ContractProviders,
+  providers: CounterProviders,
   contractAddress: ContractAddress,
 ): Promise<string[]> => {
   assertIsContractAddress(contractAddress);

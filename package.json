@@ -1,6 +1,6 @@
 {
-  "name": "scaffold-midnight",
-  "description": "A scaffold for building applications on the Midnight network using TypeScript.",
+  "name": "witness",
+  "description": "A Midnight smart contract project: witness",
   "version": "0.1.0",
   "private": true,
   "type": "module",

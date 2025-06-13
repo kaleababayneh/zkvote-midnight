@@ -1,13 +1,13 @@
 import { type Interface } from 'node:readline/promises';
 import { type Logger } from 'pino';
 import { ContractAnalyzer, type ContractAnalysis, type ContractFunction } from './contract-analyzer.js';
-import { type ContractProviders, type DeployedContractContract } from './common-types.js';
+import { type CounterProviders, type DeployedCounterContract } from './common-types.js';
 
 export interface MenuItem {
   id: string;
   label: string;
   description: string;
-  action: (providers: ContractProviders, contract: DeployedContractContract, rli: Interface) => Promise<void>;
+  action: (providers: CounterProviders, contract: DeployedCounterContract, rli: Interface) => Promise<void>;
   isReadOnly: boolean;
 }
 
@@ -102,8 +102,8 @@ export class DynamicCLIGenerator {
   /**
    * Create a function handler for a specific contract function
    */
-  private createFunctionHandler(func: ContractFunction): (providers: ContractProviders, contract: DeployedContractContract, rli: Interface) => Promise<void> {
-    return async (providers: ContractProviders, contract: DeployedContractContract, rli: Interface) => {
+  private createFunctionHandler(func: ContractFunction): (providers: CounterProviders, contract: DeployedCounterContract, rli: Interface) => Promise<void> {
+    return async (providers: CounterProviders, contract: DeployedCounterContract, rli: Interface) => {
       try {
         this.logger.info(`🔧 Executing ${func.name}...`);
 
@@ -140,8 +140,8 @@ export class DynamicCLIGenerator {
   /**
    * Create a handler for displaying contract state
    */
-  private createStateDisplayHandler(): (providers: ContractProviders, contract: DeployedContractContract, rli: Interface) => Promise<void> {
-    return async (providers: ContractProviders, contract: DeployedContractContract) => {
+  private createStateDisplayHandler(): (providers: CounterProviders, contract: DeployedCounterContract, rli: Interface) => Promise<void> {
+    return async (providers: CounterProviders, contract: DeployedCounterContract) => {
       if (!this.contractAnalysis) return;
 
       const api = await import('./api.js');
@@ -260,8 +260,8 @@ export class DynamicCLIGenerator {
   private async executeReadOnlyFunction(
     functionName: string,
     args: any[],
-    providers: ContractProviders,
-    contract: DeployedContractContract
+    providers: CounterProviders,
+    contract: DeployedCounterContract
   ): Promise<void> {
     const api = await import('./api.js');
     
@@ -284,7 +284,7 @@ export class DynamicCLIGenerator {
   private async executeStateChangingFunction(
     functionName: string,
     args: any[],
-    contract: DeployedContractContract
+    contract: DeployedCounterContract
   ): Promise<void> {
     // Use dynamic property access to call the function
     const contractFunction = (contract.callTx as any)[functionName];

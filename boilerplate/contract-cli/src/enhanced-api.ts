@@ -1,6 +1,6 @@
-// Enhanced API wrapper for Bboard Contract
-// Generated on: 2025-06-13T19:59:54.667Z
-// Auto-generated from bboard.compact
+// Enhanced API wrapper for Counter Contract
+// Generated on: 2025-06-13T20:26:30.666Z
+// Auto-generated from counter.compact
 
 import { type Logger } from 'pino';
 import { ContractAnalyzer } from './contract-analyzer.js';
@@ -108,9 +108,9 @@ export class EnhancedContractAPI {
 
 // Export contract metadata for reference
 export const CONTRACT_METADATA = {
-  name: 'Bboard Contract',
-  fileName: 'bboard.compact',
-  generatedAt: '2025-06-13T19:59:54.667Z',
+  name: 'Counter Contract',
+  fileName: 'counter.compact',
+  generatedAt: '2025-06-13T20:26:30.666Z',
   functions: [
   {
     "name": "increment",
@@ -155,15 +155,5 @@ export const CONTRACT_METADATA = {
     "type": "Counter"
   }
 ],
-  witnesses: [
-  {
-    "name": "secretKey",
-    "ledgerType": "typeof Ledger",
-    "privateType": "ContractPrivate",
-    "returns": [
-      "privateState",
-      "privateState.secretKey"
-    ]
-  }
-]
+  witnesses: []
 } as const;
