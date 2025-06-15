@@ -16,7 +16,7 @@
 - 🌐 **Seamless testnet deployment** with automated wallet management
 - 💰 **Built-in wallet tools** for balance checking and faucet requests
 - 📊 **Smart contract analysis** with automatic type generation
-- 📝 **Comprehensive documentation** and debugging guides
+- 📝 **Comprehensive api generation** start interacting with the contract right away
 
 
 ## 🚀 Quick Start
@@ -83,7 +83,7 @@ This single command:
 
 **For testnet deployment:**
 ```bash
-npm run wallet
+npm run deploy
 ```
 
 ## 🚀 Features
@@ -96,7 +96,7 @@ npm run wallet
 - **Witness Function Support**: Automatically detects and includes private state functions
 
 ### 🌐 **Complete Deployment Pipeline**
-- **One-Command Local Deployment**: `npm run deploy` for full local development setup
+- **One-Command Testnet Deployment**: `npm run deploy` for full testnet development setup
 - **Docker Integration**: Automatically manages local Midnight node containers
 - **Testnet Deployment**: Seamless testnet integration with `npm run wallet`
 - **Dry Run Support**: Preview deployment with `--dry-run` flag
@@ -205,11 +205,10 @@ npm run deploy
 
 ### 🚨 Common Issues & Solutions
 
+## 🚨 Make sure nvm use 20
 | Issue | Symptoms | Solution |
 |-------|----------|----------|
 | **Contract not detected** | "No .compact files found" | Ensure `.compact` file is in project root |
-| **Compilation errors** | Build fails, ZK key generation errors | Check `pragma language_version` directive |
-| **CLI generation failed** | Missing menu options | Verify `export circuit` function syntax |
 | **Docker issues** | Local deployment fails | Ensure Docker Desktop is running |
 | **Testnet connection** | Wallet sync timeouts | Check internet connection, try `npm run balance` |
 | **Zero balance** | Deployment fails with "insufficient funds" | Run `npm run faucet` or use manual faucet |
@@ -268,10 +267,10 @@ npm run wallet
 **Automated testnet deployment:**
 ```bash
 # Deploy new contract automatically
-npm run deploy --new
+npm run deploy:new
 
 # Join existing contract
-npm run deploy --join
+npm run deploy:join
 
 # Preview commands (dry run)
 npm run deploy --dry-run
@@ -281,10 +280,10 @@ npm run deploy --dry-run
 
 | Flag | Behavior | Use Case |
 |------|----------|----------|
-| `--new` | Auto-deploy new contract | CI/CD pipelines |
-| `--join` | Auto-join existing contract | Team collaboration |
-| `--dry-run` | Preview commands only | Testing scripts |
-| `--help` | Show detailed help | Documentation |
+| `--new` | Auto-deploy new contract |
+| `--join` | Auto-join existing contract |
+| `--dry-run` | Preview commands only | 
+| `--help` | Show detailed help |
 
 
 ## 🏗️ How It Works
@@ -412,7 +411,7 @@ We welcome contributions! Here's how to get started:
 
 
 ## 📊 Project Status
-
+Only 1 contract is supported right now.
 | Feature | Status | Notes |
 |---------|--------|-------|
 | ✅ Auto-CLI Generation | Complete | Supports all contract types |
@@ -425,7 +424,7 @@ We welcome contributions! Here's how to get started:
 | 🔄 GUI Interface | Planned | Web-based contract interaction |
 | 🔄 Contract Templates | Planned | Pre-built contract examples |
 
-**Last Updated**: June 13, 2025  
+**Last Updated**: June 15, 2025  
 Built with ❤️ for the Midnight ecosystem 🌙
 
 Empowering developers to build privacy-preserving applications with zero-knowledge proofs.
