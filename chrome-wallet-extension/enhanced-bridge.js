@@ -53,7 +53,13 @@ class EnhancedMidnightBridge {
 
   setupMiddleware() {
     this.app.use(cors({
-      origin: ['chrome-extension://*', 'http://localhost:*'],
+      origin: [
+        'chrome-extension://*',
+        'http://localhost:5173',
+        'http://localhost:3000',
+        'http://localhost:8080',
+        /^http:\/\/localhost:\d+$/
+      ],
       credentials: true
     }));
     

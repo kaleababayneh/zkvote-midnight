@@ -18,9 +18,10 @@ class MidnightWallet {
     async loadWalletData() {
         try {
             // Load wallet data from storage
-            const result = await chrome.storage.local.get(['walletData', 'contractData']);
+            const result = await chrome.storage.local.get(['walletData', 'contractData', 'lastAction']);
             this.walletData = result.walletData || null;
             this.contractData = result.contractData || null;
+            this.lastAction = result.lastAction || null;
 
             // Try to load from .env file simulation
             if (!this.walletData) {
@@ -72,21 +73,6 @@ class MidnightWallet {
             this.checkBalance();
         });
 
-        // Increment counter
-        document.getElementById('incrementCounter').addEventListener('click', () => {
-            this.incrementCounter();
-        });
-
-        // Deploy contract
-        document.getElementById('deployContract').addEventListener('click', () => {
-            this.deployContract();
-        });
-
-        // Refresh counter
-        document.getElementById('refreshCounter').addEventListener('click', () => {
-            this.refreshCounter();
-        });
-
         // Connect CLI
         document.getElementById('connectCli').addEventListener('click', () => {
             this.connectToCLI();
@@ -108,7 +94,15 @@ class MidnightWallet {
 
         // Update counter value
         if (this.contractData && this.contractData.counterValue !== undefined) {
-            document.getElementById('counterValue').textContent = this.contractData.counterValue;
+            // Remove this since we're not showing counter in popup anymore
+        }
+
+        // Update extension status
+        document.getElementById('extensionStatus').textContent = this.cliConnected ? 'Connected' : 'Standby';
+        
+        // Show last action if any
+        if (this.lastAction) {
+            document.getElementById('lastAction').textContent = this.lastAction;
         }
 
         // Update network status

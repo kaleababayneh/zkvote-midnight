@@ -81,47 +81,24 @@
             </button>
         </section>
 
-        <!-- Contract Section -->
-        <section class="contract-section">
-            <h3>Smart Contract</h3>
+        <!-- Website Integration Status -->
+        <section class="website-section">
+            <h3>Website Integration</h3>
             
-            <div class="contract-info">
-                <div class="contract-status">
-                    <span class="status-label">Counter Value:</span>
-                    <span class="counter-value" id="counterValue">--</span>
+            <div class="integration-info">
+                <div class="integration-status">
+                    <span class="status-label">Extension Status:</span>
+                    <span class="status-value" id="extensionStatus">Active</span>
                 </div>
-                <button class="refresh-btn small" id="refreshCounter">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                        <polyline points="23 4 23 10 17 10"></polyline>
-                        <polyline points="1 20 1 14 7 14"></polyline>
-                        <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                    </svg>
-                </button>
+                <div class="integration-status">
+                    <span class="status-label">Last Action:</span>
+                    <span class="status-value" id="lastAction">None</span>
+                </div>
             </div>
 
-            <div class="contract-actions">
-                <button class="action-btn contract-btn" id="incrementCounter">
-                    <div class="btn-content">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <line x1="12" y1="5" x2="12" y2="19"></line>
-                            <line x1="5" y1="12" x2="19" y2="12"></line>
-                        </svg>
-                        <span>Increment Counter</span>
-                    </div>
-                    <div class="btn-description">Execute increment function</div>
-                </button>
-
-                <button class="action-btn contract-btn" id="deployContract">
-                    <div class="btn-content">
-                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                            <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"></polygon>
-                            <line x1="12" y1="22" x2="12" y2="15.5"></line>
-                            <polyline points="22 8.5 12 15.5 2 8.5"></polyline>
-                        </svg>
-                        <span>Deploy Contract</span>
-                    </div>
-                    <div class="btn-description">Deploy new counter contract</div>
-                </button>
+            <div class="integration-note">
+                <p>🌐 Extension is running in background mode</p>
+                <p>Contract functions will be executed when triggered from websites</p>
             </div>
         </section>
 

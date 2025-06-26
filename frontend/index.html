@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" href="/midnight-icon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>🌙 Midnight DApp</title>
+    <meta name="description" content="Professional Midnight DApp Frontend with real wallet integration" />
+  </head>
+  <body>
+    <div id="app">
+      <div class="container">
+        <div class="header">
+          <h1>🌙 Midnight DApp</h1>
+          <p>Professional Midnight DApp with real testnet integration</p>
+        </div>
+
+        <div class="extension-warning" id="extensionWarning">
+          ⚠️ Wallet API Offline: Start Chrome extension bridge server on port 3001
+        </div>
+
+        <div class="tabs">
+          <button class="tab active" onclick="switchTab('main')">🏠 Main</button>
+          <button class="tab" onclick="switchTab('logs')">📋 Activity Logs</button>
+        </div>
+
+        <!-- Main Tab -->
+        <div class="tab-content active" id="main-content">
+          <!-- Wallet Card -->
+          <div class="card wallet-section">
+            <div class="connection-status">
+              <div class="status-dot" id="statusDot"></div>
+              <span id="statusText">Wallet Not Connected</span>
+            </div>
+
+            <button class="btn btn-primary" id="connectBtn">
+              <span class="emoji">🔗</span> Connect Wallet
+            </button>
+
+            <div class="wallet-info" id="walletInfo">
+              <div class="info-row">
+                <span class="info-label">Address:</span>
+                <span class="info-value" id="walletAddress">--</span>
+              </div>
+              <div class="info-row">
+                <span class="info-label">Balance:</span>
+                <span class="info-value" id="walletBalance">-- tUsdt</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions Card -->
+          <div class="card">
+            <div class="actions-grid">
+              <button class="btn btn-success" disabled id="tokensBtn">
+                <span class="emoji">🚰</span> Request Test Tokens
+              </button>
+              <button class="btn btn-primary" disabled id="deployBtn">
+                <span class="emoji">🚀</span> Deploy Counter Contract
+              </button>
+              <button class="btn btn-primary" disabled id="incrementBtn">
+                <span class="emoji">➕</span> Increment Counter
+              </button>
+              <button class="btn btn-primary" disabled id="getBtn">
+                <span class="emoji">📊</span> Get Counter Value
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Logs Tab -->
+        <div class="tab-content" id="logs-content">
+          <div class="card">
+            <h3>📋 Activity Log</h3>
+            <div class="activity-log" id="activityLog">
+              <div class="log-entry">
+                <div class="log-time">Page loaded</div>
+                <div class="log-message">DApp interface initialized</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Toast -->
+      <div class="toast" id="toast"></div>
+    </div>
+    <script type="module" src="/src/main.js"></script>
+  </body>
+</html>
