@@ -239,16 +239,21 @@ class MidnightDApp {
       
       if (response.ok) {
         const data = await response.json();
+        console.log('Deploy response:', data);
+        
         if (data.success) {
-          this.log(`Counter contract deployed successfully!`, 'success');
+          this.log(`Counter contract deployed successfully! Address: ${data.contractAddress || 'N/A'}`, 'success');
           this.showToast('✅ Contract Deployed!', 'success');
         } else {
-          throw new Error(data.error || 'Contract deployment failed');
+          this.log(`Contract deployment failed: ${data.error || data.message}`, 'error');
+          this.showToast('❌ Deployment Failed', 'error');
         }
       } else {
-        throw new Error('Contract deployment API request failed');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
       }
     } catch (error) {
+      console.error('Deploy error:', error);
       this.log(`Contract deployment failed: ${error.message}`, 'error');
       this.showToast('❌ Deployment Failed', 'error');
     }
@@ -273,16 +278,21 @@ class MidnightDApp {
       
       if (response.ok) {
         const data = await response.json();
+        console.log('Increment response:', data);
+        
         if (data.success) {
-          this.log(`Counter incremented successfully!`, 'success');
+          this.log(`Counter incremented successfully! New value: ${data.result || 'Unknown'}`, 'success');
           this.showToast('✅ Counter Incremented!', 'success');
         } else {
-          throw new Error(data.error || 'Counter increment failed');
+          this.log(`Counter increment failed: ${data.error || data.message}`, 'error');
+          this.showToast('❌ Increment Failed', 'error');
         }
       } else {
-        throw new Error('Contract increment API request failed');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
       }
     } catch (error) {
+      console.error('Increment error:', error);
       this.log(`Counter increment failed: ${error.message}`, 'error');
       this.showToast('❌ Increment Failed', 'error');
     }
@@ -303,16 +313,21 @@ class MidnightDApp {
       
       if (response.ok) {
         const data = await response.json();
+        console.log('Contract state response:', data);
+        
         if (data.success && data.state) {
-          this.log(`Contract state: ${JSON.stringify(data.state)}`, 'success');
-          this.showToast(`📊 Counter Value: ${data.state.counter || 'N/A'}`, 'success');
+          this.log(`Contract state: Counter = ${data.state.counter}, Deployed = ${data.state.deployed}`, 'success');
+          this.showToast(`📊 Counter Value: ${data.state.counter}`, 'success');
         } else {
-          throw new Error(data.error || 'Failed to get contract state');
+          this.log(`Get contract state failed: ${data.error || 'No contract deployed'}`, 'warning');
+          this.showToast('⚠️ No Contract Deployed', 'warning');
         }
       } else {
-        throw new Error('Contract state API request failed');
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}`);
       }
     } catch (error) {
+      console.error('Get state error:', error);
       this.log(`Failed to get contract state: ${error.message}`, 'error');
       this.showToast('❌ Failed to Get State', 'error');
     }
