@@ -1,0 +1,38 @@
+{
+  "manifest_version": 3,
+  "name": "Midnight Wallet",
+  "version": "1.0.0",
+  "description": "Midnight Network Wallet Extension for Smart Contract Interaction",
+  "permissions": [
+    "storage",
+    "activeTab",
+    "identity"
+  ],
+  "host_permissions": [
+    "http://localhost:*/*",
+    "https://indexer.testnet-02.midnight.network/*",
+    "https://rpc.testnet-02.midnight.network/*"
+  ],
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Midnight Wallet",
+    "default_icon": {
+      "16": "icons/icon16.png",
+      "32": "icons/icon32.png",
+      "48": "icons/icon48.png",
+      "128": "icons/icon128.png"
+    }
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self';"
+  },
+  "icons": {
+    "16": "icons/icon16.png",
+    "32": "icons/icon32.png",
+    "48": "icons/icon48.png",
+    "128": "icons/icon128.png"
+  }
+}

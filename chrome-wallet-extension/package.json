@@ -1,0 +1,27 @@
+{
+  "name": "midnight-wallet-bridge",
+  "version": "1.0.0",
+  "description": "Bridge server for Midnight Wallet Chrome Extension",
+  "type": "module",
+  "main": "bridge-server.js",
+  "scripts": {
+    "start": "node enhanced-bridge.js",
+    "basic": "node bridge-server.js",
+    "dev": "node --watch enhanced-bridge.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0"
+  },
+  "keywords": [
+    "midnight",
+    "wallet",
+    "blockchain",
+    "chrome-extension"
+  ],
+  "author": "Kaleab",
+  "license": "MIT"
+}

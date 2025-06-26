@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Midnight Wallet</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="wallet-container">
+        <!-- Header -->
+        <header class="wallet-header">
+            <div class="logo">
+                <img src="icons/icon32.png" alt="Midnight" class="logo-icon">
+                <h1>Midnight Wallet</h1>
+            </div>
+            <div class="network-status">
+                <span class="status-dot" id="networkStatus"></span>
+                <span class="network-text">Testnet</span>
+            </div>
+        </header>
+
+        <!-- Wallet Info Section -->
+        <section class="wallet-info">
+            <div class="balance-card">
+                <div class="balance-header">
+                    <span class="balance-label">Balance</span>
+                    <button class="refresh-btn" id="refreshBalance">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polyline points="23 4 23 10 17 10"></polyline>
+                            <polyline points="1 20 1 14 7 14"></polyline>
+                            <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="balance-amount">
+                    <span id="balanceAmount">--</span>
+                    <span class="currency">tUsdt</span>
+                </div>
+                <div class="balance-usd" id="balanceUsd">-- microTusdt</div>
+            </div>
+
+            <div class="address-card">
+                <div class="address-header">
+                    <span>Wallet Address</span>
+                    <button class="copy-btn" id="copyAddress">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                            <path d="m5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                        </svg>
+                    </button>
+                </div>
+                <div class="address-text" id="walletAddress">--</div>
+            </div>
+        </section>
+
+        <!-- Actions Section -->
+        <section class="actions-section">
+            <h3>Actions</h3>
+            
+            <button class="action-btn primary" id="requestTokens">
+                <div class="btn-content">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M12 1v22"></path>
+                        <path d="m17 7-5-5-5 5"></path>
+                        <path d="m17 17-5 5-5-5"></path>
+                    </svg>
+                    <span>Request Testnet Tokens</span>
+                </div>
+                <div class="btn-description">Get free tokens for testing</div>
+            </button>
+
+            <button class="action-btn" id="checkBalance">
+                <div class="btn-content">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"></path>
+                        <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"></path>
+                    </svg>
+                    <span>Check Balance</span>
+                </div>
+            </button>
+        </section>
+
+        <!-- Contract Section -->
+        <section class="contract-section">
+            <h3>Smart Contract</h3>
+            
+            <div class="contract-info">
+                <div class="contract-status">
+                    <span class="status-label">Counter Value:</span>
+                    <span class="counter-value" id="counterValue">--</span>
+                </div>
+                <button class="refresh-btn small" id="refreshCounter">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="23 4 23 10 17 10"></polyline>
+                        <polyline points="1 20 1 14 7 14"></polyline>
+                        <path d="m3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <div class="contract-actions">
+                <button class="action-btn contract-btn" id="incrementCounter">
+                    <div class="btn-content">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <line x1="12" y1="5" x2="12" y2="19"></line>
+                            <line x1="5" y1="12" x2="19" y2="12"></line>
+                        </svg>
+                        <span>Increment Counter</span>
+                    </div>
+                    <div class="btn-description">Execute increment function</div>
+                </button>
+
+                <button class="action-btn contract-btn" id="deployContract">
+                    <div class="btn-content">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <polygon points="12 2 22 8.5 22 15.5 12 22 2 15.5 2 8.5 12 2"></polygon>
+                            <line x1="12" y1="22" x2="12" y2="15.5"></line>
+                            <polyline points="22 8.5 12 15.5 2 8.5"></polyline>
+                        </svg>
+                        <span>Deploy Contract</span>
+                    </div>
+                    <div class="btn-description">Deploy new counter contract</div>
+                </button>
+            </div>
+        </section>
+
+        <!-- Status Section -->
+        <section class="status-section">
+            <div class="status-log" id="statusLog">
+                <div class="log-entry">
+                    <span class="timestamp"></span>
+                    <span class="message">Wallet loaded</span>
+                </div>
+            </div>
+        </section>
+
+        <!-- CLI Connection Section -->
+        <section class="cli-section">
+            <h3>CLI Connection</h3>
+            <div class="cli-status">
+                <span class="status-dot" id="cliStatus"></span>
+                <span id="cliStatusText">Checking connection...</span>
+            </div>
+            <button class="action-btn small" id="connectCli">
+                <span>Connect to CLI</span>
+            </button>
+        </section>
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="loading-spinner"></div>
+        <div class="loading-text" id="loadingText">Processing...</div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script src="popup.js"></script>
+</body>
+</html>
