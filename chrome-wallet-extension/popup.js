@@ -11,7 +11,8 @@ class MidnightWallet {
         await this.loadWalletData();
         this.setupEventListeners();
         this.updateUI();
-        this.checkCLIConnection();
+        // Auto-connect to CLI and load wallet data on initialization
+        await this.checkCLIConnection();
         this.logMessage('Wallet initialized');
     }
 
@@ -89,7 +90,10 @@ class MidnightWallet {
         if (this.walletData && this.walletData.balance !== undefined) {
             const balance = this.formatBalance(this.walletData.balance);
             document.getElementById('balanceAmount').textContent = balance.formatted;
-            document.getElementById('balanceUsd').textContent = balance.micro;
+            const balanceUsdElement = document.getElementById('balanceUsd');
+            if (balanceUsdElement) {
+                balanceUsdElement.textContent = `${balance.micro} microDUST`;
+            }
         }
 
         // Update counter value
@@ -123,15 +127,25 @@ class MidnightWallet {
         return `${address.slice(0, 12)}...${address.slice(-12)}`;
     }
 
-    formatBalance(microBalance) {
-        const balance = Number(microBalance) || 0;
-        const tusdt = balance / 1_000_000;
+    formatBalance(balance) {
+        // Convert string to number and handle both string and numeric inputs
+        const balanceNum = typeof balance === 'string' ? parseFloat(balance) : (balance || 0);
+        
+        if (isNaN(balanceNum) || balanceNum === 0) {
+            return {
+                formatted: '0.000000',
+                micro: '0'
+            };
+        }
+        let dustAmount = balanceNum;
+        
+
         return {
-            formatted: tusdt.toLocaleString('en-US', { 
-                minimumFractionDigits: 2,
+            formatted: dustAmount.toLocaleString('en-US', { 
+                minimumFractionDigits: 6,
                 maximumFractionDigits: 6 
             }),
-            micro: `${balance.toLocaleString()} microTusdt`
+            micro: Math.round(dustAmount * 1000000).toLocaleString()
         };
     }
 
@@ -197,19 +211,22 @@ class MidnightWallet {
             
             if (response.ok) {
                 this.cliConnected = true;
-                document.getElementById('cliStatusText').textContent = 'Connected to CLI';
+                const statusElement = document.getElementById('cliStatusText');
+                if (statusElement) statusElement.textContent = 'Connected to CLI';
                 this.updateNetworkStatus();
                 this.showToast('Connected to CLI successfully!');
                 this.logMessage('Connected to CLI');
                 
-                // Load initial data
+                // Auto-load wallet data and balance when connecting
                 await this.loadCLIData();
+                await this.autoRefreshBalance();
             } else {
                 throw new Error('CLI not responding');
             }
         } catch (error) {
             this.cliConnected = false;
-            document.getElementById('cliStatusText').textContent = 'CLI not available - Using simulation mode';
+            const statusElement = document.getElementById('cliStatusText');
+            if (statusElement) statusElement.textContent = 'CLI not available - Using simulation mode';
             this.updateNetworkStatus();
             this.showToast('CLI not available. Using simulation mode.', 'warning');
             this.logMessage('CLI connection failed, using simulation mode', 'error');
@@ -220,30 +237,75 @@ class MidnightWallet {
 
     async loadCLIData() {
         try {
-            // Load wallet data from CLI
-            const walletResponse = await fetch('http://localhost:3001/api/wallet');
+            this.logMessage('Loading wallet data from CLI...');
+            
+            // Load wallet status from bridge server
+            const walletResponse = await fetch('http://localhost:3001/api/wallet/status');
             if (walletResponse.ok) {
                 const walletData = await walletResponse.json();
-                this.walletData = walletData;
-                await this.saveWalletData();
+                if (walletData.success && walletData.data) {
+                    // Update wallet data with CLI response
+                    this.walletData = {
+                        seed: walletData.data.seed || this.walletData?.seed,
+                        address: walletData.data.address || this.walletData?.address,
+                        balance: walletData.data.balance || '0',
+                        lastUpdated: Date.now()
+                    };
+                    await this.saveWalletData();
+                    this.logMessage('Wallet data loaded from CLI');
+                }
             }
 
-            // Load contract data from CLI
-            const contractResponse = await fetch('http://localhost:3001/api/contract');
-            if (contractResponse.ok) {
-                const contractData = await contractResponse.json();
-                this.contractData = contractData;
-                await this.saveWalletData();
+            // Load contract data if available
+            try {
+                const contractResponse = await fetch('http://localhost:3001/api/contract/status');
+                if (contractResponse.ok) {
+                    const contractData = await contractResponse.json();
+                    if (contractData.success && contractData.data) {
+                        this.contractData = {
+                            address: contractData.data.address,
+                            counterValue: contractData.data.counterValue || 0,
+                            deployed: contractData.data.deployed || false,
+                            lastUpdated: Date.now()
+                        };
+                        await this.saveWalletData();
+                        this.logMessage('Contract data loaded from CLI');
+                    }
+                }
+            } catch (contractError) {
+                // Contract data is optional, don't fail if not available
+                this.logMessage('No contract data available');
             }
 
             this.updateUI();
         } catch (error) {
             console.error('Error loading CLI data:', error);
+            this.logMessage('Error loading CLI data', 'error');
         }
     }
 
     async checkCLIConnection() {
         await this.connectToCLI();
+    }
+
+    async autoRefreshBalance() {
+        // Automatically refresh balance after connecting to CLI
+        try {
+            this.logMessage('Auto-refreshing balance...');
+            const response = await fetch('http://localhost:3001/api/wallet/balance');
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data) {
+                    this.walletData.balance = data.data.balance || '0';
+                    this.walletData.lastUpdated = Date.now();
+                    await this.saveWalletData();
+                    this.updateUI();
+                    this.logMessage(`Balance auto-updated: ${this.formatBalance(this.walletData.balance).formatted} DUST`);
+                }
+            }
+        } catch (error) {
+            this.logMessage('Auto-balance refresh failed, using cached data', 'warning');
+        }
     }
 
     async refreshBalance() {
@@ -252,38 +314,33 @@ class MidnightWallet {
         
         try {
             if (this.cliConnected) {
-                const response = await fetch('http://localhost:3001/api/balance');
+                const response = await fetch('http://localhost:3001/api/wallet/balance');
                 if (response.ok) {
                     const data = await response.json();
-                    this.walletData.balance = data.balance;
-                    await this.saveWalletData();
-                    this.updateUI();
-                    this.showToast('Balance updated!');
-                    this.logMessage(`Balance updated: ${this.formatBalance(data.balance).formatted} tUsdt`);
+                    if (data.success && data.data) {
+                        this.walletData.balance = data.data.balance || '0';
+                        this.walletData.lastUpdated = Date.now();
+                        await this.saveWalletData();
+                        this.updateUI();
+                        this.showToast('Balance updated!');
+                        this.logMessage(`Balance updated: ${this.formatBalance(this.walletData.balance).formatted} DUST`);
+                    } else {
+                        throw new Error(data.error || 'Invalid response format');
+                    }
                 } else {
-                    throw new Error('Failed to fetch balance');
+                    throw new Error('Failed to fetch balance from server');
                 }
             } else {
                 // Simulation mode
-                await this.simulateBalanceCheck();
             }
         } catch (error) {
             this.showToast('Failed to refresh balance', 'error');
-            this.logMessage('Failed to refresh balance', 'error');
+            this.logMessage(`Failed to refresh balance: ${error.message}`, 'error');
         }
         
         this.hideLoading();
     }
 
-    async simulateBalanceCheck() {
-        // Simulate balance check with random values for demo
-        const randomBalance = Math.floor(Math.random() * 10000000); // Random microTusdt
-        this.walletData.balance = randomBalance.toString();
-        await this.saveWalletData();
-        this.updateUI();
-        this.showToast('Balance updated (simulated)');
-        this.logMessage(`Balance updated (simulated): ${this.formatBalance(randomBalance).formatted} tUsdt`);
-    }
 
     async copyAddress() {
         if (this.walletData && this.walletData.address) {
@@ -319,7 +376,6 @@ class MidnightWallet {
                 }
             } else {
                 // Simulation mode
-                await this.simulateTokenRequest();
             }
         } catch (error) {
             this.showToast('Failed to request tokens', 'error');
@@ -329,16 +385,7 @@ class MidnightWallet {
         this.hideLoading();
     }
 
-    async simulateTokenRequest() {
-        // Simulate token request
-        const currentBalance = Number(this.walletData.balance) || 0;
-        const newBalance = currentBalance + 10000000; // Add 10 tUsdt
-        this.walletData.balance = newBalance.toString();
-        await this.saveWalletData();
-        this.updateUI();
-        this.showToast('Tokens added (simulated)!');
-        this.logMessage('Tokens added (simulated): +10 tUsdt');
-    }
+
 
     async checkBalance() {
         await this.refreshBalance();
@@ -366,7 +413,6 @@ class MidnightWallet {
                 }
             } else {
                 // Simulation mode
-                await this.simulateIncrement();
             }
         } catch (error) {
             this.showToast('Failed to increment counter', 'error');
@@ -376,19 +422,6 @@ class MidnightWallet {
         this.hideLoading();
     }
 
-    async simulateIncrement() {
-        // Simulate counter increment
-        const currentValue = Number(this.contractData?.counterValue) || 0;
-        this.contractData = {
-            ...this.contractData,
-            counterValue: currentValue + 1,
-            lastUpdated: Date.now()
-        };
-        await this.saveWalletData();
-        this.updateUI();
-        this.showToast('Counter incremented (simulated)!');
-        this.logMessage(`Counter incremented to: ${currentValue + 1}`);
-    }
 
     async deployContract() {
         this.showLoading('Deploying contract...');
@@ -419,7 +452,6 @@ class MidnightWallet {
                 }
             } else {
                 // Simulation mode
-                await this.simulateDeployment();
             }
         } catch (error) {
             this.showToast('Failed to deploy contract', 'error');
@@ -429,19 +461,7 @@ class MidnightWallet {
         this.hideLoading();
     }
 
-    async simulateDeployment() {
-        // Simulate contract deployment
-        this.contractData = {
-            address: `0x${Math.random().toString(16).substr(2, 40)}`,
-            counterValue: 0,
-            deployed: true,
-            lastUpdated: Date.now()
-        };
-        await this.saveWalletData();
-        this.updateUI();
-        this.showToast('Contract deployed (simulated)!');
-        this.logMessage(`Contract deployed (simulated) at: ${this.contractData.address}`);
-    }
+
 
     async refreshCounter() {
         this.showLoading('Refreshing counter...');

@@ -222,6 +222,58 @@ class EnhancedMidnightBridge {
       }
     });
 
+    // Wallet status endpoint (alternative format for popup)
+    this.app.get('/api/wallet/status', async (req, res) => {
+      try {
+        const walletData = await this.getWalletData();
+        this.walletCache = { ...this.walletCache, ...walletData };
+        res.json({
+          success: true,
+          data: this.walletCache,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        res.status(500).json({ 
+          success: false, 
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
+    // Wallet balance endpoint (alternative format for popup)
+    this.app.get('/api/wallet/balance', async (req, res) => {
+      try {
+        console.log('💳 Checking wallet balance...');
+        
+        const result = await this.queueCommand(async () => {
+          // Run balance from root directory with cd command
+          return await this.executeInIsolatedProcess(`cd "${this.projectRoot}" && npm run balance`, this.projectRoot, 30000);
+        });
+
+        const balance = this.parseBalanceFromOutput(result.output);
+        this.walletCache.balance = balance;
+        this.walletCache.lastBalanceCheck = Date.now();
+
+        res.json({
+          success: true,
+          data: {
+            balance: balance,
+            address: this.walletCache.address,
+            lastUpdated: this.walletCache.lastBalanceCheck
+          },
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error('❌ Balance check failed:', error.message);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
     // Deploy contract - HIGH PRIORITY ISOLATED EXECUTION
     this.app.post('/api/contract/deploy', async (req, res) => {
       try {
@@ -514,22 +566,55 @@ class EnhancedMidnightBridge {
   }
 
   parseBalanceFromOutput(output) {
-    // Parse balance from CLI output
+    // Parse balance from CLI output - Updated for Midnight DUST format
+    console.log('🔍 Parsing balance from output:', output.substring(0, 500));
+    
+    // Pattern 1: Look for "balance is: X.XXXXXX" format (DUST)
+    const dustMatch = output.match(/balance\s+is:\s*(\d+(?:\.\d+)?)/i);
+    if (dustMatch) {
+      console.log('✅ Found DUST balance:', dustMatch[1]);
+      return dustMatch[1];
+    }
+    
+    // Pattern 2: Look for "Your wallet balance is: X DUST"
+    const dustBalance = output.match(/wallet\s+balance\s+is:\s*(\d+(?:\.\d+)?)\s*(?:DUST|dust)/i);
+    if (dustBalance) {
+      console.log('✅ Found wallet DUST balance:', dustBalance[1]);
+      return dustBalance[1];
+    }
+    
+    // Pattern 3: Look for any number followed by DUST
+    const dustAmount = output.match(/(\d+(?:\.\d+)?)\s*(?:DUST|dust)/i);
+    if (dustAmount) {
+      console.log('✅ Found DUST amount:', dustAmount[1]);
+      return dustAmount[1];
+    }
+    
+    // Pattern 4: Legacy tUsdt format (convert to DUST equivalent)
     const balanceMatch = output.match(/Balance.*?(\d+).*?(?:micro)?[tT]usdt/i);
     if (balanceMatch) {
-      return balanceMatch[1];
+      const microTusdt = parseInt(balanceMatch[1]);
+      const dustEquivalent = (microTusdt).toFixed(2);
+      console.log('🔄 Converted microTusdt to DUST:', microTusdt, '->', dustEquivalent);
+      return dustEquivalent;
     }
     
+    // Pattern 5: Alternative tUsdt format
     const altMatch = output.match(/(\d+)\s*[tT][uU]sdt/i);
     if (altMatch) {
-      return (parseInt(altMatch[1]) * 1_000_000).toString();
+      const tusdt = parseInt(altMatch[1]);
+      console.log('🔄 Converted tUsdt to DUST equivalent:', tusdt);
+      return tusdt.toString();
     }
 
+    // Pattern 6: Decimal tUsdt format
     const tUsdtMatch = output.match(/(\d+(?:\.\d+)?)\s*tUsdt/i);
     if (tUsdtMatch) {
-      return (parseFloat(tUsdtMatch[1]) * 1_000_000).toString();
+      console.log('🔄 Found decimal tUsdt:', tUsdtMatch[1]);
+      return tUsdtMatch[1];
     }
     
+    console.log('⚠️ No balance pattern matched, returning 0');
     return '0';
   }
 
