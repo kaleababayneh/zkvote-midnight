@@ -2,7 +2,7 @@
 
 /**
  * Enhanced Midnight Wallet Bridge Server
- * Better integration with existing CLI and contract system
+ * Robust CLI execution with isolated processes
  */
 
 import express from 'express';
@@ -12,6 +12,7 @@ import fs from 'fs';
 import path from 'path';
 import { fileURLToPath } from 'node:url';
 import { promisify } from 'util';
+import os from 'os';
 
 const execAsync = promisify(exec);
 const __filename = fileURLToPath(import.meta.url);
@@ -21,9 +22,21 @@ class EnhancedMidnightBridge {
   constructor() {
     this.app = express();
     this.port = 3001;
-    this.projectRoot = path.resolve(__dirname, '..');
+    this.projectRoot = path.resolve(__dirname, '..'); // scaffold-midnight root
     this.envPath = path.join(this.projectRoot, '.env');
     this.cliPath = path.join(this.projectRoot, 'boilerplate', 'contract-cli');
+    this.scriptsPath = path.join(this.projectRoot, 'boilerplate', 'scripts');
+    
+    // Log paths for debugging
+    console.log('📁 Project root (where npm run deploy works):', this.projectRoot);
+    console.log('📁 CLI path (for testnet commands):', this.cliPath);
+    console.log('📁 Scripts path:', this.scriptsPath);
+    
+    // Command queue to handle sequential execution
+    this.commandQueue = [];
+    this.isProcessingQueue = false;
+    this.runningProcesses = new Map();
+    
     this.setupMiddleware();
     this.setupRoutes();
     this.initializeWalletCache();
@@ -79,6 +92,108 @@ class EnhancedMidnightBridge {
     });
   }
 
+  // Execute command in isolated process
+  async executeInIsolatedProcess(command, workingDir = null, timeout = 60000) {
+    return new Promise((resolve, reject) => {
+      const processId = Date.now() + Math.random().toString(36).substr(2, 9);
+      const cwd = workingDir || this.cliPath;
+      
+      console.log(`🚀 [${processId}] Starting command: ${command}`);
+      console.log(`📁 [${processId}] Working directory: ${cwd}`);
+
+      const childProcess = exec(command, {
+        cwd: cwd,
+        timeout: timeout,
+        env: { ...process.env, FORCE_COLOR: '0' },
+        maxBuffer: 1024 * 1024 // 1MB buffer
+      });
+
+      this.runningProcesses.set(processId, childProcess);
+
+      let output = '';
+      let errorOutput = '';
+
+      childProcess.stdout?.on('data', (data) => {
+        const chunk = data.toString();
+        output += chunk;
+        console.log(`📤 [${processId}] ${chunk.trim()}`);
+      });
+
+      childProcess.stderr?.on('data', (data) => {
+        const chunk = data.toString();
+        errorOutput += chunk;
+        console.log(`📤 [${processId}] ERROR: ${chunk.trim()}`);
+      });
+
+      childProcess.on('close', (code) => {
+        this.runningProcesses.delete(processId);
+        console.log(`✅ [${processId}] Process completed with code: ${code}`);
+        
+        if (code === 0) {
+          resolve({
+            success: true,
+            output: output,
+            errorOutput: errorOutput,
+            exitCode: code,
+            processId: processId
+          });
+        } else {
+          reject(new Error(`Command failed with exit code ${code}: ${errorOutput || output}`));
+        }
+      });
+
+      childProcess.on('error', (err) => {
+        this.runningProcesses.delete(processId);
+        console.error(`❌ [${processId}] Process error: ${err.message}`);
+        reject(new Error(`Failed to execute command: ${err.message}`));
+      });
+    });
+  }
+
+  // Queue system for sequential command execution
+  async queueCommand(commandFunction, priority = 0) {
+    return new Promise((resolve, reject) => {
+      this.commandQueue.push({
+        execute: commandFunction,
+        resolve,
+        reject,
+        priority,
+        timestamp: Date.now()
+      });
+
+      // Sort queue by priority (higher first) then by timestamp
+      this.commandQueue.sort((a, b) => {
+        if (a.priority !== b.priority) {
+          return b.priority - a.priority;
+        }
+        return a.timestamp - b.timestamp;
+      });
+
+      this.processQueue();
+    });
+  }
+
+  async processQueue() {
+    if (this.isProcessingQueue || this.commandQueue.length === 0) {
+      return;
+    }
+
+    this.isProcessingQueue = true;
+
+    while (this.commandQueue.length > 0) {
+      const { execute, resolve, reject } = this.commandQueue.shift();
+      
+      try {
+        const result = await execute();
+        resolve(result);
+      } catch (error) {
+        reject(error);
+      }
+    }
+
+    this.isProcessingQueue = false;
+  }
+
   setupRoutes() {
     // Health check
     this.app.get('/api/status', (req, res) => {
@@ -87,7 +202,9 @@ class EnhancedMidnightBridge {
         timestamp: new Date().toISOString(),
         service: 'Enhanced Midnight Wallet Bridge',
         walletConnected: !!this.walletCache.address,
-        cliPath: this.cliPath
+        cliPath: this.cliPath,
+        runningProcesses: Array.from(this.runningProcesses.keys()),
+        queueLength: this.commandQueue.length
       });
     });
 
@@ -95,19 +212,6 @@ class EnhancedMidnightBridge {
     this.app.get('/api/wallet', async (req, res) => {
       try {
         const walletData = await this.getWalletData();
-        
-        // Try to get balance if not recently checked
-        if (!this.walletCache.lastBalanceCheck || 
-            Date.now() - this.walletCache.lastBalanceCheck > 30000) {
-          try {
-            const balanceResult = await this.checkBalance();
-            walletData.balance = balanceResult.balance;
-            this.walletCache.lastBalanceCheck = Date.now();
-          } catch (error) {
-            console.warn('Could not fetch live balance:', error.message);
-          }
-        }
-
         this.walletCache = { ...this.walletCache, ...walletData };
         res.json(this.walletCache);
       } catch (error) {
@@ -115,83 +219,217 @@ class EnhancedMidnightBridge {
       }
     });
 
-    // Check balance using your existing balance script
-    this.app.get('/api/balance', async (req, res) => {
-      try {
-        const result = await this.checkBalance();
-        this.walletCache.balance = result.balance;
-        this.walletCache.lastBalanceCheck = Date.now();
-        res.json(result);
-      } catch (error) {
-        res.status(500).json({ error: error.message });
-      }
-    });
-
-    // Request faucet tokens
-    this.app.post('/api/faucet', async (req, res) => {
-      try {
-        const result = await this.requestFaucet();
-        res.json(result);
-      } catch (error) {
-        res.status(500).json({ error: error.message });
-      }
-    });
-
-    // Generate new wallet
-    this.app.post('/api/wallet/generate', async (req, res) => {
-      try {
-        const result = await this.generateWallet();
-        await this.initializeWalletCache(); // Reload cache
-        res.json(result);
-      } catch (error) {
-        res.status(500).json({ error: error.message });
-      }
-    });
-
-    // Deploy contract
+    // Deploy contract - HIGH PRIORITY ISOLATED EXECUTION
     this.app.post('/api/contract/deploy', async (req, res) => {
       try {
-        const result = await this.deployContract();
-        res.json(result);
+        console.log('🚀 Starting contract deployment...');
+        
+        const result = await this.queueCommand(async () => {
+          // Run deploy from the root scaffold-midnight directory, not CLI subdirectory
+          return await this.executeInIsolatedProcess('npm run deploy', this.projectRoot, 120000); // 2 minute timeout
+        }, 1); // High priority
+        
+        // Parse contract address from output
+        const contractAddress = this.parseContractAddressFromOutput(result.output);
+        
+        // Update cache
+        this.walletCache.contractInfo = {
+          address: contractAddress,
+          deployed: true,
+          deployedAt: new Date().toISOString()
+        };
+        
+        res.json({
+          success: true,
+          contractAddress: contractAddress,
+          output: result.output,
+          processId: result.processId,
+          timestamp: new Date().toISOString()
+        });
       } catch (error) {
-        res.status(500).json({ error: error.message });
-      }
-    });
-
-    // Get contract state
-    this.app.get('/api/contract/state', async (req, res) => {
-      try {
-        const result = await this.getContractState();
-        res.json(result);
-      } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('❌ Contract deployment failed:', error.message);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
       }
     });
 
     // Execute contract function (increment)
     this.app.post('/api/contract/increment', async (req, res) => {
       try {
-        const result = await this.executeContractFunction('increment');
-        res.json(result);
+        console.log('⚡ Incrementing counter...');
+        
+        const result = await this.queueCommand(async () => {
+          // Use CLI path for testnet-remote command
+          return await this.executeInIsolatedProcess('npm run testnet-remote', this.cliPath, 90000);
+        });
+        
+        const txHash = this.parseTxHashFromOutput(result.output);
+        
+        res.json({
+          success: true,
+          txHash: txHash,
+          output: result.output,
+          processId: result.processId,
+          timestamp: new Date().toISOString()
+        });
       } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('❌ Contract increment failed:', error.message);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
       }
     });
 
-    // Build and run dev (regenerate CLI)
-    this.app.post('/api/dev/build', async (req, res) => {
+    // Request faucet tokens
+    this.app.post('/api/faucet', async (req, res) => {
       try {
-        const result = await this.runDevBuild();
-        res.json(result);
+        console.log('💰 Requesting faucet tokens...');
+        
+        const result = await this.queueCommand(async () => {
+          // Run faucet from root directory
+          return await this.executeInIsolatedProcess('npm run faucet', this.projectRoot, 60000);
+        });
+        
+        res.json({
+          success: true,
+          message: 'Faucet request completed',
+          output: result.output,
+          processId: result.processId,
+          timestamp: new Date().toISOString()
+        });
       } catch (error) {
-        res.status(500).json({ error: error.message });
+        console.error('❌ Faucet request failed:', error.message);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
       }
+    });
+
+    // Check balance
+    this.app.get('/api/balance', async (req, res) => {
+      try {
+        console.log('💳 Checking balance...');
+        
+        const result = await this.queueCommand(async () => {
+          // Run balance from root directory
+          return await this.executeInIsolatedProcess('npm run balance', this.projectRoot, 30000);
+        });
+        
+        const balance = this.parseBalanceFromOutput(result.output);
+        this.walletCache.balance = balance;
+        this.walletCache.lastBalanceCheck = Date.now();
+        
+        res.json({
+          success: true,
+          balance: balance,
+          output: result.output,
+          processId: result.processId,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error('❌ Balance check failed:', error.message);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
+    // Generate new wallet
+    this.app.post('/api/wallet/generate', async (req, res) => {
+      try {
+        console.log('🔑 Generating new wallet...');
+        
+        const result = await this.queueCommand(async () => {
+          // Run wallet generation from root directory
+          return await this.executeInIsolatedProcess('npm run wallet', this.projectRoot, 30000);
+        }, 1); // High priority
+        
+        // Reload wallet cache after generation
+        await this.initializeWalletCache();
+        
+        res.json({
+          success: true,
+          message: 'Wallet generated successfully',
+          output: result.output,
+          processId: result.processId,
+          walletData: this.walletCache,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error('❌ Wallet generation failed:', error.message);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
+    // Get contract state
+    this.app.get('/api/contract/state', async (req, res) => {
+      try {
+        res.json({
+          success: true,
+          state: this.walletCache.contractInfo || { deployed: false },
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        res.status(500).json({ 
+          success: false, 
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
+    // Kill running process (emergency stop)
+    this.app.post('/api/kill/:processId', (req, res) => {
+      const { processId } = req.params;
+      
+      if (this.runningProcesses.has(processId)) {
+        const process = this.runningProcesses.get(processId);
+        process.kill('SIGTERM');
+        this.runningProcesses.delete(processId);
+        
+        res.json({
+          success: true,
+          message: `Process ${processId} terminated`,
+          timestamp: new Date().toISOString()
+        });
+      } else {
+        res.status(404).json({
+          success: false,
+          error: `Process ${processId} not found`,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
+    // Get running processes
+    this.app.get('/api/processes', (req, res) => {
+      const processes = Array.from(this.runningProcesses.keys());
+      res.json({
+        success: true,
+        runningProcesses: processes,
+        count: processes.length,
+        queueLength: this.commandQueue.length,
+        timestamp: new Date().toISOString()
+      });
     });
   }
 
   async getWalletData() {
     if (!fs.existsSync(this.envPath)) {
-      throw new Error('.env file not found. Run "npm run wallet" to generate a wallet first.');
+      throw new Error('.env file not found. Generate a wallet first.');
     }
 
     const envContent = fs.readFileSync(this.envPath, 'utf8');
@@ -202,10 +440,10 @@ class EnhancedMidnightBridge {
     
     for (const line of lines) {
       if (line.startsWith('WALLET_SEED=')) {
-        seed = line.split('=')[1];
+        seed = line.split('=')[1]?.replace(/"/g, '');
       }
       if (line.startsWith('WALLET_ADDRESS=')) {
-        address = line.split('=')[1];
+        address = line.split('=')[1]?.replace(/"/g, '');
       }
     }
     
@@ -217,313 +455,108 @@ class EnhancedMidnightBridge {
     };
   }
 
-  async checkBalance() {
-    try {
-      console.log('🔍 Checking wallet balance...');
-      const { stdout, stderr } = await execAsync('npm run balance', {
-        cwd: this.projectRoot,
-        timeout: 30000
-      });
-
-      const output = stdout + stderr;
-      const balance = this.parseBalanceFromOutput(output);
-      
-      return {
-        balance: balance,
-        timestamp: new Date().toISOString(),
-        output: output
-      };
-    } catch (error) {
-      console.error('Balance check failed:', error.message);
-      throw new Error(`Failed to check balance: ${error.message}`);
-    }
-  }
-
-  async requestFaucet() {
-    try {
-      console.log('🚰 Requesting faucet tokens...');
-      const { stdout, stderr } = await execAsync('npm run faucet', {
-        cwd: this.projectRoot,
-        timeout: 60000
-      });
-
-      const output = stdout + stderr;
-      const success = !output.toLowerCase().includes('error') && 
-                     !output.toLowerCase().includes('failed');
-
-      return {
-        success: success,
-        message: success ? 'Faucet request submitted successfully' : 'Faucet request may have failed',
-        output: output,
-        timestamp: new Date().toISOString()
-      };
-    } catch (error) {
-      console.error('Faucet request failed:', error.message);
-      throw new Error(`Failed to request faucet: ${error.message}`);
-    }
-  }
-
-  async generateWallet() {
-    try {
-      console.log('🔑 Generating new wallet...');
-      const { stdout, stderr } = await execAsync('npm run wallet', {
-        cwd: this.projectRoot,
-        timeout: 30000
-      });
-
-      const output = stdout + stderr;
-      
-      return {
-        success: true,
-        message: 'New wallet generated successfully',
-        output: output,
-        timestamp: new Date().toISOString()
-      };
-    } catch (error) {
-      console.error('Wallet generation failed:', error.message);
-      throw new Error(`Failed to generate wallet: ${error.message}`);
-    }
-  }
-
-  async runDevBuild() {
-    try {
-      console.log('🔄 Running dev build (regenerating CLI)...');
-      const { stdout, stderr } = await execAsync('npm run dev', {
-        cwd: this.projectRoot,
-        timeout: 60000
-      });
-
-      const output = stdout + stderr;
-      const success = !output.toLowerCase().includes('error') && 
-                     !output.toLowerCase().includes('failed');
-
-      return {
-        success: success,
-        message: success ? 'Dev build completed successfully' : 'Dev build may have failed',
-        output: output,
-        timestamp: new Date().toISOString()
-      };
-    } catch (error) {
-      console.error('Dev build failed:', error.message);
-      throw new Error(`Failed to run dev build: ${error.message}`);
-    }
-  }
-
-  async deployContract() {
-    try {
-      console.log('🚀 Deploying contract...');
-      
-      // Check if we have the necessary files
-      const counterPath = path.join(this.projectRoot, 'counter.compact');
-      if (!fs.existsSync(counterPath)) {
-        console.log('📝 Counter contract file not found, running dev build first...');
-        await this.runDevBuild();
-      }
-      
-      console.log('🔨 Running contract deployment...');
-      const { stdout, stderr } = await execAsync('npm run deploy', {
-        cwd: this.projectRoot,
-        timeout: 120000, // 2 minutes for deployment
-        env: { ...process.env, NODE_ENV: 'development' }
-      });
-
-      const output = stdout + stderr;
-      console.log('📄 Deployment output:', output.substring(0, 500) + '...');
-      
-      const contractAddress = this.parseContractAddressFromOutput(output);
-      const success = !output.toLowerCase().includes('error') && 
-                     !output.toLowerCase().includes('failed') &&
-                     !output.toLowerCase().includes('deployment failed');
-
-      if (success && contractAddress) {
-        // Update wallet cache with contract info
-        this.walletCache.contractInfo = {
-          address: contractAddress,
-          deployed: true,
-          deployedAt: new Date().toISOString(),
-          counterValue: 0
-        };
-      }
-
-      return {
-        success: success,
-        contractAddress: contractAddress,
-        message: success ? 'Contract deployed successfully' : 'Contract deployment failed',
-        output: output,
-        timestamp: new Date().toISOString()
-      };
-    } catch (error) {
-      console.error('❌ Contract deployment failed:', error);
-      return {
-        success: false,
-        error: error.message,
-        message: `Failed to deploy contract: ${error.message}`,
-        timestamp: new Date().toISOString()
-      };
-    }
-  }
-
-  async getContractState() {
-    try {
-      console.log('📊 Getting contract state...');
-      
-      // If we have contract info in cache, return it
-      if (this.walletCache.contractInfo && this.walletCache.contractInfo.deployed) {
-        return {
-          success: true,
-          state: {
-            counter: this.walletCache.contractInfo.counterValue || 0,
-            deployed: true,
-            address: this.walletCache.contractInfo.address
-          },
-          timestamp: new Date().toISOString()
-        };
-      }
-      
-      // No contract deployed yet
-      return {
-        success: false,
-        error: 'No contract deployed yet',
-        state: {
-          counter: 0,
-          deployed: false,
-          address: null
-        },
-        timestamp: new Date().toISOString()
-      };
-    } catch (error) {
-      console.error('❌ Failed to get contract state:', error);
-      return {
-        success: false,
-        error: error.message,
-        state: {
-          counter: 0,
-          deployed: false,
-          address: null
-        },
-        timestamp: new Date().toISOString()
-      };
-    }
-  }
-
-  async executeContractFunction(functionName) {
-    try {
-      console.log(`⚙️ Executing contract function: ${functionName}`);
-      
-      // Check if contract is deployed
-      if (!this.walletCache.contractInfo || !this.walletCache.contractInfo.deployed) {
-        return {
-          success: false,
-          error: 'No contract deployed yet',
-          message: 'Please deploy a contract first',
-          timestamp: new Date().toISOString()
-        };
-      }
-      
-      // For increment function, simulate it for now
-      if (functionName === 'increment') {
-        this.walletCache.contractInfo.counterValue = 
-          (this.walletCache.contractInfo.counterValue || 0) + 1;
-        
-        return {
-          success: true,
-          txHash: `0x${Math.random().toString(16).substr(2, 64)}`,
-          functionName: functionName,
-          result: this.walletCache.contractInfo.counterValue,
-          message: `Counter incremented to ${this.walletCache.contractInfo.counterValue}`,
-          timestamp: new Date().toISOString()
-        };
-      }
-      
-      // For other functions, return success
-      return {
-        success: true,
-        txHash: `0x${Math.random().toString(16).substr(2, 64)}`,
-        functionName: functionName,
-        message: `Function ${functionName} executed successfully`,
-        timestamp: new Date().toISOString()
-      };
-    } catch (error) {
-      console.error(`❌ Failed to execute function ${functionName}:`, error);
-      return {
-        success: false,
-        error: error.message,
-        message: `Failed to execute ${functionName}: ${error.message}`,
-        timestamp: new Date().toISOString()
-      };
-    }
-  }
-
   parseBalanceFromOutput(output) {
-    // Parse balance from your balance script output
-    console.log('Parsing balance from output:', output.substring(0, 200) + '...');
-    
-    // Look for "Balance: X.XXXXXX tUsdt" pattern
-    const tusdetMatch = output.match(/Balance:\s*([\d,]+\.?\d*)\s*tUsdt/i);
-    if (tusdetMatch) {
-      const tusdt = parseFloat(tusdetMatch[1].replace(/,/g, ''));
-      return Math.floor(tusdt * 1_000_000).toString(); // Convert to microTusdt
+    // Parse balance from CLI output
+    const balanceMatch = output.match(/Balance.*?(\d+).*?(?:micro)?[tT]usdt/i);
+    if (balanceMatch) {
+      return balanceMatch[1];
     }
     
-    // Look for "X microTusdt" pattern
-    const microMatch = output.match(/(\d+)\s*microTusdt/i);
-    if (microMatch) {
-      return microMatch[1];
+    const altMatch = output.match(/(\d+)\s*[tT][uU]sdt/i);
+    if (altMatch) {
+      return (parseInt(altMatch[1]) * 1_000_000).toString();
+    }
+
+    const tUsdtMatch = output.match(/(\d+(?:\.\d+)?)\s*tUsdt/i);
+    if (tUsdtMatch) {
+      return (parseFloat(tUsdtMatch[1]) * 1_000_000).toString();
     }
     
-    // Look for raw numbers that might be balance
-    const numberMatch = output.match(/Balance.*?(\d+)/i);
-    if (numberMatch) {
-      return numberMatch[1];
-    }
-    
-    console.warn('Could not parse balance from output');
     return '0';
   }
 
   parseContractAddressFromOutput(output) {
-    // Look for contract address patterns in deployment output
-    const patterns = [
-      /contract.*?address.*?([a-zA-Z0-9]{40,})/i,
-      /deployed.*?([a-zA-Z0-9]{40,})/i,
-      /address.*?([a-zA-Z0-9]{40,})/i
-    ];
-    
-    for (const pattern of patterns) {
-      const match = output.match(pattern);
-      if (match) {
-        return match[1];
-      }
+    const addressMatch = output.match(/Contract\s+(?:deployed|address).*?([a-fA-F0-9]{40,})/i);
+    if (addressMatch) {
+      return addressMatch[1];
+    }
+
+    const hexMatch = output.match(/0x[a-fA-F0-9]{40}/);
+    if (hexMatch) {
+      return hexMatch[0];
+    }
+
+    const fallbackMatch = output.match(/[a-fA-F0-9]{40,}/);
+    if (fallbackMatch) {
+      return fallbackMatch[0];
     }
     
     return `contract_${Date.now()}`;
   }
 
+  parseTxHashFromOutput(output) {
+    const txMatch = output.match(/(?:tx|transaction|hash).*?([a-fA-F0-9]{64})/i);
+    if (txMatch) {
+      return txMatch[1];
+    }
+
+    const hexMatch = output.match(/0x[a-fA-F0-9]{64}/);
+    if (hexMatch) {
+      return hexMatch[0];
+    }
+
+    const hashMatch = output.match(/[a-fA-F0-9]{64}/);
+    if (hashMatch) {
+      return hashMatch[0];
+    }
+    
+    return `tx_${Date.now()}`;
+  }
+
   start() {
     this.app.listen(this.port, () => {
       console.log('🌙 Enhanced Midnight Wallet Bridge Server');
-      console.log('=========================================');
       console.log(`🚀 Server running on http://localhost:${this.port}`);
       console.log(`📁 Project root: ${this.projectRoot}`);
-      console.log(`🔧 CLI path: ${this.cliPath}`);
+      console.log(`🛠️  CLI path: ${this.cliPath}`);
+      console.log(`📜 Scripts path: ${this.scriptsPath}`);
+      console.log('⚡ Ready to execute isolated commands');
       console.log('');
-      console.log('🔗 Available API endpoints:');
-      console.log('  GET  /api/status                   - Server status');
-      console.log('  GET  /api/wallet                   - Wallet information'); 
-      console.log('  GET  /api/balance                  - Check balance');
-      console.log('  POST /api/faucet                   - Request tokens');
-      console.log('  POST /api/wallet/generate          - Generate new wallet');
-      console.log('  POST /api/contract/deploy          - Deploy contract');
-      console.log('  GET  /api/contract/state           - Contract state');
-      console.log('  POST /api/contract/increment       - Increment counter');
-      console.log('  POST /api/dev/build                - Run dev build');
+      console.log('Available endpoints:');
+      console.log('  GET  /api/status                  - Health check');
+      console.log('  GET  /api/wallet                  - Get wallet info');
+      console.log('  GET  /api/balance                 - Check balance');
+      console.log('  POST /api/faucet                  - Request tokens');
+      console.log('  POST /api/wallet/generate         - Generate wallet');
+      console.log('  POST /api/contract/deploy         - Deploy contract');
+      console.log('  GET  /api/contract/state          - Get contract state');
+      console.log('  POST /api/contract/increment      - Increment counter');
+      console.log('  GET  /api/processes               - List running processes');
+      console.log('  POST /api/kill/:processId         - Kill specific process');
       console.log('');
-      console.log('🎯 Ready for Chrome Extension connection!');
+      console.log('✨ Features:');
+      console.log('  - Isolated process execution');
+      console.log('  - Command queue management');
+      console.log('  - Process monitoring');
+      console.log('  - Timeout protection');
       console.log('');
+    });
+
+    // Graceful shutdown
+    process.on('SIGINT', () => {
+      console.log('\n🛑 Shutting down server...');
+      
+      // Kill all running processes
+      for (const [processId, process] of this.runningProcesses) {
+        console.log(`🔪 Killing process ${processId}`);
+        process.kill('SIGTERM');
+      }
+      
+      process.exit(0);
     });
   }
 }
 
-// Start the enhanced server
+// Start the enhanced bridge server
 const bridge = new EnhancedMidnightBridge();
 bridge.start();
