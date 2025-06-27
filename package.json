@@ -18,8 +18,10 @@
     "faucet": "node boilerplate/scripts/request-faucet.js",
     "balance": "node boilerplate/scripts/check-balance.js",
     "deploy": "node boilerplate/scripts/deploy.js --new",
+    "deploy:enhanced": "node boilerplate/scripts/deploy-enhanced.js",
     "deploy:new": "node boilerplate/scripts/deploy.js --new",
     "deploy:join": "node boilerplate/scripts/deploy.js --join",
+    "increment": "node boilerplate/scripts/increment-counter.js",
     "docs": "open https://docs.midnight.network/develop/reference/compact/",
     "check": "node -e \"console.log('✅ Scaffold-midnight is ready!'); console.log('💡 Create a .compact file and run: npm run dev'); process.exit(0)\""
   },

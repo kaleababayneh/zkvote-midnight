@@ -100,10 +100,12 @@ class EnhancedMidnightBridge {
       
       console.log(`🚀 [${processId}] Starting command: ${command}`);
       console.log(`📁 [${processId}] Working directory: ${cwd}`);
-
+      
+      // Use shell: true to ensure cd commands work properly
       const childProcess = exec(command, {
         cwd: cwd,
         timeout: timeout,
+        shell: true, // Important for cd commands
         env: { ...process.env, FORCE_COLOR: '0' },
         maxBuffer: 1024 * 1024 // 1MB buffer
       });
@@ -129,7 +131,8 @@ class EnhancedMidnightBridge {
         this.runningProcesses.delete(processId);
         console.log(`✅ [${processId}] Process completed with code: ${code}`);
         
-        if (code === 0) {
+        // Process succeeded if code is 0 or null (normal exit)
+        if (code === 0 || code === null) {
           resolve({
             success: true,
             output: output,
@@ -225,8 +228,8 @@ class EnhancedMidnightBridge {
         console.log('🚀 Starting contract deployment...');
         
         const result = await this.queueCommand(async () => {
-          // Run deploy from the root scaffold-midnight directory, not CLI subdirectory
-          return await this.executeInIsolatedProcess('npm run deploy', this.projectRoot, 120000); // 2 minute timeout
+          // Use the enhanced deploy script that saves contract address
+          return await this.executeInIsolatedProcess(`cd "${this.projectRoot}" && node boilerplate/scripts/deploy-enhanced.js`, this.projectRoot, 180000); // 3 minute timeout
         }, 1); // High priority
         
         // Parse contract address from output
@@ -239,11 +242,17 @@ class EnhancedMidnightBridge {
           deployedAt: new Date().toISOString()
         };
         
+        // Update .env file with new contract address
+        this.updateEnvFile({
+          CONTRACT_ADDRESS: contractAddress
+        });
+        
         res.json({
           success: true,
           contractAddress: contractAddress,
           output: result.output,
           processId: result.processId,
+          message: 'Contract deployed and address saved to .env file',
           timestamp: new Date().toISOString()
         });
       } catch (error) {
@@ -262,15 +271,22 @@ class EnhancedMidnightBridge {
         console.log('⚡ Incrementing counter...');
         
         const result = await this.queueCommand(async () => {
-          // Use CLI path for testnet-remote command
-          return await this.executeInIsolatedProcess('npm run testnet-remote', this.cliPath, 90000);
+          // Use the new non-interactive increment script with cd command
+          return await this.executeInIsolatedProcess(`cd "${this.projectRoot}" && node boilerplate/scripts/increment-counter.js`, this.projectRoot, 90000);
         });
         
+        // Parse meaningful data from output
         const txHash = this.parseTxHashFromOutput(result.output);
+        const blockHeight = this.parseBlockHeightFromOutput(result.output);
+        const contractAddress = process.env.CONTRACT_ADDRESS || this.parseContractAddressFromOutput(result.output);
+        
+        console.log(`✅ Increment successful - TX: ${txHash}, Block: ${blockHeight}`);
         
         res.json({
           success: true,
-          txHash: txHash,
+          txId: txHash,
+          blockHeight: blockHeight,
+          contractAddress: contractAddress,
           output: result.output,
           processId: result.processId,
           timestamp: new Date().toISOString()
@@ -291,8 +307,8 @@ class EnhancedMidnightBridge {
         console.log('💰 Requesting faucet tokens...');
         
         const result = await this.queueCommand(async () => {
-          // Run faucet from root directory
-          return await this.executeInIsolatedProcess('npm run faucet', this.projectRoot, 60000);
+          // Run faucet from root directory with cd command
+          return await this.executeInIsolatedProcess(`cd "${this.projectRoot}" && npm run faucet`, this.projectRoot, 60000);
         });
         
         res.json({
@@ -318,8 +334,8 @@ class EnhancedMidnightBridge {
         console.log('💳 Checking balance...');
         
         const result = await this.queueCommand(async () => {
-          // Run balance from root directory
-          return await this.executeInIsolatedProcess('npm run balance', this.projectRoot, 30000);
+          // Run balance from root directory with cd command
+          return await this.executeInIsolatedProcess(`cd "${this.projectRoot}" && npm run balance`, this.projectRoot, 30000);
         });
         
         const balance = this.parseBalanceFromOutput(result.output);
@@ -349,8 +365,8 @@ class EnhancedMidnightBridge {
         console.log('🔑 Generating new wallet...');
         
         const result = await this.queueCommand(async () => {
-          // Run wallet generation from root directory
-          return await this.executeInIsolatedProcess('npm run wallet', this.projectRoot, 30000);
+          // Run wallet generation from root directory with cd command
+          return await this.executeInIsolatedProcess(`cd "${this.projectRoot}" && npm run wallet`, this.projectRoot, 30000);
         }, 1); // High priority
         
         // Reload wallet cache after generation
@@ -425,6 +441,48 @@ class EnhancedMidnightBridge {
         timestamp: new Date().toISOString()
       });
     });
+
+    // Join existing contract
+    this.app.post('/api/contract/join', async (req, res) => {
+      try {
+        const { contractAddress } = req.body;
+        
+        if (!contractAddress || !/^[0-9a-fA-F]{64}$/.test(contractAddress)) {
+          return res.status(400).json({
+            success: false,
+            error: 'Valid contract address (64 hex chars) is required'
+          });
+        }
+        
+        console.log(`🔗 Joining contract: ${contractAddress}`);
+        
+        // Update .env file with contract address
+        this.updateEnvFile({
+          CONTRACT_ADDRESS: contractAddress
+        });
+        
+        // Update cache
+        this.walletCache.contractInfo = {
+          address: contractAddress,
+          deployed: false,
+          joinedAt: new Date().toISOString()
+        };
+        
+        res.json({
+          success: true,
+          contractAddress: contractAddress,
+          message: 'Contract address saved to .env file - ready for interactions',
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error('❌ Contract join failed:', error.message);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
   }
 
   async getWalletData() {
@@ -495,6 +553,13 @@ class EnhancedMidnightBridge {
   }
 
   parseTxHashFromOutput(output) {
+    // Look for "Transaction ID:" pattern (the actual format we see)
+    const txIdMatch = output.match(/Transaction ID:\s*([a-fA-F0-9]{64})/i);
+    if (txIdMatch) {
+      return txIdMatch[1];
+    }
+
+    // Look for general tx patterns
     const txMatch = output.match(/(?:tx|transaction|hash).*?([a-fA-F0-9]{64})/i);
     if (txMatch) {
       return txMatch[1];
@@ -505,12 +570,61 @@ class EnhancedMidnightBridge {
       return hexMatch[0];
     }
 
+    // Look for any 64-character hex string
     const hashMatch = output.match(/[a-fA-F0-9]{64}/);
     if (hashMatch) {
       return hashMatch[0];
     }
     
-    return `tx_${Date.now()}`;
+    return null; // Return null instead of generating fake tx
+  }
+
+  parseBlockHeightFromOutput(output) {
+    // Look for "Block Height:" pattern
+    const blockMatch = output.match(/Block Height:\s*(\d+)/i);
+    if (blockMatch) {
+      return parseInt(blockMatch[1]);
+    }
+    
+    return null;
+  }
+
+  // Update .env file with new values
+  updateEnvFile(updates) {
+    try {
+      let envContent = '';
+      
+      // Read existing .env file if it exists
+      if (fs.existsSync(this.envPath)) {
+        envContent = fs.readFileSync(this.envPath, 'utf8');
+      }
+      
+      // Update or add each key-value pair
+      Object.entries(updates).forEach(([key, value]) => {
+        const pattern = new RegExp(`^${key}=.*$`, 'm');
+        const newLine = `${key}=${value}`;
+        
+        if (pattern.test(envContent)) {
+          // Update existing line
+          envContent = envContent.replace(pattern, newLine);
+        } else {
+          // Add new line
+          envContent += envContent.endsWith('\n') ? newLine + '\n' : '\n' + newLine + '\n';
+        }
+      });
+      
+      // Ensure file ends with newline
+      if (!envContent.endsWith('\n')) {
+        envContent += '\n';
+      }
+      
+      fs.writeFileSync(this.envPath, envContent, 'utf8');
+      console.log(`✅ Updated .env file with: ${Object.keys(updates).join(', ')}`);
+      return true;
+    } catch (error) {
+      console.error(`❌ Failed to update .env file: ${error.message}`);
+      return false;
+    }
   }
 
   start() {

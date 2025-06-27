@@ -10,10 +10,10 @@
     "dev": "node --watch enhanced-bridge.js",
     "restart": "./restart.sh",
     "test": "./test-bridge.sh",
-    "deploy": "curl -X POST http://localhost:3001/api/contract/deploy",
-    "increment": "curl -X POST http://localhost:3001/api/contract/increment",
-    "faucet": "curl -X POST http://localhost:3001/api/faucet",
-    "balance": "curl -s http://localhost:3001/api/balance",
+    "deploy": "cd .. && npm run deploy:enhanced",
+    "increment": "cd .. && npm run increment",
+    "faucet": "cd .. && npm run faucet",
+    "balance": "cd .. && npm run balance",
     "status": "curl -s http://localhost:3001/api/status"
   },
   "dependencies": {

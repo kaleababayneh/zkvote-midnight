@@ -106,7 +106,16 @@ export class SimpleEnhancedCLI {
       
       if (deployMode === 'join') {
         this.logger.info('🔗 Auto-joining existing contract...');
-        const contractAddress = await rli.question('What is the contract address (in hex)? ');
+        
+        // Get contract address from environment if available
+        let contractAddress = process.env.CONTRACT_ADDRESS;
+        
+        if (!contractAddress) {
+          contractAddress = await rli.question('What is the contract address (in hex)? ');
+        } else {
+          this.logger.info(`📍 Using contract address from environment: ${contractAddress}`);
+        }
+        
         this.contract = await api.joinContract(providers, contractAddress);
         this.logger.info(`🔗 Successfully joined ${this.contractInfo.contractName}!`);
         return this.contract;
@@ -172,6 +181,46 @@ Which would you like to do? `;
         const contract = await this.deployOrJoin(providers, rli);
         if (contract !== null) {
           this.contract = contract;
+          
+          // Check if we should auto-execute a specific function BEFORE checking auto-exit
+          const autoFunction = process.env.AUTO_FUNCTION;
+          if (autoFunction) {
+            logger.info(`⚡ Auto-executing function: ${autoFunction}`);
+            
+            try {
+              // Execute the specified function
+              const contractFunction = (contract.callTx as any)[autoFunction];
+              if (!contractFunction) {
+                throw new Error(`Function ${autoFunction} not found on contract`);
+              }
+              
+              // Call the function (assuming no parameters for now)
+              const result = await contractFunction();
+              logger.info(`✅ ${autoFunction} executed successfully!`);
+              logger.info(`📍 Transaction ID: ${result.public.txId}`);
+              logger.info(`📦 Block Height: ${result.public.blockHeight}`);
+              
+              // Now check for auto-exit after function execution
+              if (process.env.AUTO_EXIT === 'true') {
+                logger.info('✅ Auto-exit enabled. Function execution completed successfully.');
+                return; // Exit after function execution
+              }
+            } catch (error) {
+              logger.error(`❌ Auto-function execution failed: ${(error as Error).message}`);
+              if (process.env.AUTO_EXIT === 'true') {
+                throw error; // Exit with error
+              }
+            }
+          } else {
+            // Check if we should auto-exit after deployment/joining (only if no function to execute)
+            if (process.env.AUTO_EXIT === 'true') {
+              logger.info('✅ Auto-exit enabled. Contract operation completed successfully.');
+              logger.info(`📍 Contract Address: ${contract.deployTxData.public.contractAddress}`);
+              return; // Exit without starting interactive CLI
+            }
+          }
+          
+          // Start interactive CLI if no auto-exit
           await this.runEnhancedCLI(providers, rli);
         }
       }

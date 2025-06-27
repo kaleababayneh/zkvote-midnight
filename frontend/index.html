@@ -53,17 +53,32 @@
           <div class="card">
             <div class="actions-grid">
               <button class="btn btn-success" disabled id="tokensBtn">
-                <span class="emoji">🚰</span> Request Test Tokens
+                <span class="emoji">🚰</span> 
+                <span class="btn-text">Request Test Tokens</span>
               </button>
               <button class="btn btn-primary" disabled id="deployBtn">
-                <span class="emoji">🚀</span> Deploy Counter Contract
+                <span class="emoji">🚀</span> 
+                <span class="btn-text">Deploy Counter Contract</span>
+              </button>
+              <button class="btn btn-secondary" disabled id="joinBtn">
+                <span class="emoji">🔗</span> 
+                <span class="btn-text">Join Existing Contract</span>
               </button>
               <button class="btn btn-primary" disabled id="incrementBtn">
-                <span class="emoji">➕</span> Increment Counter
+                <span class="emoji">➕</span> 
+                <span class="btn-text">Increment Counter</span>
               </button>
               <button class="btn btn-primary" disabled id="getBtn">
-                <span class="emoji">📊</span> Get Counter Value
+                <span class="emoji">📊</span> 
+                <span class="btn-text">Get Counter Value</span>
               </button>
+            </div>
+            
+            <!-- Contract Info -->
+            <div class="contract-info" id="contractInfo" style="display: none;">
+              <h4>📋 Contract Information</h4>
+              <div class="contract-address" id="contractAddress">No contract deployed</div>
+              <div class="contract-status" id="contractStatus">Not Connected</div>
             </div>
           </div>
         </div>
@@ -84,6 +99,9 @@
 
       <!-- Toast -->
       <div class="toast" id="toast"></div>
+      
+      <!-- Modal Container -->
+      <div id="modalContainer"></div>
     </div>
     <script type="module" src="/src/main.js"></script>
   </body>
