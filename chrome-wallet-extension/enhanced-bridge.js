@@ -783,7 +783,7 @@ class EnhancedMidnightBridge {
     // Get contract state by executing CLI command
     this.app.get('/api/contract/state', async (req, res) => {
       try {
-        console.log('📋 Getting contract state from CLI...');
+        console.log('📋 Getting contract state using isolated CLI execution...');
         
         // Check if we have a contract address
         const walletData = await this.getWalletData();
@@ -795,8 +795,8 @@ class EnhancedMidnightBridge {
           });
         }
         
-        // Execute display state command (option 4) using persistent session
-        const result = await this.executeInSession(walletData.contractAddress, '4');
+        // Use isolated execution for contract state instead of persistent session
+        const result = await this.executeContractStateQuery(walletData.contractAddress);
         
         if (result.success) {
           // Parse the output to extract choices and vote counts
@@ -1062,8 +1062,44 @@ class EnhancedMidnightBridge {
       }
     });
 
-    // Execute command in session
+    // Complete voting flow: join, vote, close, return results
     this.app.post('/api/sessions/:contractAddress/execute', async (req, res) => {
+      try {
+        const { contractAddress } = req.params;
+        const { choice, secretKey } = req.body;
+        
+        if (!choice || !secretKey) {
+          return res.status(400).json({
+            success: false,
+            error: 'Choice and secretKey are required for voting',
+            timestamp: new Date().toISOString()
+          });
+        }
+
+        console.log(`🗳️  Starting complete voting flow for ${contractAddress}: choice=${choice}`);
+        
+        // Execute complete voting flow
+        const result = await this.executeCompleteVoting(contractAddress, choice, secretKey);
+        
+        res.json({
+          success: true,
+          result: result,
+          contractAddress: contractAddress,
+          choice: choice,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error('❌ Complete voting flow failed:', error.message);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
+    // Legacy command execution (keep for compatibility)
+    this.app.post('/api/sessions/:contractAddress/command', async (req, res) => {
       try {
         const { contractAddress } = req.params;
         const { command } = req.body;
@@ -1386,6 +1422,233 @@ class EnhancedMidnightBridge {
         totalVoters: 0,
         contractAddress: null
       };
+    }
+  }
+
+  async executeCompleteVoting(contractAddress, choice, secretKey) {
+    console.log(`🗳️  Starting complete voting flow for contract: ${contractAddress}`);
+    
+    try {
+      // Step 1: Create a CLI command to join the contract, vote, and get results
+      const cliPath = path.join(this.projectRoot, 'boilerplate', 'contract-cli');
+      const command = `cd "${cliPath}" && npm run cli`;
+      
+      console.log(`📞 Executing voting CLI command: ${command}`);
+      
+      const result = await new Promise((resolve, reject) => {
+        const childProcess = spawn('npm', ['run', 'cli'], {
+          cwd: cliPath,
+          env: { ...process.env, PATH: process.env.PATH },
+          stdio: ['pipe', 'pipe', 'pipe'],
+          shell: true
+        });
+
+        let output = '';
+        let errorOutput = '';
+        let votingCompleted = false;
+        
+        // Handle stdout
+        childProcess.stdout.on('data', (chunk) => {
+          const text = chunk.toString();
+          output += text;
+          console.log(`📤 [VOTE] STDOUT: ${text.trim()}`);
+          
+          // Handle interactive prompts
+          if (text.includes('Enter contract address')) {
+            console.log(`📝 Sending contract address: ${contractAddress}`);
+            childProcess.stdin.write(contractAddress + '\n');
+          } else if (text.includes('Select an option') || text.includes('What do you want to do?')) {
+            // Join the contract first (option 1)
+            console.log(`📝 Selecting option 1 (Join contract)`);
+            childProcess.stdin.write('1\n');
+          } else if (text.includes('Enter your choice (1 or 2)') || text.includes('Enter your vote choice')) {
+            console.log(`📝 Voting for choice: ${choice}`);
+            childProcess.stdin.write(choice.toString() + '\n');
+          } else if (text.includes('Enter your secret key') || text.includes('Enter secret key')) {
+            console.log(`📝 Sending secret key`);
+            childProcess.stdin.write(secretKey + '\n');
+          } else if (text.includes('Transaction completed') || 
+                     text.includes('Vote recorded') || 
+                     text.includes('✅')) {
+            // Voting completed, now get the final state
+            console.log(`📝 Selecting option 3 (Check results)`);
+            setTimeout(() => {
+              childProcess.stdin.write('3\n');
+            }, 1000);
+          } else if (text.includes('Current Votes:') || text.includes('Option 1:') || text.includes('Option 2:')) {
+            // We have results, mark as completed and exit
+            if (!votingCompleted) {
+              votingCompleted = true;
+              console.log(`📝 Selecting option 4 (Exit)`);
+              setTimeout(() => {
+                childProcess.stdin.write('4\n');
+              }, 1000);
+            }
+          }
+        });
+
+        // Handle stderr
+        childProcess.stderr.on('data', (chunk) => {
+          const text = chunk.toString();
+          errorOutput += text;
+          console.log(`📤 [VOTE] STDERR: ${text.trim()}`);
+        });
+
+        // Handle process completion
+        childProcess.on('close', (code) => {
+          console.log(`✅ [VOTE] Process completed with code: ${code}`);
+          
+          if (code === 0 || votingCompleted) {
+            // Parse the voting results from output
+            const voteResults = this.parseVotingResults(output);
+            resolve({
+              success: true,
+              output: output,
+              voteResults: voteResults,
+              exitCode: code
+            });
+          } else {
+            reject(new Error(`Voting failed with exit code ${code}: ${errorOutput || output}`));
+          }
+        });
+
+        childProcess.on('error', (err) => {
+          console.error(`❌ [VOTE] Process error: ${err.message}`);
+          reject(new Error(`Failed to execute voting command: ${err.message}`));
+        });
+
+        // Set timeout for the entire voting process
+        setTimeout(() => {
+          if (!votingCompleted) {
+            childProcess.kill('SIGTERM');
+            reject(new Error('Voting process timeout'));
+          }
+        }, 300000); // 5 minutes timeout
+      });
+
+      return result;
+
+    } catch (error) {
+      console.error(`❌ Complete voting flow failed:`, error.message);
+      throw new Error(`Voting failed: ${error.message}`);
+    }
+  }
+
+  parseVotingResults(output) {
+    // Parse voting results from CLI output
+    const lines = output.split('\n');
+    const results = {
+      choice1: 0,
+      choice2: 0,
+      total: 0
+    };
+
+    for (const line of lines) {
+      if (line.includes('Option 1:') || line.includes('Choice 1:')) {
+        const match = line.match(/(\d+)/);
+        if (match) {
+          results.choice1 = parseInt(match[1]);
+        }
+      } else if (line.includes('Option 2:') || line.includes('Choice 2:')) {
+        const match = line.match(/(\d+)/);
+        if (match) {
+          results.choice2 = parseInt(match[1]);
+        }
+      }
+    }
+
+    results.total = results.choice1 + results.choice2;
+    console.log(`📊 Parsed voting results:`, results);
+    return results;
+  }
+
+  async executeContractStateQuery(contractAddress) {
+    console.log(`📊 Executing isolated contract state query for: ${contractAddress}`);
+    
+    try {
+      const cliPath = path.join(this.projectRoot, 'boilerplate', 'contract-cli');
+      
+      const result = await new Promise((resolve, reject) => {
+        const childProcess = spawn('npm', ['run', 'cli'], {
+          cwd: cliPath,
+          env: { ...process.env, PATH: process.env.PATH },
+          stdio: ['pipe', 'pipe', 'pipe'],
+          shell: true
+        });
+
+        let output = '';
+        let errorOutput = '';
+        let stateReceived = false;
+        
+        // Handle stdout
+        childProcess.stdout.on('data', (chunk) => {
+          const text = chunk.toString();
+          output += text;
+          console.log(`📤 [STATE] STDOUT: ${text.trim()}`);
+          
+          // Handle interactive prompts
+          if (text.includes('Enter contract address')) {
+            console.log(`📝 Sending contract address: ${contractAddress}`);
+            childProcess.stdin.write(contractAddress + '\n');
+          } else if (text.includes('Select an option') || text.includes('What do you want to do?')) {
+            // Join the contract first (option 1)
+            console.log(`📝 Selecting option 1 (Join contract)`);
+            childProcess.stdin.write('1\n');
+          } else if (text.includes('ZkVote Contract - What would you like to do?')) {
+            // Now display contract state (option 4)
+            console.log(`📝 Selecting option 4 (Display state)`);
+            childProcess.stdin.write('4\n');
+          } else if ((text.includes('Current Votes:') || text.includes('Choice A:') || text.includes('Option 1:')) && !stateReceived) {
+            // We have the state, mark as received and exit
+            stateReceived = true;
+            console.log(`📝 State received, selecting option 5 (Exit)`);
+            setTimeout(() => {
+              childProcess.stdin.write('5\n');
+            }, 500);
+          }
+        });
+
+        // Handle stderr
+        childProcess.stderr.on('data', (chunk) => {
+          const text = chunk.toString();
+          errorOutput += text;
+          console.log(`📤 [STATE] STDERR: ${text.trim()}`);
+        });
+
+        // Handle process completion
+        childProcess.on('close', (code) => {
+          console.log(`✅ [STATE] Process completed with code: ${code}`);
+          
+          if (code === 0 || stateReceived) {
+            resolve({
+              success: true,
+              output: output,
+              exitCode: code
+            });
+          } else {
+            reject(new Error(`State query failed with exit code ${code}: ${errorOutput || output}`));
+          }
+        });
+
+        childProcess.on('error', (err) => {
+          console.error(`❌ [STATE] Process error: ${err.message}`);
+          reject(new Error(`Failed to execute state query: ${err.message}`));
+        });
+
+        // Set timeout for the state query
+        setTimeout(() => {
+          if (!stateReceived) {
+            childProcess.kill('SIGTERM');
+            reject(new Error('State query timeout'));
+          }
+        }, 120000); // 2 minutes timeout
+      });
+
+      return result;
+
+    } catch (error) {
+      console.error(`❌ Contract state query failed:`, error.message);
+      throw new Error(`State query failed: ${error.message}`);
     }
   }
 

@@ -181,9 +181,17 @@
                     <!-- Live Results -->
                     <div class="voting-page-results" id="votingPageResults">
                         <h3 class="results-section-title">Live Results</h3>
-                        <div class="results-charts" id="votingResultsCharts">
+                        
+                        <!-- Dynamic voting results container -->
+                        <div id="votingResults">
+                            <!-- Results will be populated dynamically via updateVotingPageResults -->
+                        </div>
+                        
+                        <!-- Legacy results charts (kept for fallback) -->
+                        <div class="results-charts" id="votingResultsCharts" style="display: none;">
                             <!-- Results will be populated dynamically -->
                         </div>
+                        
                         <div class="results-total">
                             <span class="total-label">Total Votes Cast:</span>
                             <span class="total-count" id="votingTotalVotes">0</span>
