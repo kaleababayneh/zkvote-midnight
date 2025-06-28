@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZkVote - Private Voting on Midnight</title>
+    <link rel="icon" href="/midnight-icon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="/src/zkvote.css">
+    <meta name="description" content="Create and participate in private, zero-knowledge voting on Midnight blockchain">
+</head>
+<body>
+    <div id="app">
+        <!-- Navigation -->
+        <nav class="nav">
+            <div class="nav-brand">
+                <div class="logo">🗳️</div>
+                <span class="brand-text">ZkVote</span>
+            </div>
+            <div class="nav-actions">
+                <div class="wallet-status" id="walletStatus">
+                    <div class="status-indicator" id="statusIndicator"></div>
+                    <span id="statusText">Connect Wallet</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main">
+            <!-- Hero Section -->
+            <section class="hero">
+                <h1 class="hero-title">Private Voting<br><span class="accent">with Zero Knowledge</span></h1>
+                <p class="hero-subtitle">Create secure voting contracts or participate in existing polls with complete privacy</p>
+            </section>
+
+            <!-- Action Cards -->
+            <section class="cards">
+                <!-- Create Vote Card -->
+                <div class="card create-card" id="createCard">
+                    <div class="card-header">
+                        <div class="card-icon">✨</div>
+                        <h3 class="card-title">Create Vote</h3>
+                    </div>
+                    <div class="card-content">
+                        <p class="card-description">Deploy a new voting contract with custom options</p>
+                        <div class="choice-inputs" id="choiceInputs">
+                            <div class="input-group">
+                                <label class="input-label">Option A</label>
+                                <input type="text" class="choice-input" id="choiceA" maxlength="3" placeholder="YES">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">Option B</label>
+                                <input type="text" class="choice-input" id="choiceB" maxlength="3" placeholder="NO">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">Option C</label>
+                                <input type="text" class="choice-input" id="choiceC" maxlength="3" placeholder="ABS">
+                            </div>
+                            <div class="input-group">
+                                <label class="input-label">Option D</label>
+                                <input type="text" class="choice-input" id="choiceD" maxlength="3" placeholder="N/A">
+                            </div>
+                        </div>
+                        <button class="btn btn-primary" id="createBtn" disabled>
+                            <span class="btn-text">Deploy Contract</span>
+                            <div class="btn-loader" id="createLoader"></div>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Join Vote Card -->
+                <div class="card join-card" id="joinCard">
+                    <div class="card-header">
+                        <div class="card-icon">🔗</div>
+                        <h3 class="card-title">Join Vote</h3>
+                    </div>
+                    <div class="card-content">
+                        <p class="card-description">Connect to an existing voting contract</p>
+                        <div class="input-group">
+                            <label class="input-label">Contract Address</label>
+                            <input type="text" class="contract-input" id="contractAddress" placeholder="Enter contract address...">
+                        </div>
+                        <button class="btn btn-secondary" id="joinBtn" disabled>
+                            <span class="btn-text">Connect</span>
+                            <div class="btn-loader" id="joinLoader"></div>
+                        </button>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Voting Interface (Hidden by default) -->
+            <section class="voting-section" id="votingSection" style="display: none;">
+                <div class="voting-container">
+                    <div class="voting-header">
+                        <h2 class="voting-title">Cast Your Vote</h2>
+                        <div class="contract-info">
+                            <span class="contract-label">Contract:</span>
+                            <span class="contract-address" id="connectedContract">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Vote Options -->
+                    <div class="vote-options" id="voteOptions">
+                        <!-- Options will be populated dynamically -->
+                    </div>
+
+                    <!-- Secret Key Input -->
+                    <div class="secret-section">
+                        <div class="input-group">
+                            <label class="input-label">Your Secret Key (5 characters)</label>
+                            <input type="password" class="secret-input" id="secretKey" maxlength="5" placeholder="Enter your secret...">
+                            <small class="input-hint">This ensures your vote remains private and anonymous</small>
+                        </div>
+                    </div>
+
+                    <!-- Vote Button -->
+                    <div class="vote-actions">
+                        <button class="btn btn-vote" id="voteBtn" disabled>
+                            <span class="btn-text">Submit Vote</span>
+                            <div class="btn-loader" id="voteLoader"></div>
+                        </button>
+                    </div>
+
+                    <!-- Results Section -->
+                    <div class="results-section" id="resultsSection">
+                        <div class="results-header">
+                            <h3 class="results-title">Current Results</h3>
+                            <button class="refresh-btn" id="refreshBtn">
+                                <span class="refresh-icon">🔄</span>
+                            </button>
+                        </div>
+                        <div class="results-grid" id="resultsGrid">
+                            <!-- Results will be populated dynamically -->
+                        </div>
+                        <div class="total-votes">
+                            <span>Total Votes: <strong id="totalVotes">0</strong></span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- Toast Notifications -->
+        <div class="toast-container" id="toastContainer"></div>
+
+        <!-- Loading Overlay -->
+        <div class="loading-overlay" id="loadingOverlay" style="display: none;">
+            <div class="loading-content">
+                <div class="loading-spinner"></div>
+                <p class="loading-text" id="loadingText">Processing...</p>
+            </div>
+        </div>
+    </div>
+
+    <script type="module" src="/src/zkvote.js"></script>
+</body>
+</html>

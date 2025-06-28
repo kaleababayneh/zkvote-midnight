@@ -7,12 +7,24 @@ export default defineConfig({
     assetsDir: 'assets',
     sourcemap: true,
     minify: 'terser',
-    target: 'es2020'
+    target: 'es2020',
+    rollupOptions: {
+      input: {
+        main: 'index.html',
+        zkvote: 'zkvote.html'
+      }
+    }
   },
   server: {
     port: 5173,
     host: true,
-    open: true
+    open: '/zkvote.html',
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3001',
+        changeOrigin: true
+      }
+    }
   },
   preview: {
     port: 4173,
