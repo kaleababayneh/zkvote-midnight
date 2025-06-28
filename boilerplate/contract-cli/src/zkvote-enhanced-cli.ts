@@ -133,6 +133,29 @@ export class SimpleEnhancedCLI {
   }
 
   async deployOrJoin(providers: ZkvoteProviders, rli: Interface): Promise<DeployedZkvoteContract | null> {
+    // Check if auto-deploy is enabled (set by deployment script)
+    if (process.env.AUTO_DEPLOY === 'true') {
+      const deployMode = process.env.DEPLOY_MODE || 'new';
+      
+      if (deployMode === 'join') {
+        this.logger.info('🔗 Auto-joining existing contract...');
+        const contractAddress = process.env.CONTRACT_ADDRESS;
+        if (!contractAddress) {
+          throw new Error('CONTRACT_ADDRESS environment variable is required for join mode');
+        }
+        this.contract = await api.joinContract(providers, contractAddress);
+        return this.contract;
+      } else {
+        this.logger.info('🚀 Auto-deploying new ZkVote contract...');
+        this.contract = await api.deploy(providers, { secretKey: new Uint8Array(32).fill(1) });
+        
+        // Output the contract address for the deploy script to capture
+        console.log('CONTRACT_ADDRESS:' + this.contract.deployTxData.public.contractAddress);
+        
+        return this.contract;
+      }
+    }
+    
     while (true) {
       const choice = await rli.question(DEPLOY_OR_JOIN_QUESTION);
       switch (choice) {
@@ -189,6 +212,27 @@ export const runEnhanced = async (config: Config, logger: Logger): Promise<void>
     
     const contract = await enhancedCLI.deployOrJoin(providers, rli);
     if (contract !== null) {
+      // Check if auto-exit is enabled (for non-interactive deployment)
+      if (process.env.AUTO_EXIT === 'true') {
+        logger.info('✅ Auto-deployment completed, exiting...');
+        // Force cleanup and exit for auto-deploy
+        try {
+          rli.close();
+          rli.removeAllListeners();
+          
+          // Force exit after a short delay to ensure cleanup
+          setTimeout(() => {
+            process.exit(0);
+          }, 500);
+        } catch (error) {
+          // If cleanup fails, force exit anyway
+          setTimeout(() => {
+            process.exit(0);
+          }, 100);
+        }
+        return;
+      }
+      
       await enhancedCLI.runEnhancedCLI(providers, rli);
     }
   } catch (e) {

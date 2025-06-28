@@ -176,6 +176,16 @@ export const voteFor = async (
   }
 };
 
+// Simple wrapper for voting without needing to specify secret key
+export const vote = async (
+  providers: ZkvoteProviders,
+  zkvoteContract: DeployedZkvoteContract,
+  choiceIndex: number
+): Promise<string> => {
+  const defaultSecretKey = "vote" + choiceIndex; // Simple default secret key
+  return await voteFor(providers, zkvoteContract, defaultSecretKey, choiceIndex);
+};
+
 export const getVoteCount = async (
   providers: ZkvoteProviders,
   zkvoteContract: DeployedZkvoteContract,

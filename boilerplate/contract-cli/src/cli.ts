@@ -48,7 +48,7 @@ const deployOrJoin = async (providers: ZkvoteProviders, rli: Interface): Promise
       const contractAddress = await rli.question('What is the contract address (in hex)? ');
       return await api.joinContract(providers, contractAddress);
     } else {
-      logger.info('🚀 Auto-deploying new contract...');
+      logger.info('🚀 Auto-deploying new ZkVote contract...');
       return await api.deploy(providers, { secretKey: new Uint8Array(32).fill(1) });
     }
   }
@@ -62,6 +62,7 @@ const deployOrJoin = async (providers: ZkvoteProviders, rli: Interface): Promise
         return await join(providers, rli);
       case '3':
         logger.info('Exiting...');
+        rli.close();
         return null;
       default:
         logger.error(`Invalid choice: ${choice}`);
@@ -78,8 +79,16 @@ const mainLoop = async (providers: ZkvoteProviders, rli: Interface): Promise<voi
   logger.info('=== ZkVote Contract CLI ===');
   logger.info(`Contract Address: ${counterContract.deployTxData.public.contractAddress}`);
   
+  // Check if this is auto-deployment - if so, exit after deployment
+  if (process.env.AUTO_DEPLOY === 'true') {
+    logger.info('✅ Auto-deployment completed, exiting...');
+    // Close readline interface and force exit
+    rli.close();
+    process.exit(0);
+  }
+  
   // Check if this is a quick deployment test
-  if (process.env.AUTO_DEPLOY === 'true' && process.env.QUICK_TEST === 'true') {
+  if (process.env.QUICK_TEST === 'true') {
     logger.info('🧪 Running quick deployment test...');
     
     try {
@@ -95,6 +104,7 @@ const mainLoop = async (providers: ZkvoteProviders, rli: Interface): Promise<voi
     }
     
     logger.info('💡 Use `npm run wallet` for full testnet CLI or restart for interactive mode');
+    rli.close();
     return;
   }
 
@@ -139,6 +149,7 @@ Which would you like to do? `;
           break;
         case '5':
           logger.info('Exiting...');
+          rli.close();
           return;
         default:
           logger.error(`Invalid choice: ${choice}`);
@@ -188,6 +199,7 @@ const buildWallet = async (config: Config, rli: Interface): Promise<(Wallet & Re
         return await buildWalletFromSeed(config, rli);
       case '3':
         logger.info('Exiting...');
+        rli.close();
         return null;
       default:
         logger.error(`Invalid choice: ${choice}`);

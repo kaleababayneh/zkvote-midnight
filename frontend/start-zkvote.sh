@@ -16,6 +16,14 @@ if ! command -v npm &> /dev/null; then
     exit 1
 fi
 
+# Check if WALLET_SEED is set
+if [ -z "$WALLET_SEED" ]; then
+    echo "⚠️  WALLET_SEED environment variable not found."
+    echo "💡 Make sure you have a .env file in the project root with:"
+    echo "   WALLET_SEED=your_wallet_seed_here"
+    echo ""
+fi
+
 # Function to kill background processes on exit
 cleanup() {
     echo ""
@@ -42,13 +50,13 @@ if [ ! -d "node_modules" ]; then
     npm install
 fi
 
-# Start API bridge in background
-echo "🚀 Starting API bridge on port 3001..."
+# Start API server in background
+echo "🚀 Starting ZkVote API Server on port 3001..."
 npm start &
 API_PID=$!
 
 # Wait a moment for API to start
-sleep 2
+sleep 3
 
 # Navigate back to frontend
 cd ..
@@ -64,7 +72,7 @@ echo "🌐 Starting frontend on port 5173..."
 echo ""
 echo "🎉 ZkVote is starting up!"
 echo "   Frontend: http://localhost:5173/zkvote.html"
-echo "   API Bridge: http://localhost:3001/api/health"
+echo "   API Server: http://localhost:3001/api/health"
 echo ""
 echo "Press Ctrl+C to stop all services"
 echo ""

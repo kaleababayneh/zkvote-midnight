@@ -46,19 +46,19 @@
                         <div class="choice-inputs" id="choiceInputs">
                             <div class="input-group">
                                 <label class="input-label">Option A</label>
-                                <input type="text" class="choice-input" id="choiceA" maxlength="3" placeholder="YES">
+                                <input type="text" class="choice-input" id="choiceA" maxlength="3" value="YES">
                             </div>
                             <div class="input-group">
                                 <label class="input-label">Option B</label>
-                                <input type="text" class="choice-input" id="choiceB" maxlength="3" placeholder="NO">
+                                <input type="text" class="choice-input" id="choiceB" maxlength="3" value="NOD">
                             </div>
                             <div class="input-group">
                                 <label class="input-label">Option C</label>
-                                <input type="text" class="choice-input" id="choiceC" maxlength="3" placeholder="ABS">
+                                <input type="text" class="choice-input" id="choiceC" maxlength="3" value="ABS">
                             </div>
                             <div class="input-group">
                                 <label class="input-label">Option D</label>
-                                <input type="text" class="choice-input" id="choiceD" maxlength="3" placeholder="N/A">
+                                <input type="text" class="choice-input" id="choiceD" maxlength="3" value="N/A">
                             </div>
                         </div>
                         <button class="btn btn-primary" id="createBtn" disabled>
@@ -78,7 +78,8 @@
                         <p class="card-description">Connect to an existing voting contract</p>
                         <div class="input-group">
                             <label class="input-label">Contract Address</label>
-                            <input type="text" class="contract-input" id="contractAddress" placeholder="Enter contract address...">
+                            <input type="text" class="contract-input" id="contractAddress" placeholder="Enter 64-character hex contract address..." maxlength="64">
+                            <small class="input-hint">Enter the contract address from a previously deployed voting contract</small>
                         </div>
                         <button class="btn btn-secondary" id="joinBtn" disabled>
                             <span class="btn-text">Connect</span>
@@ -135,6 +136,62 @@
                         <div class="total-votes">
                             <span>Total Votes: <strong id="totalVotes">0</strong></span>
                         </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Dedicated Voting Page (Hidden by default) -->
+            <section class="voting-page" id="votingPage" style="display: none;">
+                <div class="voting-page-container">
+                    <!-- Back Button -->
+                    <button class="back-btn" id="backBtn">
+                        <span class="back-icon">←</span>
+                        <span>Back to Home</span>
+                    </button>
+
+                    <!-- Voting Header -->
+                    <div class="voting-page-header">
+                        <h1 class="voting-page-title">Choose Your Option</h1>
+                        <p class="voting-page-subtitle">Select one option below and submit your private vote</p>
+                        <div class="contract-badge">
+                            <span class="contract-label">Contract:</span>
+                            <span class="contract-address" id="votingPageContract">--</span>
+                        </div>
+                    </div>
+
+                    <!-- Large Vote Options Grid -->
+                    <div class="voting-page-options" id="votingPageOptions">
+                        <!-- Options will be populated dynamically -->
+                    </div>
+
+                    <!-- Voting Form -->
+                    <div class="voting-page-form">
+                        <div class="secret-input-section">
+                            <label class="secret-label">Your Private Key</label>
+                            <input type="password" class="voting-secret-input" id="votingSecretKey" maxlength="5" placeholder="Enter 5-character secret...">
+                            <p class="secret-help">This key ensures your vote is anonymous and cannot be traced back to you</p>
+                        </div>
+                        
+                        <button class="voting-submit-btn" id="votingSubmitBtn" disabled>
+                            <span class="voting-btn-text">Submit My Vote</span>
+                            <div class="voting-btn-loader" id="votingSubmitLoader"></div>
+                        </button>
+                    </div>
+
+                    <!-- Live Results -->
+                    <div class="voting-page-results" id="votingPageResults">
+                        <h3 class="results-section-title">Live Results</h3>
+                        <div class="results-charts" id="votingResultsCharts">
+                            <!-- Results will be populated dynamically -->
+                        </div>
+                        <div class="results-total">
+                            <span class="total-label">Total Votes Cast:</span>
+                            <span class="total-count" id="votingTotalVotes">0</span>
+                        </div>
+                        <button class="refresh-results-btn" id="refreshResultsBtn">
+                            <span class="refresh-icon">🔄</span>
+                            Refresh Results
+                        </button>
                     </div>
                 </div>
             </section>

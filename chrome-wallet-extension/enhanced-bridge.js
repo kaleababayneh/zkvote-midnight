@@ -21,7 +21,7 @@ const __dirname = path.dirname(__filename);
 class EnhancedMidnightBridge {
   constructor() {
     this.app = express();
-    this.port = 3001;
+    this.port = 3002;
     this.projectRoot = path.resolve(__dirname, '..'); // scaffold-midnight root
     this.envPath = path.join(this.projectRoot, '.env');
     this.cliPath = path.join(this.projectRoot, 'boilerplate', 'contract-cli');
@@ -780,15 +780,39 @@ class EnhancedMidnightBridge {
       }
     });
 
-    // Get contract state
+    // Get contract state by executing CLI command
     this.app.get('/api/contract/state', async (req, res) => {
       try {
-        res.json({
-          success: true,
-          state: this.walletCache.contractInfo || { deployed: false },
-          timestamp: new Date().toISOString()
-        });
+        console.log('📋 Getting contract state from CLI...');
+        
+        // Check if we have a contract address
+        const walletData = await this.getWalletData();
+        if (!walletData.contractAddress) {
+          return res.status(400).json({
+            success: false,
+            error: 'No contract address found. Deploy or join a contract first.',
+            timestamp: new Date().toISOString()
+          });
+        }
+        
+        // Execute display state command (option 4) using persistent session
+        const result = await this.executeInSession(walletData.contractAddress, '4');
+        
+        if (result.success) {
+          // Parse the output to extract choices and vote counts
+          const contractState = this.parseContractState(result.output);
+          
+          res.json({
+            success: true,
+            state: contractState,
+            contractAddress: walletData.contractAddress,
+            timestamp: new Date().toISOString()
+          });
+        } else {
+          throw new Error(result.error || 'Failed to get contract state');
+        }
       } catch (error) {
+        console.error('❌ Failed to get contract state:', error.message);
         res.status(500).json({ 
           success: false, 
           error: error.message,
@@ -1107,6 +1131,7 @@ class EnhancedMidnightBridge {
     
     let seed = null;
     let address = null;
+    let contractAddress = null;
     
     for (const line of lines) {
       if (line.startsWith('WALLET_SEED=')) {
@@ -1115,11 +1140,15 @@ class EnhancedMidnightBridge {
       if (line.startsWith('WALLET_ADDRESS=')) {
         address = line.split('=')[1]?.replace(/"/g, '');
       }
+      if (line.startsWith('CONTRACT_ADDRESS=')) {
+        contractAddress = line.split('=')[1]?.replace(/"/g, '');
+      }
     }
     
     return {
       seed: seed,
       address: address,
+      contractAddress: contractAddress,
       balance: this.walletCache?.balance || '0',
       lastUpdated: new Date().toISOString()
     };
@@ -1297,6 +1326,66 @@ class EnhancedMidnightBridge {
     } catch (error) {
       console.error(`❌ Failed to update .env file: ${error.message}`);
       return false;
+    }
+  }
+
+  // Parse contract state output from CLI
+  parseContractState(output) {
+    try {
+      console.log('📋 Parsing contract state output:', output.substring(0, 500) + '...');
+      
+      const lines = output.split('\n');
+      const state = {
+        choices: [],
+        voteCounts: [],
+        totalVoters: 0,
+        contractAddress: null
+      };
+      
+      // Parse contract address
+      const addressMatch = output.match(/Contract Address:\s*([a-fA-F0-9]+)/i);
+      if (addressMatch) {
+        state.contractAddress = addressMatch[1];
+      }
+      
+      // Parse total voters
+      const votersMatch = output.match(/Total Voters:\s*(\d+)/i);
+      if (votersMatch) {
+        state.totalVoters = parseInt(votersMatch[1]);
+      }
+      
+      // Parse voting results
+      // Look for lines like: 0: "YES" - 2 votes
+      const resultRegex = /(\d+):\s*"([^"]+)"\s*-\s*(\d+)\s*votes?/gi;
+      let match;
+      
+      while ((match = resultRegex.exec(output)) !== null) {
+        const choiceIndex = parseInt(match[1]);
+        const choiceText = match[2];
+        const voteCount = parseInt(match[3]);
+        
+        console.log(`📊 Found choice ${choiceIndex}: "${choiceText}" with ${voteCount} votes`);
+        
+        // Ensure arrays are large enough
+        while (state.choices.length <= choiceIndex) {
+          state.choices.push('');
+          state.voteCounts.push(0);
+        }
+        
+        state.choices[choiceIndex] = choiceText;
+        state.voteCounts[choiceIndex] = voteCount;
+      }
+      
+      console.log('📋 Parsed contract state:', state);
+      return state;
+    } catch (error) {
+      console.error('❌ Error parsing contract state:', error);
+      return {
+        choices: [],
+        voteCounts: [],
+        totalVoters: 0,
+        contractAddress: null
+      };
     }
   }
 
