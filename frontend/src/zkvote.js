@@ -16,6 +16,7 @@ class ZkVoteApp {
 
     async init() {
         this.setupEventListeners();
+        await this.autoConnectWallet();
         this.updateUI();
     }
 
@@ -24,6 +25,9 @@ class ZkVoteApp {
         document.getElementById('walletStatus').addEventListener('click', () => {
             if (!this.isWalletConnected) {
                 this.showWalletPopup();
+            } else {
+                // Already connected, do nothing
+                console.log('Wallet already connected');
             }
         });
 
@@ -88,6 +92,36 @@ class ZkVoteApp {
         }, 30000);
     }
 
+    async autoConnectWallet() {
+        try {
+            // Silently check if server is running and wallet is available
+            const statusResponse = await fetch(`${this.apiBaseUrl}/status`, { 
+                signal: AbortSignal.timeout(2000) 
+            });
+            
+            if (!statusResponse.ok) {
+                return; // Server not running, stay disconnected
+            }
+            
+            // Try to get existing wallet from server
+            const walletResponse = await fetch(`${this.apiBaseUrl}/wallet`, { 
+                signal: AbortSignal.timeout(2000) 
+            });
+            const walletData = await walletResponse.json();
+            
+            if (walletResponse.ok && walletData.address) {
+                // Wallet found, auto-connect silently
+                this.isWalletConnected = true;
+                this.walletData = walletData;
+                console.log('✅ Wallet auto-connected:', walletData.address);
+                this.updateWalletStatus();
+            }
+        } catch (error) {
+            // Silent fail - just stay disconnected
+            console.log('Auto-connect failed, staying disconnected');
+        }
+    }
+
     async connectWallet() {
         if (this.isWalletConnected) return;
 
@@ -100,6 +134,11 @@ class ZkVoteApp {
         const walletBalanceDisplay = document.getElementById('walletBalanceDisplay');
         const walletStatusDisplay = document.getElementById('walletStatusDisplay');
         const walletAuthorizeBtn = document.getElementById('walletAuthorizeBtn');
+        
+        // Immediately set default values to avoid any "Loading..." text
+        walletAddressDisplay.textContent = 'Loading...';
+        walletBalanceDisplay.textContent = 'Loading...';
+        walletStatusDisplay.innerHTML = '<span class="connection-status connecting">Checking...</span>';
         
         try {
             // Get wallet info from server
@@ -1245,24 +1284,261 @@ class ZkVoteApp {
         return `${address.slice(0, 6)}...${address.slice(-6)}`;
     }
 
-    showWalletPopup() {
-        const popup = document.getElementById('walletPopup');
-        const step2 = document.getElementById('walletStep2');
-        const step3 = document.getElementById('walletStep3');
-        const walletAuthorizeBtn = document.getElementById('walletAuthorizeBtn');
+    async showWalletPopup() {
+        if (this.isWalletConnected) return;
         
-        // Show step 2 directly (wallet information)
-        step2.style.display = 'block';
-        step3.style.display = 'none';
+        try {
+            // Show wallet connection modal like deploy/join modals
+            await this.showWalletConnectionModal();
+        } catch (error) {
+            // User cancelled or error occurred
+            console.log('Wallet connection cancelled or failed:', error);
+        }
+    }
+
+    async showWalletConnectionModal() {
+        return new Promise((resolve, reject) => {
+            const overlay = document.createElement('div');
+            overlay.className = 'wallet-popup-overlay';
+            
+            const popup = this.createWalletConnectionPopup(resolve, reject);
+            overlay.appendChild(popup);
+            
+            document.body.appendChild(overlay);
+            
+            // Close on overlay click
+            overlay.addEventListener('click', (e) => {
+                if (e.target === overlay) {
+                    this.closeWalletPopup(overlay, reject);
+                }
+            });
+            
+            // Close on escape key
+            const escHandler = (e) => {
+                if (e.key === 'Escape') {
+                    document.removeEventListener('keydown', escHandler);
+                    this.closeWalletPopup(overlay, reject);
+                }
+            };
+            document.addEventListener('keydown', escHandler);
+        });
+    }
+
+    createWalletConnectionPopup(resolve, reject) {
+        const popup = document.createElement('div');
+        popup.className = 'wallet-popup';
         
-        // Reset button state
-        walletAuthorizeBtn.disabled = true;
+        popup.innerHTML = `
+            <div class="wallet-popup-header">
+                <div class="wallet-popup-title">
+                    <span>🌙</span>
+                    Connect Wallet
+                </div>
+                <button class="wallet-popup-close" onclick="this.closest('.wallet-popup-overlay').remove()">×</button>
+            </div>
+            
+            <div class="wallet-popup-content">
+                <p class="wallet-popup-message">Connect to your Midnight wallet to start voting on ZkVote contracts.</p>
+                
+                <div class="wallet-connection-steps">
+                    <div class="connection-step">
+                        <div class="step-icon">🖥️</div>
+                        <div class="step-content">
+                            <h4>Bridge Server</h4>
+                            <p>Connecting to local bridge server on port 3002</p>
+                        </div>
+                        <div class="step-status" id="serverStatus">⏳</div>
+                    </div>
+                    
+                    <div class="connection-step">
+                        <div class="step-icon">🔑</div>
+                        <div class="step-content">
+                            <h4>Wallet Access</h4>
+                            <p>Loading wallet address and balance</p>
+                        </div>
+                        <div class="step-status" id="walletStatus">⏳</div>
+                    </div>
+                    
+                    <div class="connection-step">
+                        <div class="step-icon">🔐</div>
+                        <div class="step-content">
+                            <h4>Authorization</h4>
+                            <p>Requesting permission to access wallet</p>
+                        </div>
+                        <div class="step-status" id="authStatus">⏳</div>
+                    </div>
+                </div>
+                
+                <div class="wallet-details" id="walletDetails" style="display: none;">
+                    <div class="wallet-detail-row">
+                        <span class="wallet-detail-label">Network:</span>
+                        <span class="wallet-detail-value">Midnight Testnet</span>
+                    </div>
+                    <div class="wallet-detail-row">
+                        <span class="wallet-detail-label">Address:</span>
+                        <span class="wallet-detail-value" id="modalWalletAddress">Loading...</span>
+                    </div>
+                    <div class="wallet-detail-row">
+                        <span class="wallet-detail-label">Balance:</span>
+                        <span class="wallet-detail-value" id="modalWalletBalance">Loading...</span>
+                    </div>
+                </div>
+                
+                <div class="wallet-permissions" id="walletPermissions" style="display: none;">
+                    <h5 style="margin-bottom: 12px; color: var(--text);">ZkVote is requesting permission to:</h5>
+                    <ul style="list-style: none; padding: 0; margin: 0;">
+                        <li style="display: flex; align-items: center; padding: 8px 0; color: var(--text-muted);">
+                            <span style="color: var(--success); margin-right: 8px;">✅</span>
+                            View your wallet address and balance
+                        </li>
+                        <li style="display: flex; align-items: center; padding: 8px 0; color: var(--text-muted);">
+                            <span style="color: var(--success); margin-right: 8px;">✅</span>
+                            Request transaction signatures for voting
+                        </li>
+                        <li style="display: flex; align-items: center; padding: 8px 0; color: var(--text-muted);">
+                            <span style="color: var(--success); margin-right: 8px;">✅</span>
+                            Deploy and interact with voting contracts
+                        </li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div class="wallet-popup-actions">
+                <button class="wallet-popup-btn wallet-popup-btn-cancel" id="walletCancel">
+                    Cancel
+                </button>
+                <button class="wallet-popup-btn wallet-popup-btn-confirm" id="walletConnect" disabled>
+                    <span id="walletConnectText">Connecting...</span>
+                    <div class="wallet-popup-loader" id="walletLoader" style="display: none;"></div>
+                </button>
+            </div>
+        `;
         
-        // Show popup
-        popup.style.display = 'flex';
+        // Add event listeners
+        popup.querySelector('#walletCancel').addEventListener('click', () => {
+            this.closeWalletPopup(popup.closest('.wallet-popup-overlay'), reject);
+        });
         
-        // Load wallet information immediately
-        this.loadWalletInformation();
+        popup.querySelector('#walletConnect').addEventListener('click', () => {
+            this.confirmWalletConnection(popup, resolve, reject);
+        });
+        
+        // Start the connection process
+        setTimeout(() => this.startWalletConnection(popup, resolve, reject), 500);
+        
+        return popup;
+    }
+
+    async startWalletConnection(popup, resolve, reject) {
+        const serverStatus = popup.querySelector('#serverStatus');
+        const walletStatus = popup.querySelector('#walletStatus');
+        const authStatus = popup.querySelector('#authStatus');
+        const walletDetails = popup.querySelector('#walletDetails');
+        const walletPermissions = popup.querySelector('#walletPermissions');
+        const connectBtn = popup.querySelector('#walletConnect');
+        const connectText = popup.querySelector('#walletConnectText');
+        
+        try {
+            // Step 1: Check server
+            serverStatus.textContent = '🔄';
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            const statusResponse = await fetch(`${this.apiBaseUrl}/status`, { 
+                signal: AbortSignal.timeout(3000) 
+            });
+            
+            if (!statusResponse.ok) {
+                throw new Error('Server not responding');
+            }
+            
+            serverStatus.textContent = '✅';
+            
+            // Step 2: Load wallet
+            walletStatus.textContent = '🔄';
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            const walletResponse = await fetch(`${this.apiBaseUrl}/wallet`);
+            const walletData = await walletResponse.json();
+            
+            if (!walletResponse.ok || !walletData.address) {
+                throw new Error('No wallet found');
+            }
+            
+            walletStatus.textContent = '✅';
+            
+            // Update wallet details
+            popup.querySelector('#modalWalletAddress').textContent = this.truncateAddress(walletData.address);
+            popup.querySelector('#modalWalletBalance').textContent = walletData.balance ? 
+                `${(parseFloat(walletData.balance) / 1000000).toFixed(2)} tUsdt` : '0 tUsdt';
+            
+            walletDetails.style.display = 'block';
+            
+            // Step 3: Ready for authorization
+            authStatus.textContent = '🔄';
+            await new Promise(resolve => setTimeout(resolve, 800));
+            authStatus.textContent = '✅';
+            
+            // Show permissions and enable connect button
+            walletPermissions.style.display = 'block';
+            connectBtn.disabled = false;
+            connectText.textContent = 'Authorize Connection';
+            
+            // Store wallet data
+            this.walletData = walletData;
+            
+        } catch (error) {
+            console.error('Wallet connection failed:', error);
+            serverStatus.textContent = '❌';
+            walletStatus.textContent = '❌';
+            authStatus.textContent = '❌';
+            connectText.textContent = 'Connection Failed';
+            
+            setTimeout(() => {
+                this.closeWalletPopup(popup.closest('.wallet-popup-overlay'), reject);
+            }, 2000);
+        }
+    }
+
+    async confirmWalletConnection(popup, resolve, reject) {
+        const connectBtn = popup.querySelector('#walletConnect');
+        const connectText = popup.querySelector('#walletConnectText');
+        const loader = popup.querySelector('#walletLoader');
+        
+        connectBtn.disabled = true;
+        connectText.textContent = 'Authorizing...';
+        loader.style.display = 'block';
+        
+        try {
+            // Simulate authorization process
+            await new Promise(resolve => setTimeout(resolve, 1500));
+            
+            // Set connected state
+            this.isWalletConnected = true;
+            this.updateWalletStatus();
+            
+            // Show success
+            connectText.textContent = 'Connected!';
+            loader.style.display = 'none';
+            
+            setTimeout(() => {
+                this.closeWalletPopup(popup.closest('.wallet-popup-overlay'), resolve);
+                this.showToast('Wallet connected successfully!', 'success');
+            }, 1000);
+            
+        } catch (error) {
+            connectBtn.disabled = false;
+            connectText.textContent = 'Authorization Failed';
+            loader.style.display = 'none';
+            
+            setTimeout(() => {
+                this.closeWalletPopup(popup.closest('.wallet-popup-overlay'), reject);
+            }, 2000);
+        }
+    }
+
+    closeWalletPopup(overlay, callback) {
+        overlay.remove();
+        if (callback) callback();
     }
 
     hideWalletPopup() {

@@ -11,8 +11,7 @@ class MidnightWallet {
         await this.loadWalletData();
         this.setupEventListeners();
         this.updateUI();
-        // Auto-connect to CLI and load wallet data on initialization
-        await this.checkCLIConnection();
+        // Don't auto-connect to CLI - only connect when user clicks the button
         this.logMessage('Wallet initialized');
     }
 
