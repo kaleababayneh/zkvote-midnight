@@ -1438,14 +1438,15 @@ class EnhancedMidnightBridge {
     console.log(`🗳️  Starting complete voting flow for contract: ${contractAddress}`);
     
     try {
-      // Step 1: Create a CLI command to join the contract, vote, and get results
+      // Use the direct voting script
       const cliPath = path.join(this.projectRoot, 'boilerplate', 'contract-cli');
-      const command = `cd "${cliPath}" && npm run cli`;
+      const command = 'npm run tsx src/direct-vote.ts';
+      const args = [contractAddress, choice.toString(), secretKey];
       
-      console.log(`📞 Executing voting CLI command: ${command}`);
+      console.log(`📞 Executing direct voting script: ${command} ${args.join(' ')}`);
       
       const result = await new Promise((resolve, reject) => {
-        const childProcess = spawn('npm', ['run', 'cli'], {
+        const childProcess = spawn('npm', ['run', 'tsx', 'src/direct-vote.ts', ...args], {
           cwd: cliPath,
           env: { ...process.env, PATH: process.env.PATH },
           stdio: ['pipe', 'pipe', 'pipe'],
@@ -1454,46 +1455,12 @@ class EnhancedMidnightBridge {
 
         let output = '';
         let errorOutput = '';
-        let votingCompleted = false;
         
         // Handle stdout
         childProcess.stdout.on('data', (chunk) => {
           const text = chunk.toString();
           output += text;
           console.log(`📤 [VOTE] STDOUT: ${text.trim()}`);
-          
-          // Handle interactive prompts
-          if (text.includes('Enter contract address')) {
-            console.log(`📝 Sending contract address: ${contractAddress}`);
-            childProcess.stdin.write(contractAddress + '\n');
-          } else if (text.includes('Select an option') || text.includes('What do you want to do?')) {
-            // Join the contract first (option 1)
-            console.log(`📝 Selecting option 1 (Join contract)`);
-            childProcess.stdin.write('1\n');
-          } else if (text.includes('Enter your choice (1 or 2)') || text.includes('Enter your vote choice')) {
-            console.log(`📝 Voting for choice: ${choice}`);
-            childProcess.stdin.write(choice.toString() + '\n');
-          } else if (text.includes('Enter your secret key') || text.includes('Enter secret key')) {
-            console.log(`📝 Sending secret key`);
-            childProcess.stdin.write(secretKey + '\n');
-          } else if (text.includes('Transaction completed') || 
-                     text.includes('Vote recorded') || 
-                     text.includes('✅')) {
-            // Voting completed, now get the final state
-            console.log(`📝 Selecting option 3 (Check results)`);
-            setTimeout(() => {
-              childProcess.stdin.write('3\n');
-            }, 1000);
-          } else if (text.includes('Current Votes:') || text.includes('Option 1:') || text.includes('Option 2:')) {
-            // We have results, mark as completed and exit
-            if (!votingCompleted) {
-              votingCompleted = true;
-              console.log(`📝 Selecting option 4 (Exit)`);
-              setTimeout(() => {
-                childProcess.stdin.write('4\n');
-              }, 1000);
-            }
-          }
         });
 
         // Handle stderr
@@ -1507,17 +1474,17 @@ class EnhancedMidnightBridge {
         childProcess.on('close', (code) => {
           console.log(`✅ [VOTE] Process completed with code: ${code}`);
           
-          if (code === 0 || votingCompleted) {
-            // Parse the voting results from output
-            const voteResults = this.parseVotingResults(output);
+          if (code === 0) {
+            // Parse the JSON result from the output
+            const jsonResult = this.parseJSONResult(output);
             resolve({
               success: true,
               output: output,
-              voteResults: voteResults,
+              result: jsonResult,
               exitCode: code
             });
           } else {
-            reject(new Error(`Voting failed with exit code ${code}: ${errorOutput || output}`));
+            reject(new Error(`Direct voting failed with exit code ${code}: ${errorOutput || output}`));
           }
         });
 
@@ -1526,20 +1493,42 @@ class EnhancedMidnightBridge {
           reject(new Error(`Failed to execute voting command: ${err.message}`));
         });
 
-        // Set timeout for the entire voting process
+        // Set timeout for voting process
         setTimeout(() => {
-          if (!votingCompleted) {
-            childProcess.kill('SIGTERM');
-            reject(new Error('Voting process timeout'));
-          }
+          childProcess.kill('SIGTERM');
+          reject(new Error('Voting process timed out after 5 minutes'));
         }, 300000); // 5 minutes timeout
       });
 
       return result;
-
     } catch (error) {
       console.error(`❌ Complete voting flow failed:`, error.message);
       throw new Error(`Voting failed: ${error.message}`);
+    }
+  }
+
+  parseJSONResult(output) {
+    // Parse JSON result from direct voting script output
+    try {
+      const startMarker = 'JSON_RESULT_START';
+      const endMarker = 'JSON_RESULT_END';
+      
+      const startIndex = output.indexOf(startMarker);
+      const endIndex = output.indexOf(endMarker);
+      
+      if (startIndex === -1 || endIndex === -1) {
+        throw new Error('JSON result markers not found in output');
+      }
+      
+      const jsonString = output.substring(startIndex + startMarker.length, endIndex).trim();
+      const result = JSON.parse(jsonString);
+      
+      console.log('📊 Parsed voting results:', result);
+      return result;
+    } catch (error) {
+      console.error('❌ Failed to parse JSON result:', error.message);
+      // Fallback to old parsing method
+      return this.parseVotingResults(output);
     }
   }
 
