@@ -87,7 +87,6 @@ export const deploy = async (
   choiceC: string = "CCC", 
   choiceD: string = "DDD"
 ): Promise<DeployedZkvoteContract> => {
-  logger.info(`Deploying zkvote contract with choices: ${choiceA}, ${choiceB}, ${choiceC}, ${choiceD}...`);
   
   // Convert strings to Uint8Array (Bytes<3> in the contract)
   const encoder = new TextEncoder();
@@ -110,10 +109,7 @@ export const deploy = async (
   try {
     // The contract constructor expects 4 choice arguments
     logger.info(`Debug: Attempting to deploy with constructor args`);
-    logger.info(`Choice A bytes: [${Array.from(choiceABytes)}]`);
-    logger.info(`Choice B bytes: [${Array.from(choiceBBytes)}]`);
-    logger.info(`Choice C bytes: [${Array.from(choiceCBytes)}]`);
-    logger.info(`Choice D bytes: [${Array.from(choiceDBytes)}]`);
+   
     
     // Try passing constructor arguments in the options object
     const zkvoteContract = await deployContract(providers, {
