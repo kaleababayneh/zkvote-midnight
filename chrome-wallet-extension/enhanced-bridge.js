@@ -1438,15 +1438,15 @@ class EnhancedMidnightBridge {
     console.log(`🗳️  Starting complete voting flow for contract: ${contractAddress}`);
     
     try {
-      // Use the direct voting script
+      // Use the new API voting script
       const cliPath = path.join(this.projectRoot, 'boilerplate', 'contract-cli');
-      const command = 'npm run tsx src/direct-vote.ts';
+      const command = 'npm run tsx src/api-vote.ts';
       const args = [contractAddress, choice.toString(), secretKey];
       
-      console.log(`📞 Executing direct voting script: ${command} ${args.join(' ')}`);
+      console.log(`📞 Executing API voting script: ${command} ${args.join(' ')}`);
       
       const result = await new Promise((resolve, reject) => {
-        const childProcess = spawn('npm', ['run', 'tsx', 'src/direct-vote.ts', ...args], {
+        const childProcess = spawn('npm', ['run', 'tsx', 'src/api-vote.ts', ...args], {
           cwd: cliPath,
           env: { ...process.env, PATH: process.env.PATH },
           stdio: ['pipe', 'pipe', 'pipe'],
@@ -1484,7 +1484,7 @@ class EnhancedMidnightBridge {
               exitCode: code
             });
           } else {
-            reject(new Error(`Direct voting failed with exit code ${code}: ${errorOutput || output}`));
+            reject(new Error(`API voting failed with exit code ${code}: ${errorOutput || output}`));
           }
         });
 
@@ -1508,7 +1508,7 @@ class EnhancedMidnightBridge {
   }
 
   parseJSONResult(output) {
-    // Parse JSON result from direct voting script output
+    // Parse JSON result from API voting script output
     try {
       const startMarker = 'JSON_RESULT_START';
       const endMarker = 'JSON_RESULT_END';
