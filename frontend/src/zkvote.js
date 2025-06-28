@@ -16,7 +16,6 @@ class ZkVoteApp {
 
     async init() {
         this.setupEventListeners();
-        await this.checkWalletConnection();
         this.updateUI();
     }
 
@@ -24,8 +23,21 @@ class ZkVoteApp {
         // Wallet connection
         document.getElementById('walletStatus').addEventListener('click', () => {
             if (!this.isWalletConnected) {
-                this.connectWallet();
+                this.showWalletPopup();
             }
+        });
+
+        // Wallet popup controls
+        document.getElementById('walletPopupClose').addEventListener('click', () => {
+            this.hideWalletPopup();
+        });
+        
+        document.getElementById('walletCancelBtn').addEventListener('click', () => {
+            this.hideWalletPopup();
+        });
+        
+        document.getElementById('walletAuthorizeBtn').addEventListener('click', () => {
+            this.authorizeWalletConnection();
         });
 
         // Choice inputs
@@ -76,45 +88,115 @@ class ZkVoteApp {
         }, 30000);
     }
 
-    async checkWalletConnection() {
-        try {
-            const response = await fetch(`${this.apiBaseUrl}/wallet/status`);
-            const data = await response.json();
-            
-            this.isWalletConnected = data.success && data.data && data.data.address;
-            this.walletData = data.data || null;
-            
-            this.updateWalletStatus();
-        } catch (error) {
-            console.error('Failed to check wallet status:', error);
-            this.isWalletConnected = false;
-        }
-    }
-
     async connectWallet() {
         if (this.isWalletConnected) return;
 
-        this.showLoading('Generating wallet...');
+        // Go directly to loading wallet information
+        await this.loadWalletInformation();
+    }
+
+    async loadWalletInformation() {
+        const walletAddressDisplay = document.getElementById('walletAddressDisplay');
+        const walletBalanceDisplay = document.getElementById('walletBalanceDisplay');
+        const walletStatusDisplay = document.getElementById('walletStatusDisplay');
+        const walletAuthorizeBtn = document.getElementById('walletAuthorizeBtn');
         
         try {
-            const response = await fetch(`${this.apiBaseUrl}/wallet/generate`, {
-                method: 'POST'
-            });
-            const data = await response.json();
+            // Get wallet info from server
+            const walletResponse = await fetch(`${this.apiBaseUrl}/wallet`);
+            const walletData = await walletResponse.json();
             
-            if (data.success) {
-                this.isWalletConnected = true;
-                this.walletData = data.walletData;
-                this.updateWalletStatus();
-                this.showToast('Wallet connected successfully!', 'success');
+            if (walletResponse.ok && walletData.address) {
+                // Update wallet display information
+                walletAddressDisplay.textContent = this.truncateAddress(walletData.address);
+                walletBalanceDisplay.textContent = walletData.balance ? 
+                    `${(parseFloat(walletData.balance) / 1000000).toFixed(2)} tUsdt` : '0 tUsdt';
+                walletStatusDisplay.innerHTML = '<span class="connection-status ready">Ready to Connect</span>';
+                
+                // Store wallet data for later use
+                this.walletData = walletData;
+                
+                // Enable authorize button
+                walletAuthorizeBtn.disabled = false;
+                
             } else {
-                throw new Error(data.error || 'Failed to generate wallet');
+                throw new Error(walletData.error || 'No wallet found on server');
             }
         } catch (error) {
-            console.error('Wallet connection failed:', error);
-            this.showToast('Failed to connect wallet. Make sure the extension is running.', 'error');
+            console.error('Failed to load wallet information:', error);
+            walletAddressDisplay.textContent = 'N/A';
+            walletBalanceDisplay.textContent = 'N/A';
+            walletStatusDisplay.innerHTML = '<span class="connection-status error">Connection Failed</span>';
+            walletAuthorizeBtn.disabled = true;
+        }
+    }
+
+    async authorizeWalletConnection() {
+        const step2 = document.getElementById('walletStep2');
+        const step3 = document.getElementById('walletStep3');
+        const walletAuthorizeBtn = document.getElementById('walletAuthorizeBtn');
+        const walletAuthorizeLoader = document.getElementById('walletAuthorizeLoader');
+        const connectionTitle = document.getElementById('connectionTitle');
+        const connectionMessage = document.getElementById('connectionMessage');
+        
+        // Show loading state
+        walletAuthorizeBtn.disabled = true;
+        walletAuthorizeLoader.style.display = 'block';
+        
+        // Move to step 3
+        step2.style.display = 'none';
+        step3.style.display = 'block';
+        
+        try {
+            // Simulate connection process
+            connectionTitle.textContent = 'Establishing Connection...';
+            connectionMessage.textContent = 'Connecting to wallet server on port 3002';
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            connectionTitle.textContent = 'Authorizing Access...';
+            connectionMessage.textContent = 'Requesting permission to access wallet information';
+            
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Final connection attempt
+            const walletResponse = await fetch(`${this.apiBaseUrl}/wallet`);
+            const walletData = await walletResponse.json();
+            
+            if (walletResponse.ok && walletData.address) {
+                this.isWalletConnected = true;
+                this.walletData = walletData;
+                
+                connectionTitle.textContent = 'Connection Successful!';
+                connectionMessage.textContent = 'Your wallet has been connected successfully';
+                
+                // Show success animation
+                const connectionAnimation = document.getElementById('connectionAnimation');
+                connectionAnimation.innerHTML = '<div class="connection-success">✅</div>';
+                
+                setTimeout(() => {
+                    this.hideWalletPopup();
+                    this.updateWalletStatus();
+                    this.showToast('Connected to wallet server!', 'success');
+                }, 2000);
+            } else {
+                throw new Error(walletData.error || 'Connection failed');
+            }
+        } catch (error) {
+            console.error('Wallet authorization failed:', error);
+            connectionTitle.textContent = 'Connection Failed';
+            connectionMessage.textContent = error.message || 'Unable to connect to wallet server';
+            
+            const connectionAnimation = document.getElementById('connectionAnimation');
+            connectionAnimation.innerHTML = '<div class="connection-error">❌</div>';
+            
+            setTimeout(() => {
+                this.hideWalletPopup();
+                this.showToast('Failed to connect to wallet', 'error');
+            }, 2000);
         } finally {
-            this.hideLoading();
+            walletAuthorizeBtn.disabled = false;
+            walletAuthorizeLoader.style.display = 'none';
         }
     }
 
@@ -1161,6 +1243,31 @@ class ZkVoteApp {
     truncateAddress(address) {
         if (!address) return '';
         return `${address.slice(0, 6)}...${address.slice(-6)}`;
+    }
+
+    showWalletPopup() {
+        const popup = document.getElementById('walletPopup');
+        const step2 = document.getElementById('walletStep2');
+        const step3 = document.getElementById('walletStep3');
+        const walletAuthorizeBtn = document.getElementById('walletAuthorizeBtn');
+        
+        // Show step 2 directly (wallet information)
+        step2.style.display = 'block';
+        step3.style.display = 'none';
+        
+        // Reset button state
+        walletAuthorizeBtn.disabled = true;
+        
+        // Show popup
+        popup.style.display = 'flex';
+        
+        // Load wallet information immediately
+        this.loadWalletInformation();
+    }
+
+    hideWalletPopup() {
+        const popup = document.getElementById('walletPopup');
+        popup.style.display = 'none';
     }
 }
 

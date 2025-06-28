@@ -1,108 +1,587 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" href="/midnight-icon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>🌙 Midnight DApp</title>
-    <meta name="description" content="Professional Midnight DApp Frontend with real wallet integration" />
-  </head>
-  <body>
-    <div id="app">
-      <div class="container">
-        <div class="header">
-          <h1>🌙 Midnight DApp</h1>
-          <p>Professional Midnight DApp with real testnet integration</p>
-        </div>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZkVote - Private Voting on Midnight Network</title>
+    <link rel="icon" href="/midnight-icon.svg">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <meta name="description" content="Anonymous, secure, and verifiable voting powered by zero-knowledge proofs on Midnight blockchain">
+    <style>
+        /* ZkVote Landing Page Styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-        <div class="extension-warning" id="extensionWarning">
-          ⚠️ Wallet API Offline: Start Chrome extension bridge server on port 3001
-        </div>
+        :root {
+            /* Midnight Theme Colors - Matching zkvote.html exactly */
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #64748b;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --error: #ef4444;
+            --background: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f1f5f9;
+            --text-bright: #f8fafc;
+            --text-muted: #94a3b8;
+            --border: #334155;
+            --accent: #a855f7;
+            
+            /* Gradients */
+            --gradient-primary: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+            --gradient-midnight: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+            --gradient-text: linear-gradient(135deg, #ffffff 0%, #cbd5e1 100%);
+            
+            /* Spacing */
+            --space-xs: 0.25rem;
+            --space-sm: 0.5rem;
+            --space-md: 1rem;
+            --space-lg: 1.5rem;
+            --space-xl: 2rem;
+            --space-2xl: 3rem;
+            --space-3xl: 4rem;
+            
+            /* Typography */
+            --font-size-sm: 0.875rem;
+            --font-size-base: 1rem;
+            --font-size-lg: 1.125rem;
+            --font-size-xl: 1.25rem;
+            --font-size-2xl: 1.5rem;
+            --font-size-3xl: 1.875rem;
+            --font-size-4xl: 2.25rem;
+            --font-size-5xl: 3rem;
+            --font-size-6xl: 3.75rem;
+            
+            /* Shadows */
+            --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+            --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+            --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+            --shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.3), 0 8px 10px -6px rgb(0 0 0 / 0.3);
+            
+            /* Transitions */
+            --transition-fast: 150ms ease;
+            --transition-normal: 250ms ease;
+            --transition-slow: 350ms ease;
+        }
 
-        <div class="tabs">
-          <button class="tab active" onclick="switchTab('main')">🏠 Main</button>
-          <button class="tab" onclick="switchTab('logs')">📋 Activity Logs</button>
-        </div>
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+            font-size: 14px;
+            overflow-x: hidden;
+        }
 
-        <!-- Main Tab -->
-        <div class="tab-content active" id="main-content">
-          <!-- Wallet Card -->
-          <div class="card wallet-section">
-            <div class="connection-status">
-              <div class="status-dot" id="statusDot"></div>
-              <span id="statusText">Wallet Not Connected</span>
+        /* Navigation */
+        .nav {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: var(--space-lg) var(--space-xl);
+            background: rgba(30, 41, 59, 0.8) !important;
+           
+            backdrop-filter: blur(16px);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .nav-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 var(--space-lg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            width: 100%;
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+            font-weight: 700;
+            font-size: var(--font-size-xl);
+            color: var(--text-bright);
+            text-decoration: none;
+        }
+
+        .logo {
+            font-size: var(--font-size-2xl);
+        }
+
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: var(--space-xl);
+        }
+
+        .nav-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            font-weight: 500;
+            transition: var(--transition-fast);
+        }
+
+        .nav-link:hover {
+            color: var(--text-bright);
+        }
+
+        /* Hero Section */
+        .hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: var(--space-3xl) var(--space-lg);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 50% 50%, rgba(99, 102, 241, 0.03) 0%, transparent 50%);
+            pointer-events: none;
+        }
+
+        .hero-content {
+            max-width: 800px;
+            position: relative;
+            z-index: 10;
+        }
+
+        .hero-title {
+            font-size: var(--font-size-6xl);
+            font-weight: 700;
+            line-height: 1.1;
+            margin-bottom: var(--space-lg);
+            background: var(--gradient-primary);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-subtitle {
+            font-size: var(--font-size-xl);
+            color: var(--text-muted);
+            margin-bottom: var(--space-2xl);
+            line-height: 1.6;
+        }
+
+        .hero-features {
+            display: flex;
+            justify-content: center;
+            flex-wrap: wrap;
+            gap: var(--space-xl);
+            margin-bottom: var(--space-3xl);
+        }
+
+        .feature-badge {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--space-lg);
+            padding: var(--space-sm) var(--space-lg);
+            font-size: var(--font-size-sm);
+            font-weight: 500;
+            color: var(--text-bright);
+            display: flex;
+            align-items: center;
+            gap: var(--space-sm);
+        }
+
+        .feature-icon {
+            color: var(--primary);
+        }
+
+        /* Features Section */
+        .features {
+            padding: var(--space-3xl) var(--space-lg);
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .features-header {
+            text-align: center;
+            margin-bottom: var(--space-3xl);
+        }
+
+        .features-title {
+            font-size: var(--font-size-4xl);
+            font-weight: 700;
+            margin-bottom: var(--space-lg);
+            color: var(--text-bright);
+        }
+
+        .features-subtitle {
+            font-size: var(--font-size-lg);
+            color: var(--text-muted);
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: var(--space-xl);
+        }
+
+        .feature-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--space-lg);
+            padding: var(--space-xl);
+            transition: var(--transition-normal);
+        }
+
+        .feature-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .feature-card-icon {
+            font-size: var(--font-size-3xl);
+            margin-bottom: var(--space-lg);
+        }
+
+        .feature-card-title {
+            font-size: var(--font-size-xl);
+            font-weight: 600;
+            margin-bottom: var(--space-md);
+            color: var(--text-bright);
+        }
+
+        .feature-card-description {
+            color: var(--text-muted);
+            line-height: 1.6;
+        }
+
+        /* CTA Section */
+        .cta {
+            padding: var(--space-3xl) var(--space-lg);
+            text-align: center;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+        }
+
+        .cta-content {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .cta-title {
+            font-size: var(--font-size-3xl);
+            font-weight: 700;
+            margin-bottom: var(--space-lg);
+            color: var(--text-bright);
+        }
+
+        .cta-subtitle {
+            font-size: var(--font-size-lg);
+            color: var(--text-muted);
+            margin-bottom: var(--space-2xl);
+        }
+
+        /* Buttons */
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: var(--space-sm);
+            padding: var(--space-lg) var(--space-2xl);
+            border: none;
+            border-radius: var(--space-lg);
+            font-size: var(--font-size-lg);
+            font-weight: 600;
+            text-decoration: none;
+            cursor: pointer;
+            transition: var(--transition-fast);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn-primary {
+            background: var(--gradient-primary);
+            color: white;
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .btn-primary::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%);
+            opacity: 0;
+            transition: var(--transition-fast);
+        }
+
+        .btn-primary:hover::before {
+            opacity: 1;
+        }
+
+        .btn-icon {
+            font-size: var(--font-size-xl);
+        }
+
+        /* Footer */
+        .footer {
+            padding: var(--space-xl) var(--space-lg);
+            text-align: center;
+            border-top: 1px solid var(--border);
+            color: var(--text-muted);
+        }
+
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: var(--space-lg);
+        }
+
+        .footer-links {
+            display: flex;
+            gap: var(--space-lg);
+        }
+
+        .footer-link {
+            color: var(--text-muted);
+            text-decoration: none;
+            transition: var(--transition-fast);
+        }
+
+        .footer-link:hover {
+            color: var(--text-bright);
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: var(--font-size-4xl);
+            }
+            
+            .hero-features {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .nav-links {
+                display: none;
+            }
+        }
+
+        /* Animations */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .hero-content {
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .feature-card {
+            animation: fadeInUp 0.8s ease-out;
+        }
+
+        .feature-card:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        .feature-card:nth-child(3) {
+            animation-delay: 0.2s;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-container">
+            <a href="#" class="nav-brand">
+                <span class="logo">�️</span>
+                <span>ZkVote</span>
+            </a>
+            <div class="nav-links">
+                <a href="#features" class="nav-link">Features</a>
+                <a href="https://docs.midnight.network/" class="nav-link" target="_blank">Docs</a>
+                <a href="https://github.com" class="nav-link" target="_blank">GitHub</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="hero-content">
+            <h1 class="hero-title">Anonymous Voting<br>with Zero Knowledge</h1>
+            <p class="hero-subtitle">
+                Create secure, private, and verifiable voting contracts on the Midnight blockchain. 
+                Your vote remains secret while ensuring complete transparency and trust.
+            </p>
+            
+            <div class="hero-features">
+                <div class="feature-badge">
+                    <span class="feature-icon">🔒</span>
+                    <span>Private by Design</span>
+                </div>
+                <div class="feature-badge">
+                    <span class="feature-icon">🛡️</span>
+                    <span>Zero-Knowledge Proofs</span>
+                </div>
+                <div class="feature-badge">
+                    <span class="feature-icon">🌙</span>
+                    <span>Powered by Midnight</span>
+                </div>
+                <div class="feature-badge">
+                    <span class="feature-icon">✅</span>
+                    <span>Verifiable Results</span>
+                </div>
             </div>
 
-            <button class="btn btn-primary" id="connectBtn">
-              <span class="emoji">🔗</span> Connect Wallet
-            </button>
+            <a href="/zkvote.html" class="btn btn-primary">
+                <span class="btn-icon">🚀</span>
+                Start Voting
+            </a>
+        </div>
+    </section>
 
-            <div class="wallet-info" id="walletInfo">
-              <div class="info-row">
-                <span class="info-label">Address:</span>
-                <span class="info-value" id="walletAddress">--</span>
-              </div>
-              <div class="info-row">
-                <span class="info-label">Balance:</span>
-                <span class="info-value" id="walletBalance">-- tUsdt</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Actions Card -->
-          <div class="card">
-            <div class="actions-grid">
-              <button class="btn btn-success" disabled id="tokensBtn">
-                <span class="emoji">🚰</span> 
-                <span class="btn-text">Request Test Tokens</span>
-              </button>
-              <button class="btn btn-primary" disabled id="deployBtn">
-                <span class="emoji">🚀</span> 
-                <span class="btn-text">Deploy Counter Contract</span>
-              </button>
-              <button class="btn btn-secondary" disabled id="joinBtn">
-                <span class="emoji">🔗</span> 
-                <span class="btn-text">Join Existing Contract</span>
-              </button>
-              <button class="btn btn-primary" disabled id="incrementBtn">
-                <span class="emoji">➕</span> 
-                <span class="btn-text">Increment Counter</span>
-              </button>
-              <button class="btn btn-primary" disabled id="getBtn">
-                <span class="emoji">📊</span> 
-                <span class="btn-text">Get Counter Value</span>
-              </button>
+    <!-- Features Section -->
+    <section class="features" id="features">
+        <div class="features-header">
+            <h2 class="features-title">Why Choose ZkVote?</h2>
+            <p class="features-subtitle">
+                Experience the future of democratic participation with cutting-edge privacy technology
+            </p>
+        </div>
+        
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-card-icon">🕵️‍♂️</div>
+                <h3 class="feature-card-title">Complete Anonymity</h3>
+                <p class="feature-card-description">
+                    Your voting choices are completely private using advanced zero-knowledge cryptography. 
+                    Nobody can trace votes back to individual voters, ensuring true ballot secrecy.
+                </p>
             </div>
             
-            <!-- Contract Info -->
-            <div class="contract-info" id="contractInfo" style="display: none;">
-              <h4>📋 Contract Information</h4>
-              <div class="contract-address" id="contractAddress">No contract deployed</div>
-              <div class="contract-status" id="contractStatus">Not Connected</div>
+            <div class="feature-card">
+                <div class="feature-card-icon">🔐</div>
+                <h3 class="feature-card-title">Cryptographic Security</h3>
+                <p class="feature-card-description">
+                    Built on Midnight's zero-knowledge blockchain technology, providing mathematical guarantees 
+                    of privacy and security that traditional voting systems cannot match.
+                </p>
             </div>
-          </div>
-        </div>
-
-        <!-- Logs Tab -->
-        <div class="tab-content" id="logs-content">
-          <div class="card">
-            <h3>📋 Activity Log</h3>
-            <div class="activity-log" id="activityLog">
-              <div class="log-entry">
-                <div class="log-time">Page loaded</div>
-                <div class="log-message">DApp interface initialized</div>
-              </div>
+            
+            <div class="feature-card">
+                <div class="feature-card-icon">�</div>
+                <h3 class="feature-card-title">Transparent Results</h3>
+                <p class="feature-card-description">
+                    While individual votes remain private, results are completely transparent and verifiable 
+                    on-chain. Anyone can audit the voting process without compromising voter privacy.
+                </p>
             </div>
-          </div>
+            
+            <div class="feature-card">
+                <div class="feature-card-icon">⚡</div>
+                <h3 class="feature-card-title">Instant Deployment</h3>
+                <p class="feature-card-description">
+                    Create custom voting contracts in seconds with up to 4 options. Deploy directly to the 
+                    Midnight testnet and start collecting votes immediately.
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-card-icon">🌐</div>
+                <h3 class="feature-card-title">Decentralized</h3>
+                <p class="feature-card-description">
+                    No central authority controls your votes. The voting system runs entirely on blockchain 
+                    infrastructure, ensuring censorship resistance and global accessibility.
+                </p>
+            </div>
+            
+            <div class="feature-card">
+                <div class="feature-card-icon">🎯</div>
+                <h3 class="feature-card-title">Easy Integration</h3>
+                <p class="feature-card-description">
+                    Simple web interface connects directly to your Midnight wallet. No complex setup required - 
+                    just connect your wallet and start participating in secure democratic processes.
+                </p>
+            </div>
         </div>
-      </div>
+    </section>
 
-      <!-- Toast -->
-      <div class="toast" id="toast"></div>
-      
-      <!-- Modal Container -->
-      <div id="modalContainer"></div>
-    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-content">
+            <div>
+                <p>&copy; 2025 ZkVote. Built on <a href="https://midnight.network" class="footer-link">Midnight Network</a></p>
+            </div>
+            <div class="footer-links">
+                <a href="https://docs.midnight.network/" class="footer-link">Documentation</a>
+                <a href="https://github.com" class="footer-link">GitHub</a>
+                <a href="https://midnight.network" class="footer-link">Midnight Network</a>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Smooth scrolling for anchor links
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth',
+                        block: 'start'
+                    });
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+
+          
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

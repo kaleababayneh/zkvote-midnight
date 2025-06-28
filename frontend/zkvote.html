@@ -29,7 +29,6 @@
         <main class="main">
             <!-- Hero Section -->
             <section class="hero">
-                <h1 class="hero-title">Private Voting<br><span class="accent">with Zero Knowledge</span></h1>
                 <p class="hero-subtitle">Create secure voting contracts or participate in existing polls with complete privacy</p>
             </section>
 
@@ -213,6 +212,91 @@
             <div class="loading-content">
                 <div class="loading-spinner"></div>
                 <p class="loading-text" id="loadingText">Processing...</p>
+            </div>
+        </div>
+
+        <!-- Wallet Connection Popup -->
+        <div class="wallet-popup-overlay" id="walletPopup" style="display: none;">
+            <div class="wallet-popup">
+                <div class="wallet-popup-header">
+                    <h3 class="wallet-popup-title">
+                        <span>🌙</span>
+                        Midnight Wallet
+                    </h3>
+                    <button class="wallet-popup-close" id="walletPopupClose">×</button>
+                </div>
+                
+                <!-- Wallet Connection Steps -->
+                <div class="wallet-popup-content">
+                    <!-- Step 2: Connection Details -->
+                    <div class="wallet-step" id="walletStep2">
+                        <div class="wallet-step-header">
+                            <h4 class="wallet-step-title">Wallet Information</h4>
+                            <p class="wallet-step-subtitle">Review your wallet details before connecting</p>
+                        </div>
+                        
+                        <div class="wallet-info-card">
+                            <div class="wallet-info-row">
+                                <span class="wallet-info-label">Network:</span>
+                                <span class="wallet-info-value">
+                                    <span class="network-badge">Midnight Testnet</span>
+                                </span>
+                            </div>
+                            <div class="wallet-info-row">
+                                <span class="wallet-info-label">Address:</span>
+                                <span class="wallet-info-value" id="walletAddressDisplay">Loading...</span>
+                            </div>
+                            <div class="wallet-info-row">
+                                <span class="wallet-info-label">Balance:</span>
+                                <span class="wallet-info-value" id="walletBalanceDisplay">Loading...</span>
+                            </div>
+                            <div class="wallet-info-row">
+                                <span class="wallet-info-label">Status:</span>
+                                <span class="wallet-info-value" id="walletStatusDisplay">
+                                    <span class="connection-status connecting">Connecting...</span>
+                                </span>
+                            </div>
+                        </div>
+                        
+                        <div class="wallet-permissions">
+                            <h5 class="permissions-title">ZkVote is requesting permission to:</h5>
+                            <ul class="permissions-list">
+                                <li class="permission-item">
+                                    <span class="permission-icon">✅</span>
+                                    View your wallet address
+                                </li>
+                                <li class="permission-item">
+                                    <span class="permission-icon">✅</span>
+                                    View your account balance
+                                </li>
+                                <li class="permission-item">
+                                    <span class="permission-icon">✅</span>
+                                    Request transaction signatures for voting
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- Step 3: Connection Status -->
+                    <div class="wallet-step" id="walletStep3" style="display: none;">
+                        <div class="wallet-connection-status">
+                            <div class="connection-animation" id="connectionAnimation">
+                                <div class="connection-spinner"></div>
+                            </div>
+                            <h4 class="connection-title" id="connectionTitle">Establishing Connection...</h4>
+                            <p class="connection-message" id="connectionMessage">Please wait while we connect to your wallet</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Popup Actions -->
+                <div class="wallet-popup-actions">
+                    <button class="btn btn-secondary" id="walletCancelBtn">Cancel</button>
+                    <button class="btn btn-primary" id="walletAuthorizeBtn">
+                        <span class="btn-text">Authorize Connection</span>
+                        <div class="btn-loader" id="walletAuthorizeLoader"></div>
+                    </button>
+                </div>
             </div>
         </div>
     </div>

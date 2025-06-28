@@ -131,6 +131,7 @@ body {
 .hero {
     text-align: center;
     margin-bottom: var(--space-2xl);
+    background-color: #0f172a !important;
 }
 
 .hero-title {
@@ -1060,17 +1061,6 @@ body {
     margin-bottom: var(--space-lg);
 }
 
-.total-label {
-    color: var(--text-muted);
-    margin-right: var(--space-sm);
-}
-
-.total-count {
-    font-size: 1.5rem;
-    font-weight: 700;
-    color: var(--primary);
-}
-
 .refresh-results-btn {
     display: flex;
     align-items: center;
@@ -1307,6 +1297,12 @@ body {
 .wallet-popup-actions {
     display: flex;
     gap: var(--space-md);
+    justify-content: flex-end;
+}
+
+.wallet-popup-actions .btn {
+    flex: 1;
+    max-width: 140px;
 }
 
 .wallet-popup-btn {
@@ -1398,4 +1394,280 @@ body {
     color: white;
     font-size: 1.5rem;
     font-weight: bold;
+}
+
+/* Wallet Popup Steps */
+.wallet-step {
+    animation: stepFadeIn 0.3s ease;
+}
+
+@keyframes stepFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.wallet-step-header {
+    margin-bottom: var(--space-lg);
+    text-align: center;
+}
+
+.wallet-step-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: var(--space-sm);
+}
+
+.wallet-step-subtitle {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+}
+
+/* Wallet Options */
+.wallet-options {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-md);
+}
+
+.wallet-option {
+    display: flex;
+    align-items: center;
+    padding: var(--space-lg);
+    border: 2px solid var(--border);
+    border-radius: var(--radius-lg);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    background: var(--surface);
+}
+
+.wallet-option:hover:not(.disabled) {
+    border-color: var(--primary);
+    background: var(--surface-light);
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-lg);
+}
+
+.wallet-option.available {
+    border-color: var(--success);
+    background: rgba(34, 197, 94, 0.05);
+}
+
+.wallet-option.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    background: var(--surface-muted);
+}
+
+.wallet-option-icon {
+    font-size: 2rem;
+    margin-right: var(--space-lg);
+    flex-shrink: 0;
+}
+
+.wallet-option-content {
+    flex: 1;
+}
+
+.wallet-option-title {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: var(--space-xs);
+}
+
+.wallet-option-description {
+    color: var(--text-muted);
+    font-size: 0.9rem;
+    line-height: 1.4;
+}
+
+.wallet-option-status {
+    margin-left: var(--space-md);
+}
+
+.status-indicator {
+    font-size: 1.2rem;
+}
+
+.status-indicator.checking {
+    animation: pulse 1.5s infinite;
+}
+
+.status-indicator.available {
+    color: var(--success);
+}
+
+.status-indicator.unavailable {
+    color: var(--error);
+}
+
+.status-indicator.disabled {
+    color: var(--text-muted);
+}
+
+@keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.5; }
+}
+
+/* Wallet Info Card */
+.wallet-info-card {
+    background: var(--background);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-lg);
+    margin: var(--space-lg) 0;
+}
+
+.wallet-info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: var(--space-md) 0;
+    border-bottom: 1px solid var(--border-light);
+}
+
+.wallet-info-row:last-child {
+    border-bottom: none;
+}
+
+.wallet-info-label {
+    color: var(--text-muted);
+    font-weight: 500;
+}
+
+.wallet-info-value {
+    color: var(--text);
+    font-weight: 600;
+    font-family: monospace;
+}
+
+.network-badge {
+    background: var(--primary);
+    color: white;
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.connection-status {
+    padding: var(--space-xs) var(--space-sm);
+    border-radius: var(--radius-sm);
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.connection-status.connecting {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary);
+}
+
+.connection-status.ready {
+    background: rgba(34, 197, 94, 0.1);
+    color: var(--success);
+}
+
+.connection-status.error {
+    background: rgba(239, 68, 68, 0.1);
+    color: var(--error);
+}
+
+/* Wallet Permissions */
+.wallet-permissions {
+    margin-top: var(--space-lg);
+}
+
+.permissions-title {
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: var(--space-md);
+}
+
+.permissions-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.permission-item {
+    display: flex;
+    align-items: center;
+    padding: var(--space-sm) 0;
+    color: var(--text-muted);
+}
+
+.permission-icon {
+    margin-right: var(--space-sm);
+    color: var(--success);
+}
+
+/* Connection Animation */
+.wallet-connection-status {
+    text-align: center;
+    padding: var(--space-xl);
+}
+
+.connection-animation {
+    margin-bottom: var(--space-lg);
+    height: 80px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.connection-spinner {
+    width: 60px;
+    height: 60px;
+    border: 4px solid var(--border);
+    border-top: 4px solid var(--primary);
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.connection-success {
+    font-size: 3rem;
+    color: var(--success);
+    animation: successBounce 0.6s ease;
+}
+
+.connection-error {
+    font-size: 3rem;
+    color: var(--error);
+    animation: errorShake 0.6s ease;
+}
+
+@keyframes successBounce {
+    0% { transform: scale(0); }
+    50% { transform: scale(1.2); }
+    100% { transform: scale(1); }
+}
+
+@keyframes errorShake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-10px); }
+    75% { transform: translateX(10px); }
+}
+
+.connection-title {
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: var(--space-sm);
+}
+
+.connection-message {
+    color: var(--text-muted);
+    line-height: 1.5;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
 }
