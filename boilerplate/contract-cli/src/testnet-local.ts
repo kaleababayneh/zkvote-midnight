@@ -14,7 +14,7 @@
 // limitations under the License.
 
 import { createLogger } from './logger-utils.js';
-import { run } from './cli.js';
+import { run } from './zkvote-cli.js';
 import { TestnetLocalConfig } from './config.js';
 
 const config = new TestnetLocalConfig();

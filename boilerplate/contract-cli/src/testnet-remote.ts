@@ -24,7 +24,7 @@ const projectRoot = path.resolve(__dirname, '..', '..', '..');
 dotenv.config({ path: path.join(projectRoot, '.env') });
 
 import { createLogger } from './logger-utils.js';
-import { runEnhanced } from './simple-enhanced-cli.js';
+import { runEnhanced } from './zkvote-enhanced-cli.js';
 import { TestnetRemoteConfig } from './config.js';
 
 const config = new TestnetRemoteConfig();

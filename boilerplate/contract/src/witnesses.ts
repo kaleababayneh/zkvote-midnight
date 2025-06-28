@@ -17,16 +17,14 @@ const [folder] = fs.readdirSync(managedPath).filter(f =>
 const { Ledger } = await import(`./managed/${folder}/contract/index.cjs`);
 
 
-export type CounterPrivateState = {
+export type ZkvotePrivateState = {
   readonly secretKey: Uint8Array; 
 };
 
-export const createCounterPrivateState = (secretKey: Uint8Array) => ({
+export const createZkvotePrivateState = (secretKey: Uint8Array) => ({
   secretKey,
 });
 
 export const witnesses = {
-  secretKey: ({ privateState }: WitnessContext<typeof Ledger, CounterPrivateState>): [CounterPrivateState, Uint8Array] => {
-    return [privateState, privateState.secretKey];
-  },
+  // No witnesses needed for this zkvote contract
 };

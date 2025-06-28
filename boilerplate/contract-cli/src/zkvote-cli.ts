@@ -28,8 +28,8 @@ const GENESIS_MINT_WALLET_SEED = '0000000000000000000000000000000000000000000000
 
 const DEPLOY_OR_JOIN_QUESTION = `
 You can do one of the following:
-  1. Deploy a new contract
-  2. Join an existing contract
+  1. Deploy a new zkvote contract
+  2. Join an existing zkvote contract
   3. Exit
 Which would you like to do? `;
 
@@ -48,7 +48,7 @@ const deployOrJoin = async (providers: ZkvoteProviders, rli: Interface): Promise
       const contractAddress = await rli.question('What is the contract address (in hex)? ');
       return await api.joinContract(providers, contractAddress);
     } else {
-      logger.info('🚀 Auto-deploying new contract...');
+      logger.info('🚀 Auto-deploying new zkvote contract...');
       return await api.deploy(providers, { secretKey: new Uint8Array(32).fill(1) });
     }
   }
@@ -57,7 +57,12 @@ const deployOrJoin = async (providers: ZkvoteProviders, rli: Interface): Promise
     const choice = await rli.question(DEPLOY_OR_JOIN_QUESTION);
     switch (choice) {
       case '1':
-        return await api.deploy(providers, { secretKey: new Uint8Array(32).fill(1) });
+        // Ask for voting choices
+        const choiceA = await rli.question('Enter choice A (max 3 chars): ');
+        const choiceB = await rli.question('Enter choice B (max 3 chars): ');
+        const choiceC = await rli.question('Enter choice C (max 3 chars): ');
+        const choiceD = await rli.question('Enter choice D (max 3 chars): ');
+        return await api.deploy(providers, { secretKey: new Uint8Array(32).fill(1) }, choiceA, choiceB, choiceC, choiceD);
       case '2':
         return await join(providers, rli);
       case '3':
@@ -69,23 +74,33 @@ const deployOrJoin = async (providers: ZkvoteProviders, rli: Interface): Promise
   }
 };
 
+const ZKVOTE_MENU = `
+You can do one of the following:
+  1. Increment voter count
+  2. Cast a vote
+  3. Get vote count for a choice
+  4. Display contract state
+  5. Exit
+Which would you like to do? `;
+
 const mainLoop = async (providers: ZkvoteProviders, rli: Interface): Promise<void> => {
-  const counterContract = await deployOrJoin(providers, rli);
-  if (counterContract === null) {
+  const zkvoteContract = await deployOrJoin(providers, rli);
+  if (zkvoteContract === null) {
     return;
   }
   
   logger.info('=== ZkVote Contract CLI ===');
-  logger.info(`Contract Address: ${counterContract.deployTxData.public.contractAddress}`);
+  logger.info(`Contract Address: ${zkvoteContract.deployTxData.public.contractAddress}`);
   
   // Check if this is a quick deployment test
   if (process.env.AUTO_DEPLOY === 'true' && process.env.QUICK_TEST === 'true') {
     logger.info('🧪 Running quick deployment test...');
     
     try {
-      await api.incrementVoters(providers, counterContract);
+      // Test displaying state
+      await api.displayZkvoteState(providers, zkvoteContract);
       logger.info('✅ Quick test completed successfully!');
-      logger.info('🎉 Contract deployed and tested - ready for use!');
+      logger.info('🎉 ZkVote contract deployed and tested - ready for use!');
     } catch (error: unknown) {
       if (error instanceof Error) {
         logger.error(`❌ Quick test failed: ${error.message}`);
@@ -97,45 +112,36 @@ const mainLoop = async (providers: ZkvoteProviders, rli: Interface): Promise<voi
     logger.info('💡 Use `npm run wallet` for full testnet CLI or restart for interactive mode');
     return;
   }
-
-  const MENU_QUESTION = `
-ZkVote Contract - What would you like to do?
-  1. Increment voter count
-  2. Cast a vote
-  3. Get vote count for a choice
-  4. Display contract state
-  5. Exit
-Which would you like to do? `;
   
   while (true) {
-    const choice = await rli.question(MENU_QUESTION);
+    const choice = await rli.question(ZKVOTE_MENU);
     
     try {
       switch (choice) {
         case '1':
-          await api.incrementVoters(providers, counterContract);
+          await api.incrementVoters(providers, zkvoteContract);
           break;
         case '2':
-          const secretKey = await rli.question('Enter your secret key (5 chars): ');
-          const choiceStr = await rli.question('Enter choice (0=A, 1=B, 2=C, 3=D): ');
-          const choiceIndex = parseInt(choiceStr, 10);
-          if (isNaN(choiceIndex) || choiceIndex < 0 || choiceIndex > 3) {
-            logger.error('Invalid choice. Must be 0, 1, 2, or 3');
-            continue;
+          const secretKey = await rli.question('Enter your secret voting key (5 chars): ');
+          const choiceIndex = await rli.question('Enter choice index (0-3): ');
+          const index = parseInt(choiceIndex, 10);
+          if (index < 0 || index > 3) {
+            logger.error('Invalid choice index. Must be 0-3.');
+            break;
           }
-          await api.voteFor(providers, counterContract, secretKey, choiceIndex);
+          await api.voteFor(providers, zkvoteContract, secretKey, index);
           break;
         case '3':
-          const queryChoiceStr = await rli.question('Enter choice to check (0=A, 1=B, 2=C, 3=D): ');
-          const queryChoiceIndex = parseInt(queryChoiceStr, 10);
-          if (isNaN(queryChoiceIndex) || queryChoiceIndex < 0 || queryChoiceIndex > 3) {
-            logger.error('Invalid choice. Must be 0, 1, 2, or 3');
-            continue;
+          const queryIndex = await rli.question('Enter choice index to query (0-3): ');
+          const queryIdx = parseInt(queryIndex, 10);
+          if (queryIdx < 0 || queryIdx > 3) {
+            logger.error('Invalid choice index. Must be 0-3.');
+            break;
           }
-          await api.getVoteCount(providers, counterContract, queryChoiceIndex);
+          await api.getVoteCount(providers, zkvoteContract, queryIdx);
           break;
         case '4':
-          await api.displayZkvoteState(providers, counterContract);
+          await api.displayZkvoteState(providers, zkvoteContract);
           break;
         case '5':
           logger.info('Exiting...');

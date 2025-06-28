@@ -1,6 +1,11 @@
-import { contracts, type CounterPrivateState } from '@midnight-ntwrk/contract';
+import { contracts } from '@midnight-ntwrk/contract';
 import type { ImpureCircuitId, MidnightProviders } from '@midnight-ntwrk/midnight-js-types';
 import type { DeployedContract, FoundContract } from '@midnight-ntwrk/midnight-js-contracts';
+
+// Define the private state type for zkvote contract
+export type ZkvotePrivateState = {
+  readonly secretKey: Uint8Array; 
+};
 
 // Get the dynamic contract module
 const getContractModule = () => {
@@ -13,13 +18,12 @@ const getContractModule = () => {
 
 const contractModule = getContractModule();
 
-export type { CounterPrivateState };
-export type CounterCircuits = ImpureCircuitId<typeof contractModule.Contract>;
+export type ZkvoteCircuits = ImpureCircuitId<typeof contractModule.Contract>;
 
-export const CounterPrivateStateId = 'counterPrivateState';
+export const ZkvotePrivateStateId = 'zkvotePrivateState';
 
-export type CounterProviders = MidnightProviders<CounterCircuits, typeof CounterPrivateStateId, CounterPrivateState>;
+export type ZkvoteProviders = MidnightProviders<ZkvoteCircuits, typeof ZkvotePrivateStateId, ZkvotePrivateState>;
 
-export type CounterContract = typeof contractModule.Contract;
+export type ZkvoteContract = typeof contractModule.Contract;
 
-export type DeployedCounterContract = DeployedContract<CounterContract> | FoundContract<CounterContract>;
+export type DeployedZkvoteContract = DeployedContract<ZkvoteContract> | FoundContract<ZkvoteContract>;

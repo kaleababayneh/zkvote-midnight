@@ -123,6 +123,34 @@
                 <span>Connect to CLI</span>
             </button>
         </section>
+
+        <!-- Session Management Section -->
+        <section class="sessions-section">
+            <h3>Active Sessions</h3>
+            <div class="sessions-info">
+                <div class="session-count">
+                    <span class="session-label">Active Sessions:</span>
+                    <span class="session-value" id="sessionCount">0</span>
+                </div>
+                <div class="session-status">
+                    <span class="status-dot" id="sessionStatus"></span>
+                    <span id="sessionStatusText">No active sessions</span>
+                </div>
+            </div>
+            
+            <div class="sessions-list" id="sessionsList">
+                <!-- Sessions will be populated here -->
+            </div>
+            
+            <div class="session-actions">
+                <button class="action-btn small" id="refreshSessions">
+                    <span>Refresh Sessions</span>
+                </button>
+                <button class="action-btn small secondary" id="cleanupSessions">
+                    <span>Cleanup Inactive</span>
+                </button>
+            </div>
+        </section>
     </div>
 
     <!-- Loading Overlay -->

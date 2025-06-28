@@ -37,6 +37,11 @@ class EnhancedMidnightBridge {
     this.isProcessingQueue = false;
     this.runningProcesses = new Map();
     
+    // Persistent CLI sessions management
+    this.persistentSessions = new Map(); // contractAddress -> session info
+    this.cliProcesses = new Map(); // sessionId -> child process
+    this.processStatus = new Map(); // processId -> status info
+    
     this.setupMiddleware();
     this.setupRoutes();
     this.initializeWalletCache();
@@ -92,7 +97,7 @@ class EnhancedMidnightBridge {
     });
   }
 
-  // Execute command in isolated process
+  // Execute command in isolated process with real-time progress updates
   async executeInIsolatedProcess(command, workingDir = null, timeout = 60000) {
     return new Promise((resolve, reject) => {
       const processId = Date.now() + Math.random().toString(36).substr(2, 9);
@@ -100,6 +105,19 @@ class EnhancedMidnightBridge {
       
       console.log(`🚀 [${processId}] Starting command: ${command}`);
       console.log(`📁 [${processId}] Working directory: ${cwd}`);
+      
+      // Track process status for real-time updates
+      const processStatus = {
+        id: processId,
+        command: command,
+        status: 'running',
+        progress: [],
+        startTime: Date.now(),
+        output: '',
+        errorOutput: ''
+      };
+      
+      this.processStatus.set(processId, processStatus);
       
       // Use shell: true to ensure cd commands work properly
       const childProcess = exec(command, {
@@ -118,17 +136,27 @@ class EnhancedMidnightBridge {
       childProcess.stdout?.on('data', (data) => {
         const chunk = data.toString();
         output += chunk;
+        processStatus.output += chunk;
+        
+        // Parse progress from output
+        this.parseProgressFromOutput(chunk, processStatus);
+        
         console.log(`📤 [${processId}] ${chunk.trim()}`);
       });
 
       childProcess.stderr?.on('data', (data) => {
         const chunk = data.toString();
         errorOutput += chunk;
+        processStatus.errorOutput += chunk;
         console.log(`📤 [${processId}] ERROR: ${chunk.trim()}`);
       });
 
       childProcess.on('close', (code) => {
         this.runningProcesses.delete(processId);
+        processStatus.status = code === 0 || code === null ? 'completed' : 'failed';
+        processStatus.exitCode = code;
+        processStatus.endTime = Date.now();
+        
         console.log(`✅ [${processId}] Process completed with code: ${code}`);
         
         // Process succeeded if code is 0 or null (normal exit)
@@ -138,7 +166,8 @@ class EnhancedMidnightBridge {
             output: output,
             errorOutput: errorOutput,
             exitCode: code,
-            processId: processId
+            processId: processId,
+            progress: processStatus.progress
           });
         } else {
           reject(new Error(`Command failed with exit code ${code}: ${errorOutput || output}`));
@@ -147,10 +176,86 @@ class EnhancedMidnightBridge {
 
       childProcess.on('error', (err) => {
         this.runningProcesses.delete(processId);
+        processStatus.status = 'error';
+        processStatus.error = err.message;
         console.error(`❌ [${processId}] Process error: ${err.message}`);
         reject(new Error(`Failed to execute command: ${err.message}`));
       });
     });
+  }
+
+  // Parse progress indicators from CLI output
+  parseProgressFromOutput(output, processStatus) {
+    const timestamp = Date.now();
+    
+    // Contract deployment progress indicators
+    if (output.includes('Auto-generation complete')) {
+      processStatus.progress.push({ step: 'generation', message: 'Contract generation complete', timestamp });
+    }
+    if (output.includes('Compiling contract')) {
+      processStatus.progress.push({ step: 'compilation', message: 'Compiling contract', timestamp });
+    }
+    if (output.includes('Connecting to testnet')) {
+      processStatus.progress.push({ step: 'connection', message: 'Connecting to testnet', timestamp });
+    }
+    if (output.includes('Running: npm run testnet-remote')) {
+      processStatus.progress.push({ step: 'deployment', message: 'Starting deployment process', timestamp });
+    }
+    if (output.includes('Enhanced CLI initialized')) {
+      processStatus.progress.push({ step: 'cli-init', message: 'CLI initialized', timestamp });
+    }
+    if (output.includes('Using wallet seed')) {
+      processStatus.progress.push({ step: 'wallet', message: 'Wallet loaded', timestamp });
+    }
+    if (output.includes('Waiting to receive tokens')) {
+      processStatus.progress.push({ step: 'funding', message: 'Waiting for tokens', timestamp });
+    }
+    if (output.includes('Your wallet balance is:') && !output.includes('Your wallet balance is: 0')) {
+      processStatus.progress.push({ step: 'funded', message: 'Wallet funded successfully', timestamp });
+    }
+    if (output.includes('Auto-deploying new contract')) {
+      processStatus.progress.push({ step: 'deploying', message: 'Deploying contract', timestamp });
+    }
+    if (output.includes('Deployed contract at address:')) {
+      const addressMatch = output.match(/Deployed contract at address:\s*([a-fA-F0-9]{64})/);
+      if (addressMatch) {
+        processStatus.progress.push({ 
+          step: 'deployed', 
+          message: `Contract deployed: ${addressMatch[1]}`, 
+          contractAddress: addressMatch[1],
+          timestamp 
+        });
+        processStatus.contractAddress = addressMatch[1];
+      }
+    }
+    if (output.includes('Successfully deployed') || output.includes('Contract operation completed successfully')) {
+      processStatus.progress.push({ step: 'success', message: 'Deployment completed successfully', timestamp });
+      processStatus.status = 'completed';
+    }
+    
+    // Increment operation progress
+    if (output.includes('Transaction ID:')) {
+      const txMatch = output.match(/Transaction ID:\s*([a-fA-F0-9]{64})/);
+      if (txMatch) {
+        processStatus.progress.push({ 
+          step: 'transaction', 
+          message: `Transaction submitted: ${txMatch[1]}`, 
+          txId: txMatch[1],
+          timestamp 
+        });
+      }
+    }
+    if (output.includes('Block Height:')) {
+      const blockMatch = output.match(/Block Height:\s*(\d+)/);
+      if (blockMatch) {
+        processStatus.progress.push({ 
+          step: 'confirmed', 
+          message: `Transaction confirmed at block ${blockMatch[1]}`, 
+          blockHeight: parseInt(blockMatch[1]),
+          timestamp 
+        });
+      }
+    }
   }
 
   // Queue system for sequential command execution
@@ -195,6 +300,211 @@ class EnhancedMidnightBridge {
     }
 
     this.isProcessingQueue = false;
+  }
+
+  // Persistent CLI Session Management
+  async createPersistentSession(contractAddress) {
+    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    
+    console.log(`🔗 Creating persistent CLI session for contract: ${contractAddress}`);
+    
+    try {
+      // Start a persistent CLI process that stays connected
+      const cliProcess = spawn('npm', ['run', 'cli'], {
+        cwd: this.cliPath,
+        stdio: ['pipe', 'pipe', 'pipe'],
+        env: { 
+          ...process.env, 
+          CONTRACT_ADDRESS: contractAddress,
+          AUTO_CONNECT: 'true',
+          KEEP_ALIVE: 'true'
+        }
+      });
+
+      // Store session info
+      const sessionInfo = {
+        sessionId,
+        contractAddress,
+        process: cliProcess,
+        connected: false,
+        lastUsed: Date.now(),
+        createdAt: Date.now()
+      };
+
+      this.cliProcesses.set(sessionId, cliProcess);
+      this.persistentSessions.set(contractAddress, sessionInfo);
+
+      // Handle process output for connection status
+      let outputBuffer = '';
+      cliProcess.stdout.on('data', (data) => {
+        const output = data.toString();
+        outputBuffer += output;
+        console.log(`📤 [${sessionId}] ${output.trim()}`);
+        
+        // Check if CLI is ready for commands
+        if (output.includes('CLI ready') || output.includes('Connected to contract')) {
+          sessionInfo.connected = true;
+          console.log(`✅ [${sessionId}] CLI session ready for contract operations`);
+        }
+      });
+
+      cliProcess.stderr.on('data', (data) => {
+        console.log(`📥 [${sessionId}] STDERR: ${data.toString().trim()}`);
+      });
+
+      cliProcess.on('close', (code) => {
+        console.log(`🔌 [${sessionId}] CLI session closed with code: ${code}`);
+        this.cleanupSession(sessionId);
+      });
+
+      cliProcess.on('error', (err) => {
+        console.error(`❌ [${sessionId}] CLI session error: ${err.message}`);
+        this.cleanupSession(sessionId);
+      });
+
+      // Wait for initial connection
+      await this.waitForSessionReady(sessionId, 30000); // 30 second timeout
+
+      console.log(`✅ Persistent CLI session created: ${sessionId}`);
+      return sessionInfo;
+
+    } catch (error) {
+      console.error(`❌ Failed to create persistent session: ${error.message}`);
+      throw error;
+    }
+  }
+
+  async waitForSessionReady(sessionId, timeoutMs) {
+    const startTime = Date.now();
+    const session = Array.from(this.persistentSessions.values())
+      .find(s => s.sessionId === sessionId);
+
+    return new Promise((resolve, reject) => {
+      const checkReady = () => {
+        if (session && session.connected) {
+          resolve(session);
+          return;
+        }
+
+        if (Date.now() - startTime > timeoutMs) {
+          reject(new Error(`Session ${sessionId} connection timeout`));
+          return;
+        }
+
+        setTimeout(checkReady, 500);
+      };
+
+      checkReady();
+    });
+  }
+
+  async getOrCreateSession(contractAddress) {
+    // Check if we have an existing session for this contract
+    const existingSession = this.persistentSessions.get(contractAddress);
+    
+    if (existingSession && existingSession.connected) {
+      existingSession.lastUsed = Date.now();
+      console.log(`🔄 Reusing existing CLI session for contract: ${contractAddress}`);
+      return existingSession;
+    }
+
+    // Create new session if none exists or existing one is not connected
+    if (existingSession) {
+      console.log(`🧹 Cleaning up disconnected session for contract: ${contractAddress}`);
+      this.cleanupSession(existingSession.sessionId);
+    }
+
+    return await this.createPersistentSession(contractAddress);
+  }
+
+  async executeInSession(contractAddress, command) {
+    const session = await this.getOrCreateSession(contractAddress);
+    
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error(`Command timeout in session ${session.sessionId}`));
+      }, 60000); // 60 second timeout
+
+      let outputBuffer = '';
+      let resultSent = false;
+
+      const dataHandler = (data) => {
+        const output = data.toString();
+        outputBuffer += output;
+        console.log(`📤 [${session.sessionId}] ${output.trim()}`);
+
+        // Check for command completion patterns - More comprehensive checks
+        if (output.includes('Transaction completed') || 
+            output.includes('Transaction ID:') ||
+            output.includes('✅') || 
+            output.includes('Operation completed') ||
+            output.includes('Block Height:') ||
+            output.includes('Counter incremented')) {
+          if (!resultSent) {
+            resultSent = true;
+            clearTimeout(timeout);
+            session.process.stdout.removeListener('data', dataHandler);
+            resolve({ 
+              output: outputBuffer, 
+              success: true, 
+              sessionUsed: true,
+              sessionId: session.sessionId 
+            });
+          }
+        }
+      };
+
+      session.process.stdout.on('data', dataHandler);
+
+      // Send command to CLI session
+      session.process.stdin.write(command + '\n');
+      session.lastUsed = Date.now();
+    });
+  }
+
+  cleanupSession(sessionId) {
+    // Find and remove session
+    for (const [contractAddress, session] of this.persistentSessions.entries()) {
+      if (session.sessionId === sessionId) {
+        this.persistentSessions.delete(contractAddress);
+        break;
+      }
+    }
+
+    // Clean up process
+    const process = this.cliProcesses.get(sessionId);
+    if (process && !process.killed) {
+      process.kill('SIGTERM');
+    }
+    this.cliProcesses.delete(sessionId);
+  }
+
+  // Cleanup inactive sessions (older than 1 hour)
+  cleanupInactiveSessions() {
+    const oneHour = 60 * 60 * 1000;
+    const now = Date.now();
+
+    for (const [contractAddress, session] of this.persistentSessions.entries()) {
+      if (now - session.lastUsed > oneHour) {
+        console.log(`🧹 Cleaning up inactive session: ${session.sessionId}`);
+        this.cleanupSession(session.sessionId);
+      }
+    }
+  }
+
+  // Get list of active sessions
+  getActiveSessions() {
+    const sessions = [];
+    for (const [contractAddress, session] of this.persistentSessions.entries()) {
+      sessions.push({
+        contractAddress,
+        sessionId: session.sessionId,
+        connected: session.connected,
+        lastUsed: session.lastUsed,
+        uptime: Date.now() - session.createdAt
+      });
+    }
+    return sessions;
   }
 
   setupRoutes() {
@@ -281,30 +591,44 @@ class EnhancedMidnightBridge {
         
         const result = await this.queueCommand(async () => {
           // Use the enhanced deploy script that saves contract address
-          return await this.executeInIsolatedProcess(`cd "${this.projectRoot}" && node boilerplate/scripts/deploy-enhanced.js`, this.projectRoot, 180000); // 3 minute timeout
+          return await this.executeInIsolatedProcess(`cd "${this.projectRoot}" && node boilerplate/scripts/deploy-enhanced.js`, this.projectRoot, 300000); // 5 minute timeout
         }, 1); // High priority
         
-        // Parse contract address from output
+        // Parse contract address from output with enhanced detection
         const contractAddress = this.parseContractAddressFromOutput(result.output);
+        console.log(`🎯 Parsed contract address: ${contractAddress}`);
         
-        // Update cache
+        // Update cache with comprehensive contract info
         this.walletCache.contractInfo = {
           address: contractAddress,
           deployed: true,
-          deployedAt: new Date().toISOString()
+          deployedAt: new Date().toISOString(),
+          txId: this.parseTxHashFromOutput(result.output),
+          blockHeight: this.parseBlockHeightFromOutput(result.output)
         };
         
         // Update .env file with new contract address
         this.updateEnvFile({
           CONTRACT_ADDRESS: contractAddress
         });
+
+        // Create persistent CLI session for this contract
+        try {
+          console.log('🔗 Creating persistent CLI session for deployed contract...');
+          const session = await this.createPersistentSession(contractAddress);
+          console.log(`✅ Persistent session created: ${session.sessionId}`);
+        } catch (sessionError) {
+          console.warn('⚠️ Failed to create persistent session, but deployment succeeded:', sessionError.message);
+        }
         
         res.json({
           success: true,
           contractAddress: contractAddress,
           output: result.output,
           processId: result.processId,
-          message: 'Contract deployed and address saved to .env file',
+          progress: result.progress || [],
+          contractInfo: this.walletCache.contractInfo,
+          message: 'Contract deployed successfully, address saved, and persistent CLI session created',
           timestamp: new Date().toISOString()
         });
       } catch (error) {
@@ -317,20 +641,34 @@ class EnhancedMidnightBridge {
       }
     });
 
-    // Execute contract function (increment)
+    // Execute contract function (increment) - Now uses persistent session
     this.app.post('/api/contract/increment', async (req, res) => {
       try {
         console.log('⚡ Incrementing counter...');
         
+        const contractAddress = process.env.CONTRACT_ADDRESS;
+        if (!contractAddress) {
+          return res.status(400).json({
+            success: false,
+            error: 'No contract address found. Deploy or join a contract first.',
+            timestamp: new Date().toISOString()
+          });
+        }
+        
         const result = await this.queueCommand(async () => {
-          // Use the new non-interactive increment script with cd command
-          return await this.executeInIsolatedProcess(`cd "${this.projectRoot}" && node boilerplate/scripts/increment-counter.js`, this.projectRoot, 90000);
+          // Try to use persistent session first, fallback to isolated process
+          try {
+            console.log('🔗 Using persistent CLI session for contract interaction...');
+            return await this.executeInSession(contractAddress, 'increment');
+          } catch (sessionError) {
+            console.warn('⚠️ Session execution failed, falling back to isolated process:', sessionError.message);
+            return await this.executeInIsolatedProcess(`cd "${this.projectRoot}" && node boilerplate/scripts/increment-counter.js`, this.projectRoot, 90000);
+          }
         });
         
         // Parse meaningful data from output
         const txHash = this.parseTxHashFromOutput(result.output);
         const blockHeight = this.parseBlockHeightFromOutput(result.output);
-        const contractAddress = process.env.CONTRACT_ADDRESS || this.parseContractAddressFromOutput(result.output);
         
         console.log(`✅ Increment successful - TX: ${txHash}, Block: ${blockHeight}`);
         
@@ -340,7 +678,7 @@ class EnhancedMidnightBridge {
           blockHeight: blockHeight,
           contractAddress: contractAddress,
           output: result.output,
-          processId: result.processId,
+          sessionUsed: result.sessionUsed || false,
           timestamp: new Date().toISOString()
         });
       } catch (error) {
@@ -494,6 +832,34 @@ class EnhancedMidnightBridge {
       });
     });
 
+    // Get process status with real-time progress
+    this.app.get('/api/process/:processId/status', (req, res) => {
+      const { processId } = req.params;
+      const status = this.processStatus.get(processId);
+      
+      if (!status) {
+        return res.status(404).json({
+          success: false,
+          error: `Process ${processId} not found`,
+          timestamp: new Date().toISOString()
+        });
+      }
+
+      res.json({
+        success: true,
+        processId: processId,
+        status: status.status,
+        progress: status.progress,
+        contractAddress: status.contractAddress,
+        startTime: status.startTime,
+        endTime: status.endTime,
+        exitCode: status.exitCode,
+        error: status.error,
+        isRunning: this.runningProcesses.has(processId),
+        timestamp: new Date().toISOString()
+      });
+    });
+
     // Join existing contract
     this.app.post('/api/contract/join', async (req, res) => {
       try {
@@ -519,15 +885,209 @@ class EnhancedMidnightBridge {
           deployed: false,
           joinedAt: new Date().toISOString()
         };
-        
+
+        // Create persistent CLI session for this contract
+        try {
+          console.log('🔗 Creating persistent CLI session for joined contract...');
+          const session = await this.createPersistentSession(contractAddress);
+          console.log(`✅ Persistent session created: ${session.sessionId}`);
+          
+          res.json({
+            success: true,
+            contractAddress: contractAddress,
+            sessionId: session.sessionId,
+            message: 'Contract joined and persistent CLI session created',
+            timestamp: new Date().toISOString()
+          });
+        } catch (sessionError) {
+          console.warn('⚠️ Failed to create persistent session, but join succeeded:', sessionError.message);
+          res.json({
+            success: true,
+            contractAddress: contractAddress,
+            message: 'Contract address saved to .env file - ready for interactions',
+            warning: 'Persistent session creation failed, will use isolated processes',
+            timestamp: new Date().toISOString()
+          });
+        }
+      } catch (error) {
+        console.error('❌ Contract join failed:', error.message);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
+    // Session Management Endpoints
+    
+    // Get all active sessions
+    this.app.get('/api/sessions', (req, res) => {
+      try {
+        const sessions = this.getActiveSessions();
         res.json({
           success: true,
-          contractAddress: contractAddress,
-          message: 'Contract address saved to .env file - ready for interactions',
+          sessions: sessions,
+          count: sessions.length,
           timestamp: new Date().toISOString()
         });
       } catch (error) {
-        console.error('❌ Contract join failed:', error.message);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
+    // Get specific session status
+    this.app.get('/api/sessions/:contractAddress', (req, res) => {
+      try {
+        const { contractAddress } = req.params;
+        const session = this.persistentSessions.get(contractAddress);
+        
+        if (!session) {
+          return res.status(404).json({
+            success: false,
+            error: `No session found for contract: ${contractAddress}`,
+            timestamp: new Date().toISOString()
+          });
+        }
+
+        res.json({
+          success: true,
+          session: {
+            contractAddress: session.contractAddress,
+            sessionId: session.sessionId,
+            connected: session.connected,
+            lastUsed: session.lastUsed,
+            uptime: Date.now() - session.createdAt,
+            createdAt: session.createdAt
+          },
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        res.status(500).json({ 
+          success: false, 
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
+    // Create new session for contract
+    this.app.post('/api/sessions/:contractAddress', async (req, res) => {
+      try {
+        const { contractAddress } = req.params;
+        
+        if (!contractAddress || !/^[0-9a-fA-F]{64}$/.test(contractAddress)) {
+          return res.status(400).json({
+            success: false,
+            error: 'Valid contract address (64 hex chars) is required'
+          });
+        }
+
+        console.log(`🔗 Creating new session for contract: ${contractAddress}`);
+        const session = await this.createPersistentSession(contractAddress);
+        
+        res.json({
+          success: true,
+          sessionId: session.sessionId,
+          contractAddress: contractAddress,
+          message: 'Persistent CLI session created successfully',
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error('❌ Session creation failed:', error.message);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
+    // Close/cleanup session
+    this.app.delete('/api/sessions/:contractAddress', (req, res) => {
+      try {
+        const { contractAddress } = req.params;
+        const session = this.persistentSessions.get(contractAddress);
+        
+        if (!session) {
+          return res.status(404).json({
+            success: false,
+            error: `No session found for contract: ${contractAddress}`,
+            timestamp: new Date().toISOString()
+          });
+        }
+
+        console.log(`🧹 Closing session for contract: ${contractAddress}`);
+        this.cleanupSession(session.sessionId);
+        
+        res.json({
+          success: true,
+          message: `Session closed for contract: ${contractAddress}`,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        res.status(500).json({ 
+          success: false, 
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
+    // Execute command in session
+    this.app.post('/api/sessions/:contractAddress/execute', async (req, res) => {
+      try {
+        const { contractAddress } = req.params;
+        const { command } = req.body;
+        
+        if (!command) {
+          return res.status(400).json({
+            success: false,
+            error: 'Command is required',
+            timestamp: new Date().toISOString()
+          });
+        }
+
+        console.log(`⚡ Executing command in session for ${contractAddress}: ${command}`);
+        
+        const result = await this.executeInSession(contractAddress, command);
+        
+        res.json({
+          success: true,
+          result: result,
+          contractAddress: contractAddress,
+          command: command,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
+        console.error('❌ Session command execution failed:', error.message);
+        res.status(500).json({ 
+          success: false, 
+          error: error.message,
+          timestamp: new Date().toISOString()
+        });
+      }
+    });
+
+    // Cleanup inactive sessions
+    this.app.post('/api/sessions/cleanup', (req, res) => {
+      try {
+        const beforeCount = this.persistentSessions.size;
+        this.cleanupInactiveSessions();
+        const afterCount = this.persistentSessions.size;
+        const cleaned = beforeCount - afterCount;
+        
+        res.json({
+          success: true,
+          message: `Cleaned up ${cleaned} inactive sessions`,
+          sessionsRemaining: afterCount,
+          timestamp: new Date().toISOString()
+        });
+      } catch (error) {
         res.status(500).json({ 
           success: false, 
           error: error.message,
@@ -619,21 +1179,49 @@ class EnhancedMidnightBridge {
   }
 
   parseContractAddressFromOutput(output) {
+    // Pattern 1: "Contract Address: 0200adcf4dd3..." (new format)
+    const contractAddressMatch = output.match(/Contract Address:\s*([a-fA-F0-9]{64})/i);
+    if (contractAddressMatch) {
+      console.log('✅ Found Contract Address:', contractAddressMatch[1]);
+      return contractAddressMatch[1];
+    }
+
+    // Pattern 2: "Deployed contract at address: 0200adcf4dd3..." 
+    const deployedMatch = output.match(/Deployed contract at address:\s*([a-fA-F0-9]{64})/i);
+    if (deployedMatch) {
+      console.log('✅ Found deployed contract address:', deployedMatch[1]);
+      return deployedMatch[1];
+    }
+
+    // Pattern 3: Legacy patterns with "Contract deployed" or similar
     const addressMatch = output.match(/Contract\s+(?:deployed|address).*?([a-fA-F0-9]{40,})/i);
     if (addressMatch) {
+      console.log('✅ Found legacy contract address:', addressMatch[1]);
       return addressMatch[1];
     }
 
+    // Pattern 4: Look for 0x prefix (legacy)
     const hexMatch = output.match(/0x[a-fA-F0-9]{40}/);
     if (hexMatch) {
+      console.log('✅ Found hex contract address:', hexMatch[0]);
       return hexMatch[0];
     }
 
+    // Pattern 5: Look for any 64-character hex string (modern Midnight format)
+    const hex64Match = output.match(/\b[a-fA-F0-9]{64}\b/);
+    if (hex64Match) {
+      console.log('✅ Found 64-char hex address:', hex64Match[0]);
+      return hex64Match[0];
+    }
+
+    // Pattern 6: Fallback to any long hex string
     const fallbackMatch = output.match(/[a-fA-F0-9]{40,}/);
     if (fallbackMatch) {
+      console.log('✅ Found fallback contract address:', fallbackMatch[0]);
       return fallbackMatch[0];
     }
     
+    console.log('❌ No contract address found in output');
     return `contract_${Date.now()}`;
   }
 
@@ -719,26 +1307,43 @@ class EnhancedMidnightBridge {
       console.log(`📁 Project root: ${this.projectRoot}`);
       console.log(`🛠️  CLI path: ${this.cliPath}`);
       console.log(`📜 Scripts path: ${this.scriptsPath}`);
-      console.log('⚡ Ready to execute isolated commands');
+      console.log('⚡ Ready to execute isolated commands & persistent sessions');
       console.log('');
       console.log('Available endpoints:');
-      console.log('  GET  /api/status                  - Health check');
-      console.log('  GET  /api/wallet                  - Get wallet info');
-      console.log('  GET  /api/balance                 - Check balance');
-      console.log('  POST /api/faucet                  - Request tokens');
-      console.log('  POST /api/wallet/generate         - Generate wallet');
-      console.log('  POST /api/contract/deploy         - Deploy contract');
-      console.log('  GET  /api/contract/state          - Get contract state');
-      console.log('  POST /api/contract/increment      - Increment counter');
-      console.log('  GET  /api/processes               - List running processes');
-      console.log('  POST /api/kill/:processId         - Kill specific process');
+      console.log('  GET  /api/status                         - Health check');
+      console.log('  GET  /api/wallet                         - Get wallet info');
+      console.log('  GET  /api/balance                        - Check balance');
+      console.log('  POST /api/faucet                         - Request tokens');
+      console.log('  POST /api/wallet/generate                - Generate wallet');
+      console.log('  POST /api/contract/deploy                - Deploy contract');
+      console.log('  POST /api/contract/join                  - Join existing contract');
+      console.log('  GET  /api/contract/state                 - Get contract state');
+      console.log('  POST /api/contract/increment             - Increment counter');
+      console.log('  GET  /api/processes                      - List running processes');
+      console.log('  GET  /api/process/:processId/status      - Get process status');
+      console.log('  POST /api/kill/:processId                - Kill specific process');
+      console.log('');
+      console.log('Session Management:');
+      console.log('  GET  /api/sessions                       - List all active sessions');
+      console.log('  GET  /api/sessions/:contractAddress      - Get session status');
+      console.log('  POST /api/sessions/:contractAddress      - Create new session');
+      console.log('  DELETE /api/sessions/:contractAddress    - Close session');
+      console.log('  POST /api/sessions/:contractAddress/execute - Execute command in session');
+      console.log('  POST /api/sessions/cleanup               - Cleanup inactive sessions');
       console.log('');
       console.log('✨ Features:');
       console.log('  - Isolated process execution');
+      console.log('  - Persistent CLI sessions');
       console.log('  - Command queue management');
       console.log('  - Process monitoring');
+      console.log('  - Session reuse for contract operations');
       console.log('  - Timeout protection');
       console.log('');
+      
+      // Start periodic cleanup of inactive sessions
+      setInterval(() => {
+        this.cleanupInactiveSessions();
+      }, 30 * 60 * 1000); // Every 30 minutes
     });
 
     // Graceful shutdown
@@ -749,6 +1354,12 @@ class EnhancedMidnightBridge {
       for (const [processId, process] of this.runningProcesses) {
         console.log(`🔪 Killing process ${processId}`);
         process.kill('SIGTERM');
+      }
+      
+      // Clean up all persistent sessions
+      for (const [contractAddress, session] of this.persistentSessions.entries()) {
+        console.log(`🧹 Cleaning up session for ${contractAddress}`);
+        this.cleanupSession(session.sessionId);
       }
       
       process.exit(0);

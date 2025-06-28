@@ -24,7 +24,7 @@ const projectRoot = path.resolve(__dirname, '..', '..', '..');
 dotenv.config({ path: path.join(projectRoot, '.env') });
 
 import { createLogger } from './logger-utils.js';
-import { run } from './cli.js';
+import { run } from './zkvote-cli.js';
 import { currentDir, TestnetRemoteConfig } from './config.js';
 import { DockerComposeEnvironment, Wait } from 'testcontainers';
 

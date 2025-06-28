@@ -404,19 +404,39 @@ class MidnightWallet {
                 
                 if (response.ok) {
                     const data = await response.json();
+                    
+                    // Show if session was used
+                    if (data.sessionUsed) {
+                        this.logMessage('Using persistent CLI session for faster execution');
+                    }
+                    
                     this.showToast('Counter incremented successfully!');
-                    this.logMessage(`Transaction hash: ${data.txHash}`);
+                    this.logMessage(`Transaction ID: ${data.txId || 'Unknown'}`);
+                    if (data.blockHeight) {
+                        this.logMessage(`Confirmed at block: ${data.blockHeight}`);
+                    }
+                    
                     // Refresh counter after a delay
                     setTimeout(() => this.refreshCounter(), 3000);
                 } else {
-                    throw new Error('Increment failed');
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Increment failed');
                 }
             } else {
                 // Simulation mode
+                this.contractData = {
+                    ...this.contractData,
+                    counterValue: (this.contractData?.counterValue || 0) + 1,
+                    lastUpdated: Date.now()
+                };
+                await this.saveWalletData();
+                this.updateUI();
+                this.showToast('Counter incremented (simulation mode)');
+                this.logMessage('Counter incremented in simulation mode');
             }
         } catch (error) {
-            this.showToast('Failed to increment counter', 'error');
-            this.logMessage('Failed to increment counter', 'error');
+            this.showToast(`Failed to increment counter: ${error.message}`, 'error');
+            this.logMessage(`Failed to increment counter: ${error.message}`, 'error');
         }
         
         this.hideLoading();
@@ -437,28 +457,91 @@ class MidnightWallet {
                 
                 if (response.ok) {
                     const data = await response.json();
+                    
+                    // If we got a processId, start polling for real-time updates
+                    if (data.processId) {
+                        await this.pollProcessStatus(data.processId, 'Deploying contract');
+                    }
+                    
                     this.contractData = {
                         address: data.contractAddress,
                         counterValue: 0,
                         deployed: true,
-                        lastUpdated: Date.now()
+                        lastUpdated: Date.now(),
+                        progress: data.progress || []
                     };
                     await this.saveWalletData();
                     this.updateUI();
                     this.showToast('Contract deployed successfully!');
                     this.logMessage(`Contract deployed at: ${data.contractAddress}`);
+                    
+                    // Show progress summary if available
+                    if (data.progress && data.progress.length > 0) {
+                        this.logMessage(`Deployment completed in ${data.progress.length} steps`);
+                    }
                 } else {
-                    throw new Error('Deployment failed');
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Deployment failed');
                 }
             } else {
                 // Simulation mode
+                this.contractData = {
+                    address: `sim_contract_${Date.now()}`,
+                    counterValue: 0,
+                    deployed: true,
+                    lastUpdated: Date.now()
+                };
+                await this.saveWalletData();
+                this.updateUI();
+                this.showToast('Contract deployed (simulation mode)');
+                this.logMessage('Contract deployed in simulation mode');
             }
         } catch (error) {
-            this.showToast('Failed to deploy contract', 'error');
-            this.logMessage('Failed to deploy contract', 'error');
+            this.showToast(`Failed to deploy contract: ${error.message}`, 'error');
+            this.logMessage(`Failed to deploy contract: ${error.message}`, 'error');
         }
         
         this.hideLoading();
+    }
+
+    // Poll process status for real-time updates
+    async pollProcessStatus(processId, operationName) {
+        const maxPolls = 60; // Poll for up to 5 minutes (5 second intervals)
+        let pollCount = 0;
+        
+        const poll = async () => {
+            try {
+                const response = await fetch(`http://localhost:3001/api/process/${processId}/status`);
+                if (response.ok) {
+                    const statusData = await response.json();
+                    
+                    // Update loading text with latest progress
+                    if (statusData.progress && statusData.progress.length > 0) {
+                        const latestProgress = statusData.progress[statusData.progress.length - 1];
+                        this.showLoading(`${operationName}: ${latestProgress.message}`);
+                        this.logMessage(`Progress: ${latestProgress.message}`);
+                    }
+                    
+                    // Check if process is complete
+                    if (statusData.status === 'completed' || statusData.status === 'failed' || !statusData.isRunning) {
+                        return; // Stop polling
+                    }
+                    
+                    // Continue polling if still running and under limit
+                    pollCount++;
+                    if (pollCount < maxPolls) {
+                        setTimeout(poll, 5000); // Poll every 5 seconds
+                    }
+                } else {
+                    console.warn('Failed to fetch process status');
+                }
+            } catch (error) {
+                console.warn('Error polling process status:', error);
+            }
+        };
+        
+        // Start polling after a short delay
+        setTimeout(poll, 2000);
     }
 
 

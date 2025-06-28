@@ -15,7 +15,7 @@
 
 import { createLogger } from './logger-utils.js';
 import path from 'node:path';
-import { run } from './cli.js';
+import { run } from './zkvote-cli.js';
 import { DockerComposeEnvironment, Wait } from 'testcontainers';
 import { currentDir, StandaloneConfig } from './config.js';
 

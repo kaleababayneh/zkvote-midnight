@@ -1,0 +1,154 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Midnight Wallet</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="wallet-container">
+        <!-- Header -->
+        <div class="wallet-header">
+            <div class="wallet-logo">
+                <img src="icons/icon32.png" alt="Midnight Logo">
+                <h1>Midnight Wallet</h1>
+            </div>
+            <div class="connection-status" id="connectionStatus">
+                <span class="status-dot offline"></span>
+                <span>Connecting...</span>
+            </div>
+        </div>
+
+        <!-- Wallet Info -->
+        <div class="wallet-info" id="walletInfo">
+            <div class="balance-section">
+                <div class="balance-label">Balance</div>
+                <div class="balance-amount" id="balanceAmount">0.000</div>
+                <div class="balance-currency">MIDNIGHT</div>
+            </div>
+            
+            <div class="address-section">
+                <div class="address-label">Wallet Address</div>
+                <div class="address-value" id="walletAddress">Not Connected</div>
+                <button class="copy-btn" id="copyAddressBtn" title="Copy Address">📋</button>
+            </div>
+        </div>
+
+        <!-- Action Buttons -->
+        <div class="action-buttons">
+            <button class="btn btn-primary" id="generateWalletBtn">
+                <span class="btn-icon">🔑</span>
+                Generate Wallet
+            </button>
+            
+            <button class="btn btn-secondary" id="requestTokensBtn">
+                <span class="btn-icon">💧</span>
+                Request Tokens
+            </button>
+            
+            <button class="btn btn-secondary" id="refreshBalanceBtn">
+                <span class="btn-icon">🔄</span>
+                Refresh Balance
+            </button>
+        </div>
+
+        <!-- Contract Section -->
+        <div class="contract-section">
+            <div class="section-header">
+                <h3>Smart Contract</h3>
+                <div class="contract-status" id="contractStatus">
+                    <span class="status-dot offline"></span>
+                    <span>Not Deployed</span>
+                </div>
+            </div>
+            
+            <div class="contract-info" id="contractInfo">
+                <div class="contract-address">
+                    <span class="label">Contract:</span>
+                    <span class="value" id="contractAddress">Not Deployed</span>
+                </div>
+                <div class="counter-value">
+                    <span class="label">Counter:</span>
+                    <span class="value" id="counterValue">0</span>
+                </div>
+            </div>
+            
+            <div class="contract-actions">
+                <button class="btn btn-primary" id="deployContractBtn">
+                    <span class="btn-icon">🚀</span>
+                    Deploy Contract
+                </button>
+                
+                <button class="btn btn-secondary" id="joinContractBtn" disabled>
+                    <span class="btn-icon">🔗</span>
+                    Join Contract
+                </button>
+                
+                <button class="btn btn-secondary" id="incrementBtn" disabled>
+                    <span class="btn-icon">➕</span>
+                    Increment Counter
+                </button>
+                
+                <button class="btn btn-secondary" id="getCounterBtn" disabled>
+                    <span class="btn-icon">📊</span>
+                    Get Counter
+                </button>
+            </div>
+        </div>
+
+        <!-- Status Section -->
+        <div class="status-section" id="statusSection">
+            <div class="status-header">
+                <h4>Status</h4>
+                <button class="clear-btn" id="clearStatusBtn">Clear</button>
+            </div>
+            <div class="status-log" id="statusLog">
+                <div class="status-item info">
+                    <span class="timestamp">--:--:--</span>
+                    <span class="message">Wallet initialized</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Loading Modal -->
+    <div class="modal-overlay" id="loadingModal" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3 id="modalTitle">Processing...</h3>
+            </div>
+            <div class="modal-body">
+                <div class="spinner"></div>
+                <div class="modal-message" id="modalMessage">Please wait...</div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progressFill" style="width: 0%"></div>
+                </div>
+                <div class="progress-text" id="progressText">0%</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Join Contract Modal -->
+    <div class="modal-overlay" id="joinModal" style="display: none;">
+        <div class="modal">
+            <div class="modal-header">
+                <h3>Join Existing Contract</h3>
+                <button class="modal-close" id="closeJoinModal">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="input-group">
+                    <label for="contractAddressInput">Contract Address:</label>
+                    <input type="text" id="contractAddressInput" placeholder="Enter contract address...">
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="cancelJoinBtn">Cancel</button>
+                    <button class="btn btn-primary" id="confirmJoinBtn">Join Contract</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="popup.js"></script>
+</body>
+</html>

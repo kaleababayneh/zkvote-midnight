@@ -1,2 +1,2 @@
-export * from './api';
-export * from './cli';
+export * from './simple-api';
+export * from './zkvote-cli';
