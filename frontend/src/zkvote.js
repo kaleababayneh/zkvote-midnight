@@ -24,7 +24,7 @@ class ZkVoteApp {
         // Wallet connection
         document.getElementById('walletStatus').addEventListener('click', () => {
             if (!this.isWalletConnected) {
-                this.showWalletPopup();
+                this.showWalletConnectionPopup();
             } else {
                 // Already connected, do nothing
                 console.log('Wallet already connected');
@@ -308,6 +308,8 @@ class ZkVoteApp {
     }
 
     async deployContract() {
+        console.log('🔥 deployContract called, wallet connected:', this.isWalletConnected);
+        
         if (!this.isWalletConnected) {
             this.showToast('Please connect your wallet first', 'warning');
             return;
@@ -324,10 +326,12 @@ class ZkVoteApp {
         const validChoices = choices.filter(choice => choice !== '');
 
         try {
+            console.log('🔥 About to show wallet popup for deploy');
             // Show wallet popup for deployment confirmation
             await this.showWalletPopup('deploy', { 
                 choiceCount: validChoices.length 
             });
+            console.log('🔥 Wallet popup completed, continuing with deployment');
             
             // Continue with actual deployment
             this.setButtonLoading('createBtn', true);
@@ -669,10 +673,18 @@ class ZkVoteApp {
 
         const secretKey = document.getElementById('secretKey').value.trim();
         
-        this.setButtonLoading('voteBtn', true);
-        this.showLoading('Submitting your vote...');
-
         try {
+            // Show wallet popup for vote confirmation
+            await this.showWalletPopup('vote', { 
+                choice: this.selectedChoice,
+                contractAddress: this.currentContract,
+                secretKey: secretKey
+            });
+            
+            // Continue with actual vote submission
+            this.setButtonLoading('voteBtn', true);
+            this.showLoading('Submitting your vote...');
+
             const response = await fetch(`${this.apiBaseUrl}/sessions/${this.currentContract}/execute`, {
                 method: 'POST',
                 headers: {
@@ -703,6 +715,11 @@ class ZkVoteApp {
                 throw new Error(data.error || 'Failed to submit vote');
             }
         } catch (error) {
+            if (error.message === 'User cancelled') {
+                // User cancelled the wallet popup
+                console.log('Vote cancelled by user');
+                return;
+            }
             console.error('Vote submission failed:', error);
             this.showToast('Failed to submit vote: ' + error.message, 'error');
         } finally {
@@ -1025,6 +1042,7 @@ class ZkVoteApp {
 
     // Wallet Popup Methods
     showWalletPopup(type, details = {}) {
+        console.log('🔥 showWalletPopup called with type:', type, 'details:', details);
         return new Promise((resolve, reject) => {
             const overlay = document.createElement('div');
             overlay.className = 'wallet-popup-overlay';
@@ -1033,6 +1051,7 @@ class ZkVoteApp {
             overlay.appendChild(popup);
             
             document.body.appendChild(overlay);
+            console.log('🔥 Modal added to DOM');
             
             // Close on overlay click
             overlay.addEventListener('click', (e) => {
@@ -1056,48 +1075,80 @@ class ZkVoteApp {
         const popup = document.createElement('div');
         popup.className = 'wallet-popup';
         
-        let title, message, actionText, icon;
+        let title, message, actionText, icon, headerColor;
         
         switch(type) {
             case 'deploy':
-                title = '🚀 Deploy Contract';
-                message = 'You are about to deploy a new ZkVote contract to the Midnight testnet. This will create a new voting session.';
+                title = 'Deploy Voting Contract';
+                message = 'You are about to deploy a new ZkVote contract to the Midnight blockchain. This will create a new voting session that others can join.';
                 actionText = 'Deploy Contract';
                 icon = '🚀';
+                headerColor = '#3b82f6';
                 break;
             case 'connect':
-                title = '🔗 Connect to Contract';
+                title = 'Connect to Contract';
                 message = 'You are about to connect to an existing ZkVote contract. This will allow you to participate in the voting session.';
-                actionText = 'Connect';
+                actionText = 'Connect to Contract';
                 icon = '🔗';
+                headerColor = '#10b981';
                 break;
             case 'vote':
-                title = '🗳️ Submit Vote';
-                message = 'You are about to submit your anonymous vote to the blockchain. This action cannot be undone.';
+                title = 'Submit Anonymous Vote';
+                message = 'You are about to submit your vote to the blockchain. This action cannot be undone and your vote will be completely anonymous.';
                 actionText = 'Submit Vote';
                 icon = '🗳️';
+                headerColor = '#8b5cf6';
                 break;
         }
         
         popup.innerHTML = `
-            <div class="wallet-popup-header">
+            <div class="wallet-popup-header" style="background: linear-gradient(135deg, ${headerColor}, ${headerColor}dd);">
                 <div class="wallet-popup-title">
-                    <span>${icon}</span>
-                    ${title}
+                    <span class="wallet-popup-icon">${icon}</span>
+                    <div class="wallet-popup-title-text">
+                        <h3>${title}</h3>
+                        <p>Midnight Wallet</p>
+                    </div>
                 </div>
                 <button class="wallet-popup-close" onclick="this.closest('.wallet-popup-overlay').remove()">×</button>
             </div>
             
             <div class="wallet-popup-content">
-                <p class="wallet-popup-message">${message}</p>
+                <div class="wallet-popup-message">
+                    <p>${message}</p>
+                </div>
                 
-                ${this.createTransactionDetails(type, details)}
+                <div class="wallet-transaction-summary">
+                    <h4>Transaction Summary</h4>
+                    ${this.createTransactionDetails(type, details)}
+                </div>
+                
+                <div class="wallet-network-info">
+                    <div class="network-badge">
+                        <span class="network-icon">🌙</span>
+                        <span>Midnight Testnet</span>
+                    </div>
+                    <div class="gas-estimate">
+                        <span>Est. Gas: ~0.001 DUST</span>
+                    </div>
+                </div>
                 
                 ${type === 'vote' ? `
                     <div class="wallet-security-warning">
-                        <div class="wallet-security-warning-text">
-                            <span>⚠️</span>
-                            Your vote is completely anonymous and cannot be traced back to you
+                        <div class="security-icon">🔒</div>
+                        <div class="security-text">
+                            <strong>Privacy Guaranteed</strong>
+                            <p>Your vote is completely anonymous and cannot be traced back to you</p>
+                        </div>
+                    </div>
+                ` : ''}
+                
+                ${type === 'deploy' ? `
+                    <div class="wallet-deploy-info">
+                        <div class="deploy-icon">⚡</div>
+                        <div class="deploy-text">
+                            <strong>Contract Deployment</strong>
+                            <p>Creating a new voting contract with ${details.choiceCount || 4} options</p>
                         </div>
                     </div>
                 ` : ''}
@@ -1105,7 +1156,7 @@ class ZkVoteApp {
             
             <div class="wallet-popup-actions">
                 <button class="wallet-popup-btn wallet-popup-btn-cancel" id="walletCancel">
-                    Cancel
+                    <span>Cancel</span>
                 </button>
                 <button class="wallet-popup-btn wallet-popup-btn-confirm" id="walletConfirm">
                     <span id="walletConfirmText">${actionText}</span>
@@ -1133,20 +1184,24 @@ class ZkVoteApp {
             case 'deploy':
                 detailsHTML += `
                     <div class="wallet-detail-row">
-                        <span class="wallet-detail-label">Network:</span>
-                        <span class="wallet-detail-value">Midnight Testnet</span>
+                        <span class="wallet-detail-label">Action Type:</span>
+                        <span class="wallet-detail-value">Contract Deployment</span>
                     </div>
                     <div class="wallet-detail-row">
-                        <span class="wallet-detail-label">Contract Type:</span>
-                        <span class="wallet-detail-value">ZkVote</span>
+                        <span class="wallet-detail-label">Contract:</span>
+                        <span class="wallet-detail-value">ZkVote Voting System</span>
                     </div>
                     <div class="wallet-detail-row">
-                        <span class="wallet-detail-label">Choices:</span>
-                        <span class="wallet-detail-value">${details.choiceCount || 2} options</span>
+                        <span class="wallet-detail-label">Voting Options:</span>
+                        <span class="wallet-detail-value">${details.choiceCount || 4} choices configured</span>
                     </div>
                     <div class="wallet-detail-row">
-                        <span class="wallet-detail-label">Gas Fee:</span>
-                        <span class="wallet-detail-value">~0.001 DUST</span>
+                        <span class="wallet-detail-label">Network Fee:</span>
+                        <span class="wallet-detail-value">≈ 0.001 DUST</span>
+                    </div>
+                    <div class="wallet-detail-row">
+                        <span class="wallet-detail-label">Privacy:</span>
+                        <span class="wallet-detail-value">Zero-Knowledge Enabled</span>
                     </div>
                 `;
                 break;
@@ -1154,37 +1209,47 @@ class ZkVoteApp {
             case 'connect':
                 detailsHTML += `
                     <div class="wallet-detail-row">
-                        <span class="wallet-detail-label">Contract:</span>
+                        <span class="wallet-detail-label">Action Type:</span>
+                        <span class="wallet-detail-value">Contract Connection</span>
+                    </div>
+                    <div class="wallet-detail-row">
+                        <span class="wallet-detail-label">Contract Address:</span>
                         <span class="wallet-detail-value">${this.truncateAddress(details.contractAddress)}</span>
                     </div>
                     <div class="wallet-detail-row">
-                        <span class="wallet-detail-label">Network:</span>
-                        <span class="wallet-detail-value">Midnight Testnet</span>
+                        <span class="wallet-detail-label">Access Level:</span>
+                        <span class="wallet-detail-value">Read & Vote</span>
                     </div>
                     <div class="wallet-detail-row">
-                        <span class="wallet-detail-label">Action:</span>
-                        <span class="wallet-detail-value">Read-only access</span>
+                        <span class="wallet-detail-label">Data Usage:</span>
+                        <span class="wallet-detail-value">Minimal (viewing only)</span>
                     </div>
                 `;
                 break;
                 
             case 'vote':
+                const choiceLabels = ['A', 'B', 'C', 'D'];
+                const choiceName = choiceLabels[details.choice] || details.choice;
                 detailsHTML += `
                     <div class="wallet-detail-row">
-                        <span class="wallet-detail-label">Your Choice:</span>
-                        <span class="wallet-detail-value">Option ${details.choice}</span>
+                        <span class="wallet-detail-label">Action Type:</span>
+                        <span class="wallet-detail-value">Submit Vote</span>
+                    </div>
+                    <div class="wallet-detail-row">
+                        <span class="wallet-detail-label">Your Selection:</span>
+                        <span class="wallet-detail-value">Option ${choiceName}</span>
                     </div>
                     <div class="wallet-detail-row">
                         <span class="wallet-detail-label">Contract:</span>
                         <span class="wallet-detail-value">${this.truncateAddress(details.contractAddress)}</span>
                     </div>
                     <div class="wallet-detail-row">
-                        <span class="wallet-detail-label">Privacy:</span>
-                        <span class="wallet-detail-value">Zero-Knowledge Proof</span>
+                        <span class="wallet-detail-label">Privacy Level:</span>
+                        <span class="wallet-detail-value">Anonymous (ZK-Proof)</span>
                     </div>
                     <div class="wallet-detail-row">
-                        <span class="wallet-detail-label">Gas Fee:</span>
-                        <span class="wallet-detail-value">~0.0005 DUST</span>
+                        <span class="wallet-detail-label">Network Fee:</span>
+                        <span class="wallet-detail-value">≈ 0.0005 DUST</span>
                     </div>
                 `;
                 break;
@@ -1284,7 +1349,7 @@ class ZkVoteApp {
         return `${address.slice(0, 6)}...${address.slice(-6)}`;
     }
 
-    async showWalletPopup() {
+    async showWalletConnectionPopup() {
         if (this.isWalletConnected) return;
         
         try {
