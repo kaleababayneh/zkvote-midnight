@@ -169,7 +169,7 @@ chrome.runtime.onMessageExternal.addListener((request, sender, sendResponse) => 
 // Function to check CLI connection
 async function checkCLIConnection() {
   try {
-    const response = await fetch('http://localhost:3001/api/status', {
+    const response = await fetch('http://localhost:3002/api/status', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       signal: AbortSignal.timeout(5000) // 5 second timeout
@@ -189,7 +189,7 @@ async function checkCLIConnection() {
 async function handleContractDeploy(params = {}) {
   try {
     console.log('Deploying contract via CLI...');
-    const response = await fetch('http://localhost:3001/api/contract/deploy', {
+    const response = await fetch('http://localhost:3002/api/contract/deploy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
@@ -225,7 +225,7 @@ async function handleContractDeploy(params = {}) {
 async function handleContractIncrement(params = {}) {
   try {
     console.log('Incrementing counter via CLI...');
-    const response = await fetch('http://localhost:3001/api/contract/increment', {
+    const response = await fetch('http://localhost:3002/api/contract/increment', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(params)
@@ -251,7 +251,7 @@ async function handleContractIncrement(params = {}) {
 async function handleGetContractState() {
   try {
     console.log('Getting contract state via CLI...');
-    const response = await fetch('http://localhost:3001/api/contract/state', {
+    const response = await fetch('http://localhost:3002/api/contract/state', {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -275,7 +275,7 @@ async function handleGetContractState() {
 async function handleRequestTokens() {
   try {
     console.log('Requesting tokens via CLI...');
-    const response = await fetch('http://localhost:3001/api/faucet', {
+    const response = await fetch('http://localhost:3002/api/faucet', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' }
     });
@@ -321,7 +321,7 @@ chrome.storage.onChanged.addListener((changes, area) => {
     const walletData = changes.walletData.newValue;
     if (walletData && walletData.balance) {
       const balance = Number(walletData.balance);
-      const tusdt = Math.floor(balance / 1_000_000);
+      const tusdt = Math.floor(balance);
       
       // Update badge with balance (simplified)
       if (tusdt > 0) {

@@ -92,7 +92,7 @@ class MidnightWallet {
             document.getElementById('balanceAmount').textContent = balance.formatted;
             const balanceUsdElement = document.getElementById('balanceUsd');
             if (balanceUsdElement) {
-                balanceUsdElement.textContent = `${balance.micro} microDUST`;
+                balanceUsdElement.textContent = `${balance.micro} microTusdt`;
             }
         }
 
@@ -137,15 +137,17 @@ class MidnightWallet {
                 micro: '0'
             };
         }
-        let dustAmount = balanceNum;
         
+        // Balance comes in microDUST, convert to DUST by dividing by 1,000,000
+        const dustAmount = balanceNum / 1000000;
+        const microDustAmount = Math.round(balanceNum);
 
         return {
             formatted: dustAmount.toLocaleString('en-US', { 
                 minimumFractionDigits: 6,
                 maximumFractionDigits: 6 
             }),
-            micro: Math.round(dustAmount * 1000000).toLocaleString()
+            micro: microDustAmount.toLocaleString()
         };
     }
 
@@ -204,7 +206,7 @@ class MidnightWallet {
         
         try {
             // Try to connect to local server (your CLI would expose an API)
-            const response = await fetch('http://localhost:3001/api/status', {
+            const response = await fetch('http://localhost:3002/api/status', {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
             });
@@ -240,7 +242,7 @@ class MidnightWallet {
             this.logMessage('Loading wallet data from CLI...');
             
             // Load wallet status from bridge server
-            const walletResponse = await fetch('http://localhost:3001/api/wallet/status');
+            const walletResponse = await fetch('http://localhost:3002/api/wallet/status');
             if (walletResponse.ok) {
                 const walletData = await walletResponse.json();
                 if (walletData.success && walletData.data) {
@@ -258,7 +260,7 @@ class MidnightWallet {
 
             // Load contract data if available
             try {
-                const contractResponse = await fetch('http://localhost:3001/api/contract/status');
+                const contractResponse = await fetch('http://localhost:3002/api/contract/status');
                 if (contractResponse.ok) {
                     const contractData = await contractResponse.json();
                     if (contractData.success && contractData.data) {
@@ -292,7 +294,7 @@ class MidnightWallet {
         // Automatically refresh balance after connecting to CLI
         try {
             this.logMessage('Auto-refreshing balance...');
-            const response = await fetch('http://localhost:3001/api/wallet/balance');
+            const response = await fetch('http://localhost:3002/api/wallet/balance');
             if (response.ok) {
                 const data = await response.json();
                 if (data.success && data.data) {
@@ -314,7 +316,7 @@ class MidnightWallet {
         
         try {
             if (this.cliConnected) {
-                const response = await fetch('http://localhost:3001/api/wallet/balance');
+                const response = await fetch('http://localhost:3002/api/wallet/balance');
                 if (response.ok) {
                     const data = await response.json();
                     if (data.success && data.data) {
@@ -360,7 +362,7 @@ class MidnightWallet {
         
         try {
             if (this.cliConnected) {
-                const response = await fetch('http://localhost:3001/api/faucet', {
+                const response = await fetch('http://localhost:3002/api/faucet', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -397,7 +399,7 @@ class MidnightWallet {
         
         try {
             if (this.cliConnected) {
-                const response = await fetch('http://localhost:3001/api/contract/increment', {
+                const response = await fetch('http://localhost:3002/api/contract/increment', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' }
                 });
@@ -449,7 +451,7 @@ class MidnightWallet {
         
         try {
             if (this.cliConnected) {
-                const response = await fetch('http://localhost:3001/api/contract/deploy', {
+                const response = await fetch('http://localhost:3002/api/contract/deploy', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ initialCounter: 0 })
@@ -511,7 +513,7 @@ class MidnightWallet {
         
         const poll = async () => {
             try {
-                const response = await fetch(`http://localhost:3001/api/process/${processId}/status`);
+                const response = await fetch(`http://localhost:3002/api/process/${processId}/status`);
                 if (response.ok) {
                     const statusData = await response.json();
                     
@@ -552,7 +554,7 @@ class MidnightWallet {
         
         try {
             if (this.cliConnected) {
-                const response = await fetch('http://localhost:3001/api/contract/counter');
+                const response = await fetch('http://localhost:3002/api/contract/counter');
                 if (response.ok) {
                     const data = await response.json();
                     this.contractData = {

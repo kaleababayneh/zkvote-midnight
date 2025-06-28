@@ -108,10 +108,11 @@ class WalletBalanceChecker {
    * Format balance for display (microTusdt to Tusdt)
    */
   formatBalance(microBalance) {
-    const tusdt = Number(microBalance) / 1_000_000;
+    // Convert microTusdt to Tusdt by dividing by 1,000,000
+    const tusdt = Number(microBalance) / 1000000;
     return tusdt.toLocaleString('en-US', { 
-      minimumFractionDigits: 6,
-      maximumFractionDigits: 6 
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2 
     });
   }
 

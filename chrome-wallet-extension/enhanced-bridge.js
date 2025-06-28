@@ -1215,28 +1215,37 @@ class EnhancedMidnightBridge {
       return dustAmount[1];
     }
     
-    // Pattern 4: Legacy tUsdt format (convert to DUST equivalent)
-    const balanceMatch = output.match(/Balance.*?(\d+).*?(?:micro)?[tT]usdt/i);
-    if (balanceMatch) {
-      const microTusdt = parseInt(balanceMatch[1]);
-      const dustEquivalent = (microTusdt).toFixed(2);
-      console.log('🔄 Converted microTusdt to DUST:', microTusdt, '->', dustEquivalent);
-      return dustEquivalent;
+    // Pattern 4: Raw Balance format (microTusdt) - this is the actual balance in microTusdt
+    const rawBalanceMatch = output.match(/🔢 Raw Balance:\s*([\d,]+)\s*microTusdt/i);
+    if (rawBalanceMatch) {
+      const microTusdt = rawBalanceMatch[1].replace(/,/g, ''); // Remove commas
+      console.log('✅ Found raw microTusdt balance:', microTusdt);
+      return microTusdt; // Return the raw microTusdt value
     }
     
-    // Pattern 5: Alternative tUsdt format
-    const altMatch = output.match(/(\d+)\s*[tT][uU]sdt/i);
-    if (altMatch) {
-      const tusdt = parseInt(altMatch[1]);
-      console.log('🔄 Converted tUsdt to DUST equivalent:', tusdt);
-      return tusdt.toString();
+    // Pattern 5: Formatted Balance with commas (💎 Balance: 3,009.717256 tUsdt)
+    const formattedBalanceMatch = output.match(/💎 Balance:\s*([\d,]+\.?\d*)\s*tUsdt/i);
+    if (formattedBalanceMatch) {
+      const formattedBalance = formattedBalanceMatch[1].replace(/,/g, ''); // Remove commas
+      const microTusdt = Math.round(parseFloat(formattedBalance)); // Convert to microTusdt
+      console.log('✅ Found formatted tUsdt balance:', formattedBalance, '-> microTusdt:', microTusdt);
+      return microTusdt.toString();
     }
-
-    // Pattern 6: Decimal tUsdt format
-    const tUsdtMatch = output.match(/(\d+(?:\.\d+)?)\s*tUsdt/i);
-    if (tUsdtMatch) {
-      console.log('🔄 Found decimal tUsdt:', tUsdtMatch[1]);
-      return tUsdtMatch[1];
+    
+    // Pattern 6: Legacy tUsdt format (convert to microTusdt)
+    const balanceMatch = output.match(/Balance.*?([\d,]+).*?(?:micro)?[tT]usdt/i);
+    if (balanceMatch) {
+      const amount = balanceMatch[1].replace(/,/g, ''); // Remove commas
+      console.log('🔄 Found legacy balance:', amount);
+      return amount;
+    }
+    // Pattern 7: Simple tUsdt amount
+    const simpleTUsdtMatch = output.match(/(\d+(?:\.\d+)?)\s*tUsdt/i);
+    if (simpleTUsdtMatch) {
+      const tusdt = parseFloat(simpleTUsdtMatch[1]);
+      const microTusdt = Math.round(tusdt * 1000000);
+      console.log('🔄 Found simple tUsdt:', tusdt, '-> microTusdt:', microTusdt);
+      return microTusdt.toString();
     }
     
     console.log('⚠️ No balance pattern matched, returning 0');

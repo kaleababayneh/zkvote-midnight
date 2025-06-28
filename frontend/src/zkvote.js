@@ -1083,11 +1083,47 @@ class ZkVoteApp {
         confirmText.style.display = 'none';
         loader.style.display = 'block';
         
-        // Simulate wallet processing time
-        await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1000));
+        // Add connection status messages to the popup
+        const content = popup.querySelector('.wallet-popup-content');
+        const statusDiv = document.createElement('div');
+        statusDiv.className = 'wallet-connection-status';
+        statusDiv.style.cssText = 'margin-top: 15px; padding: 10px; background: var(--surface); border-radius: 8px; font-size: 0.9rem;';
+        content.appendChild(statusDiv);
         
-        // Show success state
-        this.showWalletSuccess(popup, resolve);
+        // Simulate realistic wallet connection sequence
+        try {
+            // Step 1: Wallet connection
+            statusDiv.innerHTML = '<div style="color: var(--primary);">🔐 Connecting to wallet...</div>';
+            await new Promise(resolve => setTimeout(resolve, 800));
+            
+            // Step 2: Blockchain connection
+            statusDiv.innerHTML = '<div style="color: var(--primary);">🌐 Connecting to Midnight testnet...</div>';
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            
+            // Step 3: Contract interaction
+            statusDiv.innerHTML = '<div style="color: var(--primary);">⚡ Preparing transaction...</div>';
+            await new Promise(resolve => setTimeout(resolve, 1200));
+            
+            // Step 4: Success
+            statusDiv.innerHTML = '<div style="color: var(--success);">✅ Transaction ready for broadcast</div>';
+            await new Promise(resolve => setTimeout(resolve, 500));
+            
+            // Show success state
+            this.showWalletSuccess(popup, resolve);
+            
+        } catch (error) {
+            // Handle any connection errors
+            statusDiv.innerHTML = '<div style="color: var(--error);">❌ Connection failed, please try again</div>';
+            
+            // Reset button state
+            confirmBtn.disabled = false;
+            confirmText.style.display = 'block';
+            loader.style.display = 'none';
+            
+            setTimeout(() => {
+                this.closeWalletPopup(popup.closest('.wallet-popup-overlay'), reject);
+            }, 2000);
+        }
     }
 
     showWalletSuccess(popup, resolve) {
