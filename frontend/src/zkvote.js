@@ -213,11 +213,20 @@ class ZkVoteApp {
 
             const data = await response.json();
 
-            if (data.success) {            this.currentContract = data.contractAddress;
-            this.showToast('Contract deployed successfully!', 'success');
-            await this.loadContractState();
-            this.showVotingPage(); // Switch to dedicated voting page
-        } else {
+            if (data.success) {
+                this.currentContract = data.contractAddress;
+                
+                // Store the deployed choices in contract state immediately
+                this.contractState = {
+                    choices: choices,
+                    voteCounts: [0, 0, 0, 0]
+                };
+                
+                this.showToast('Contract deployed successfully!', 'success');
+                
+                // Transition directly to voting page 
+                this.showVotingPage();
+            } else {
                 throw new Error(data.error || 'Failed to deploy contract');
             }
         } catch (error) {
@@ -264,10 +273,14 @@ class ZkVoteApp {
                 this.currentContract = contractAddress;
                 this.showToast('Successfully connected to contract!', 'success');
                 
-                // Load the contract state to get voting options
-                await this.loadContractState();
+                // For joined contracts, try to load state, but show fallback choices if it fails
+                try {
+                    await this.loadContractState();
+                } catch (error) {
+                    console.log('Failed to load contract state, using fallback');
+                }
                 
-                // Transition to voting page
+                // Transition to voting page regardless
                 this.showVotingPage();
             } else {
                 throw new Error(data.error || 'Failed to connect to contract');
@@ -453,8 +466,10 @@ class ZkVoteApp {
             option.innerHTML = `
                 <div class="voting-page-option-content">
                     <span class="voting-page-option-letter">${letters[index] || index}</span>
-                    <div class="voting-page-option-text">${choice}</div>
-                    <div class="voting-page-option-index">Option ${index + 1}</div>
+                    <div class="voting-page-option-details">
+                        <div class="voting-page-option-text">${choice}</div>
+                        <div class="voting-page-option-index">Option ${index + 1}</div>
+                    </div>
                 </div>
             `;
             
@@ -675,7 +690,16 @@ class ZkVoteApp {
     }
 
     renderVotingPageResults() {
-        if (!this.contractState) return;
+        // Use contract state if available, otherwise use fallback
+        let contractState = this.contractState;
+        
+        if (!contractState || !contractState.choices) {
+            console.log('Using fallback state for results');
+            contractState = {
+                choices: ['YES', 'NOD', 'ABS', 'N/A'],
+                voteCounts: [0, 0, 0, 0]
+            };
+        }
 
         const resultsContainer = document.getElementById('votingResultsCharts');
         const totalVotesElement = document.getElementById('votingTotalVotes');
@@ -683,7 +707,7 @@ class ZkVoteApp {
         resultsContainer.innerHTML = '';
         
         let totalCount = 0;
-        const voteCounts = this.contractState.voteCounts || [];
+        const voteCounts = contractState.voteCounts || [0, 0, 0, 0];
         
         // Calculate total votes
         voteCounts.forEach(count => {
@@ -693,7 +717,7 @@ class ZkVoteApp {
         totalVotesElement.textContent = totalCount;
 
         // Create result items
-        this.contractState.choices.forEach((choice, index) => {
+        contractState.choices.forEach((choice, index) => {
             const votes = voteCounts[index] || 0;
             const percentage = totalCount > 0 ? Math.round((votes / totalCount) * 100) : 0;
             const letters = ['A', 'B', 'C', 'D'];

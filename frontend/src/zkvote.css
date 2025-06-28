@@ -759,24 +759,30 @@ body {
     font-weight: 500;
 }
 
-/* Large Vote Options Grid */
+/* Large Vote Options - Vertical Bars */
 .voting-page-options {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-    gap: var(--space-xl);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-lg);
     margin-bottom: var(--space-2xl);
+    max-width: 600px;
+    margin-left: auto;
+    margin-right: auto;
 }
 
 .voting-page-option {
     background: var(--surface);
     border: 3px solid var(--border);
     border-radius: var(--radius-xl);
-    padding: var(--space-2xl);
+    padding: var(--space-lg) var(--space-xl);
     cursor: pointer;
     transition: all var(--transition-normal);
-    text-align: center;
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
     position: relative;
     overflow: hidden;
+    min-height: 80px;
 }
 
 .voting-page-option::before {
@@ -817,21 +823,35 @@ body {
 .voting-page-option-content {
     position: relative;
     z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: var(--space-lg);
+    flex: 1;
 }
 
 .voting-page-option-letter {
-    font-size: 2rem;
+    font-size: 2.5rem;
     font-weight: 700;
     color: var(--primary);
-    margin-bottom: var(--space-md);
-    display: block;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 60px;
+    height: 60px;
+    background: rgba(99, 102, 241, 0.1);
+    border-radius: var(--radius-lg);
+    flex-shrink: 0;
+}
+
+.voting-page-option-details {
+    flex: 1;
 }
 
 .voting-page-option-text {
     font-size: 1.5rem;
     font-weight: 600;
     color: var(--text);
-    margin-bottom: var(--space-sm);
+    margin-bottom: var(--space-xs);
 }
 
 .voting-page-option-index {

@@ -17,7 +17,8 @@
     "lint": "eslint src",
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "start-testnet-remote": "npm run build && npm run testnet-remote",
-    "start-testnet-remote-ps": "npm run build && npm run testnet-remote-ps"
+    "start-testnet-remote-ps": "npm run build && npm run testnet-remote-ps",
+    "cli": "node --experimental-specifier-resolution=node --loader ts-node/esm src/zkvote-enhanced-cli.ts"
   },
   "dependencies": {
     "@midnight-ntwrk/contract": "*",
