@@ -2,7 +2,7 @@
 
 A comprehensive decentralized voting application built on the Midnight blockchain that enables **completely private, verifiable voting** using zero-knowledge proofs. Privote demonstrates how to build end-to-end privacy-preserving applications using Midnight's Compact smart contract language, zero-knowledge cryptography, and modern web technologies.
 
-**During development, I encountered significant compatibility issues with the standard Midnight Lace wallet extension even though I have tried different methods and Finally I have decided to create my own chrome extension wallet to simulate the frontend connection meanwhile the wallet is connected to the CLI server**  
+**During development, I encountered severaly issues with the standard Midnight Lace wallet extension even though I have tried different methods and Finally I have decided to create my own chrome extension wallet to simulate the frontend connection meanwhile the wallet is connected to the CLI server**  
 ### Development Workflow
 
 
