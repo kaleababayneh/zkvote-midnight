@@ -699,4 +699,3 @@ This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) 
 **Built with ❤️ using Midnight Network's revolutionary zero-knowledge technology**
 
 *"Making private voting accessible to everyone"*
-![alt text](<photo_2025-06-30 00.28.28.jpeg>)
