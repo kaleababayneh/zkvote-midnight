@@ -1681,14 +1681,7 @@ class EnhancedMidnightBridge {
       console.log('  POST /api/sessions/:contractAddress/execute - Execute command in session');
       console.log('  POST /api/sessions/cleanup               - Cleanup inactive sessions');
       console.log('');
-      console.log('✨ Features:');
-      console.log('  - Isolated process execution');
-      console.log('  - Persistent CLI sessions');
-      console.log('  - Command queue management');
-      console.log('  - Process monitoring');
-      console.log('  - Session reuse for contract operations');
-      console.log('  - Timeout protection');
-      console.log('');
+    
       
       // Start periodic cleanup of inactive sessions
       setInterval(() => {
