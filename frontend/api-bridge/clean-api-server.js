@@ -187,7 +187,6 @@ app.post('/api/contract/:address/vote', async (req, res) => {
             return res.status(400).json({ error: 'Choice must be a number between 0 and 3' });
         }
         
-        console.log(`Voting for choice ${choice} in contract:`, address);
         
         // Execute vote operation
         const output = await executeAPIOperation('vote', [address, choice.toString()]);

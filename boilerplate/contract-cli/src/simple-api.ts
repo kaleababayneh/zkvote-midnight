@@ -150,7 +150,6 @@ export const voteFor = async (
   secretKey: string,
   choiceIndex: number
 ): Promise<string> => {
-  logger.info(`Voting for choice ${choiceIndex} with secret key...`);
   
   try {
     const encoder = new TextEncoder();
@@ -318,7 +317,6 @@ export const buildWalletAndWaitForFunds = async (
   seed: string,
   filename: string,
 ): Promise<Wallet & Resource> => {
-  logger.info('Building wallet from scratch');
   const wallet = await WalletBuilder.buildFromSeed(
     indexer,
     indexerWS,

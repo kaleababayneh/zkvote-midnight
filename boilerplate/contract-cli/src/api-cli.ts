@@ -197,7 +197,6 @@ async function handleVote(providers: ZkvoteProviders, args: string[]): Promise<v
     throw new Error('Choice index must be a number between 0 and 3');
   }
   
-  logger.info(`Voting for choice ${choiceIndex} in contract: ${contractAddress}`);
   
   // Join the contract first
   const contract = await api.joinContract(providers, contractAddress);

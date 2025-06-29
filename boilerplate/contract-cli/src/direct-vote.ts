@@ -47,7 +47,6 @@ function createLogger() {
 async function directVote() {
   try {
     console.log(`🗳️  Starting direct vote for contract: ${contractAddress}`);
-    console.log(`📊 Voting for choice: ${choiceIndex} (${['A', 'B', 'C', 'D'][choiceIndex]})`);
     
     // Initialize config and logger
     const config = new TestnetRemoteConfig();

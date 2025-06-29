@@ -84,7 +84,6 @@ Examples:
                     throw new Error('Secret key must be exactly 5 characters');
                 }
                 
-                console.log(`Voting for choice ${choiceIndex} with secret key...`);
                 
                 const joinedContract = await api.joinContract(providers, contractAddress);
                 const txId = await api.voteFor(providers, joinedContract, secretKey, choiceIndex);
