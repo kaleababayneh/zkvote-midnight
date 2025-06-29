@@ -1,5 +1,5 @@
 // Enhanced API wrapper for Zkvote Contract
-// Generated on: 2025-06-29T18:59:12.301Z
+// Generated on: 2025-06-29T19:25:13.566Z
 // Auto-generated from zkvote.compact
 
 import { type Logger } from 'pino';
@@ -110,7 +110,7 @@ export class EnhancedContractAPI {
 export const CONTRACT_METADATA = {
   name: 'Zkvote Contract',
   fileName: 'zkvote.compact',
-  generatedAt: '2025-06-29T18:59:12.301Z',
+  generatedAt: '2025-06-29T19:25:13.566Z',
   functions: [
   {
     "name": "increment",
