@@ -649,11 +649,6 @@ Built a custom Chrome extension that directly interfaces with the Midnight netwo
 - **State Management**: Real-time session monitoring
 - **Error Handling**: Comprehensive error catching and user feedback
 
-## 🤝 Contributing
-
-Privote is open source and welcomes contributions! Here's how you can help:
-
-
 
 
 This project is licensed under the **MIT License** - see the [LICENSE](LICENSE) file for details.
