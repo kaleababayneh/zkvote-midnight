@@ -4,6 +4,8 @@ import dotenv from 'dotenv';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createLogger as loggerUtils } from './logger-utils.js';
+import { assertIsContractAddress } from '@midnight-ntwrk/midnight-js-utils';
+import { type ContractAddress } from '@midnight-ntwrk/compact-runtime';
 
 // Configure dotenv to load from project root
 const __filename = fileURLToPath(import.meta.url);
@@ -58,7 +60,10 @@ async function apiVote() {
     
     // Get updated state to return vote results
     console.log('📊 Getting updated contract state...');
-    const state = await api.getZkvoteLedgerState(providers, contractAddress);
+    // Convert string to ContractAddress type for the state query
+    assertIsContractAddress(contractAddress);
+    const contractAddr = contractAddress as ContractAddress;
+    const state = await api.getZkvoteLedgerState(providers, contractAddr);
     
     const result = {
       success: true,

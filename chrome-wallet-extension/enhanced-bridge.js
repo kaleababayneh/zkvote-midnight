@@ -316,8 +316,9 @@ class EnhancedMidnightBridge {
         env: { 
           ...process.env, 
           CONTRACT_ADDRESS: contractAddress,
-          AUTO_CONNECT: 'true',
-          KEEP_ALIVE: 'true'
+          AUTO_DEPLOY: 'true',
+          DEPLOY_MODE: 'join',
+          AUTO_EXIT: 'true'
         }
       });
 
@@ -342,7 +343,10 @@ class EnhancedMidnightBridge {
         console.log(`📤 [${sessionId}] ${output.trim()}`);
         
         // Check if CLI is ready for commands
-        if (output.includes('CLI ready') || output.includes('Connected to contract')) {
+        if (output.includes('Joined zkvote contract at address') || 
+            output.includes('Auto-joining existing contract') ||
+            output.includes('CLI ready') || 
+            output.includes('Connected to contract')) {
           sessionInfo.connected = true;
           console.log(`✅ [${sessionId}] CLI session ready for contract operations`);
         }

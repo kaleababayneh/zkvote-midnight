@@ -195,8 +195,6 @@ class ZkVoteApp {
             if (walletResponse.ok && walletData.address) {
                 // Update wallet display information
                 walletAddressDisplay.textContent = this.truncateAddress(walletData.address);
-                walletBalanceDisplay.textContent = walletData.balance ? 
-                    `${(parseFloat(walletData.balance) / 1000000).toFixed(2)} tUsdt` : '0 tUsdt';
                 walletStatusDisplay.innerHTML = '<span class="connection-status ready">Ready to Connect</span>';
                 
                 // Store wallet data for later use
@@ -432,8 +430,10 @@ class ZkVoteApp {
         }
         
         try {
+            console.log(`🔗 Attempting to join contract: ${contractAddress}`);
+            
             // Show wallet popup for connection confirmation
-            await this.showWalletPopup('connect', { 
+            await this.showWalletPopup('join', { 
                 contractAddress: contractAddress 
             });
             
@@ -441,6 +441,8 @@ class ZkVoteApp {
             this.setButtonLoading('joinBtn', true);
             this.showLoading('Connecting to contract...');
 
+            console.log(`📞 Calling API: ${this.apiBaseUrl}/contract/join`);
+            
             // Use the Chrome wallet bridge's join contract endpoint
             const response = await fetch(`${this.apiBaseUrl}/contract/join`, {
                 method: 'POST',
@@ -452,26 +454,43 @@ class ZkVoteApp {
                 })
             });
 
+            console.log(`📡 Response status: ${response.status}`);
             const data = await response.json();
+            console.log('📡 Response data:', data);
 
             if (data.success) {
                 this.currentContract = contractAddress;
-                this.showToast('Successfully connected to contract!', 'success');
+                console.log(`✅ Successfully joined contract: ${contractAddress}`);
+                
+                if (data.sessionId) {
+                    console.log(`✅ Persistent session created: ${data.sessionId}`);
+                    this.showToast('Successfully connected to contract with persistent session!', 'success');
+                } else {
+                    this.showToast('Successfully connected to contract!', 'success');
+                }
+                
+                // Store contract info
+                document.getElementById('contractAddress').value = contractAddress;
                 
                 // For joined contracts, try to load state, but show fallback choices if it fails
                 try {
+                    console.log('📊 Loading contract state...');
                     await this.loadContractState();
+                    console.log('✅ Contract state loaded successfully');
                 } catch (error) {
-                    console.log('Failed to load contract state, using fallback');
+                    console.log('⚠️ Failed to load contract state, using fallback:', error.message);
+                    // Load fallback choices for joined contracts
+                    this.loadFallbackChoices();
                 }
                 
-                // Transition to voting page regardless
+                // Transition to voting page
+                console.log('🗳️ Transitioning to voting page...');
                 this.showVotingPage();
             } else {
                 throw new Error(data.error || 'Failed to connect to contract');
             }
         } catch (error) {
-            console.error('Failed to join contract:', error);
+            console.error('❌ Failed to join contract:', error);
             if (error.message !== 'User cancelled') {
                 this.showToast('Failed to connect to contract: ' + error.message, 'error');
             }
@@ -479,6 +498,28 @@ class ZkVoteApp {
             this.setButtonLoading('joinBtn', false);
             this.hideLoading();
         }
+    }
+
+    loadFallbackChoices() {
+        console.log('📋 Loading fallback choices for joined contract...');
+        
+        // Set fallback choices
+        const fallbackChoices = [
+            'Option A',
+            'Option B', 
+            'Option C',
+            'Option D'
+        ];
+        
+        // Set choice data
+        this.contractChoices = fallbackChoices;
+        
+        // If already on voting page, update the UI
+        if (document.getElementById('votingPage')?.style.display !== 'none') {
+            this.displayVotingChoices(fallbackChoices, [0, 0, 0, 0]);
+        }
+        
+        console.log('✅ Fallback choices loaded:', fallbackChoices);
     }
 
     async loadContractState() {
