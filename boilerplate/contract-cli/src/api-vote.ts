@@ -36,7 +36,6 @@ if (isNaN(choiceIndex) || choiceIndex < 0 || choiceIndex > 3) {
 async function apiVote() {
   try {
     console.log(`🗳️  Starting API vote for contract: ${contractAddress}`);
-    console.log(`📊 Voting for choice: ${choiceIndex} (${['A', 'B', 'C', 'D'][choiceIndex]})`);
     
     const config = new TestnetRemoteConfig();
     const logger = await loggerUtils(config.logDir);
