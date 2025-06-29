@@ -11,8 +11,31 @@ class MidnightWallet {
         await this.loadWalletData();
         this.setupEventListeners();
         this.updateUI();
-        // Don't auto-connect to CLI - only connect when user clicks the button
+        
+        // Try to auto-connect to bridge server on startup
         this.logMessage('Wallet initialized');
+        this.logMessage('Attempting auto-connection to bridge server...');
+        
+        try {
+            // Check if bridge server is available
+            const response = await fetch('http://localhost:3002/api/status', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (response.ok) {
+                this.cliConnected = true;
+                this.updateNetworkStatus();
+                this.logMessage('✅ Auto-connected to bridge server');
+                
+                // Load fresh data from bridge server
+                await this.loadCLIData();
+            } else {
+                this.logMessage('⚠️ Bridge server not responding - manual connection required', 'warning');
+            }
+        } catch (error) {
+            this.logMessage('⚠️ Bridge server not available - manual connection required', 'warning');
+        }
     }
 
     async loadWalletData() {
@@ -34,15 +57,46 @@ class MidnightWallet {
     }
 
     async loadFromEnvFile() {
-        // Simulate reading from .env file (in real implementation, this would connect to your CLI)
-        // For now, we'll use placeholder data
-        this.walletData = {
-            seed: 'YOUR_WALLET_SEED',
-            address: 'mn_shield-addr_test1mjngjmnlutcq50trhcsk3hugvt9wyjnhq3c7prryd5nqmvtzva0sxqpvzkdy4k9u7eyffff53cge62tqylevq3wqps86tdjuahsquwvucsr4vs4f',
-            balance: '0',
-            lastUpdated: Date.now()
-        };
+        try {
+            this.logMessage('Loading wallet data from bridge server...');
+            
+            // Try to get actual wallet data from the bridge server
+            const response = await fetch('http://localhost:3002/api/wallet/status', {
+                method: 'GET',
+                headers: { 'Content-Type': 'application/json' }
+            });
+            
+            if (response.ok) {
+                const data = await response.json();
+                if (data.success && data.data) {
+                    this.walletData = {
+                        seed: data.data.seed || 'WALLET_SEED_FROM_ENV',
+                        address: data.data.address || null,
+                        balance: data.data.balance || '0',
+                        lastUpdated: Date.now()
+                    };
+                    this.logMessage('✅ Wallet data loaded from bridge server');
+                } else {
+                    throw new Error('Invalid response from bridge server');
+                }
+            } else {
+                throw new Error('Bridge server not responding');
+            }
+        } catch (error) {
+            this.logMessage('⚠️ Bridge server not available, using fallback data', 'warning');
+            console.warn('Could not load from bridge server:', error.message);
+            
+            // Fallback to placeholder data if bridge server is not available
+            this.walletData = {
+                seed: 'WALLET_SEED_NOT_AVAILABLE',
+                address: 'Bridge server not connected',
+                balance: '0',
+                lastUpdated: Date.now()
+            };
+        }
+        
         await this.saveWalletData();
+        this.updateUI();
     }
 
     async saveWalletData() {
@@ -200,37 +254,40 @@ class MidnightWallet {
     }
 
     async connectToCLI() {
-        this.showLoading('Connecting to CLI...');
-        this.logMessage('Attempting to connect to CLI...');
+        this.showLoading('Connecting to bridge server...');
+        this.logMessage('Attempting to connect to bridge server...');
         
         try {
-            // Try to connect to local server (your CLI would expose an API)
+            // Try to connect to local bridge server
             const response = await fetch('http://localhost:3002/api/status', {
                 method: 'GET',
                 headers: { 'Content-Type': 'application/json' }
             });
             
             if (response.ok) {
+                const statusData = await response.json();
                 this.cliConnected = true;
                 const statusElement = document.getElementById('cliStatusText');
-                if (statusElement) statusElement.textContent = 'Connected to CLI';
+                if (statusElement) statusElement.textContent = 'Connected to Bridge Server';
                 this.updateNetworkStatus();
-                this.showToast('Connected to CLI successfully!');
-                this.logMessage('Connected to CLI');
+                this.showToast('Connected to bridge server successfully!');
+                this.logMessage('✅ Connected to bridge server');
+                this.logMessage(`Server status: ${statusData.status}, Wallet: ${statusData.walletConnected ? 'Connected' : 'Not connected'}`);
                 
                 // Auto-load wallet data and balance when connecting
                 await this.loadCLIData();
                 await this.autoRefreshBalance();
             } else {
-                throw new Error('CLI not responding');
+                throw new Error('Bridge server not responding');
             }
         } catch (error) {
             this.cliConnected = false;
             const statusElement = document.getElementById('cliStatusText');
-            if (statusElement) statusElement.textContent = 'CLI not available - Using simulation mode';
+            if (statusElement) statusElement.textContent = 'Bridge server not available';
             this.updateNetworkStatus();
-            this.showToast('CLI not available. Using simulation mode.', 'warning');
-            this.logMessage('CLI connection failed, using simulation mode', 'error');
+            this.showToast('Bridge server not available. Please start the bridge server.', 'warning');
+            this.logMessage('❌ Bridge server connection failed', 'error');
+            this.logMessage('💡 To start bridge server: cd chrome-wallet-extension && npm start', 'info');
         }
         
         this.hideLoading();
