@@ -2,6 +2,21 @@
 
 A comprehensive decentralized voting application built on the Midnight blockchain that enables **completely private, verifiable voting** using zero-knowledge proofs. Privote demonstrates how to build end-to-end privacy-preserving applications using Midnight's Compact smart contract language, zero-knowledge cryptography, and modern web technologies.
 
+**During development, I encountered significant compatibility issues with the standard Midnight Lace wallet extension even though I have tried different methods and Finally I have decided to create my own chrome extension wallet to simulate the frontend connection meanwhile the wallet is connected to the CLI server**  
+### Development Workflow
+
+
+```bash
+
+# 1. Hot reload frontend
+cd ../../frontend  
+npm run dev
+
+# 2. Monitor bridge server
+cd ../chrome-wallet-extension
+npm run dev
+```
+
 ## 🎯 What Privote Does
 
 Privote allows users to:
@@ -203,6 +218,12 @@ assert !items.member(public_key_vote(secret_key, instance)) "Already voted";
 
 **Why Custom Extension?**
 During development, I encountered significant compatibility issues with the standard Midnight wallet extension. The custom solution provides:
+- **Reliable Connection Management**: No more dropped connections during voting
+- **Enhanced Error Reporting**: Clear debugging information with detailed logs
+- **Streamlined Development**: Faster iteration and testing cycles
+
+![Wallet Error 1](wallerror1.png)
+![Wallet Error 2](wallerror2.jpg)
 
 ```javascript
 // Bridge Server API Endpoints
@@ -273,14 +294,7 @@ fetch(`http://localhost:3002/api/sessions/${contractAddress}/execute`, {
 
 ## 🚀 Getting Started
 
-## 🚀 Getting Started
 
-### Prerequisites
-
-- **Node.js** (v18 or higher) 
-- **npm** or yarn package manager
-- **Google Chrome** browser (for wallet extension)
-- **Midnight Network** testnet access
 
 ### Step-by-Step Setup
 
@@ -310,20 +324,6 @@ cd ../chrome-wallet-extension
 npm install
 ```
 
-**2. Environment Setup**
-Create a `.env` file in the project root:
-```env
-# Your Midnight wallet seed phrase (keep this secret!)
-WALLET_SEED=your_64_character_wallet_seed_here
-
-# Midnight testnet endpoints
-MIDNIGHT_RPC_URL=https://rpc.testnet-02.midnight.network
-MIDNIGHT_INDEXER_URL=https://indexer.testnet-02.midnight.network
-MIDNIGHT_INDEXER_WS=wss://indexer.testnet-02.midnight.network
-
-# Development settings
-NODE_ENV=development
-```
 
 **3. Load Chrome Extension**
 ```bash
@@ -413,44 +413,6 @@ npm run balance
    Click "Submit Vote"
    ```
 
-3. **View Results**
-   ```
-   Live Results:
-   YES: ████████ 8 votes (40%)
-   NOD: ██████ 6 votes (30%) 
-   ABS: ████ 4 votes (20%)
-   N/A: ██ 2 votes (10%)
-   
-   Total Voters: 20
-   ```
-
-### Advanced Usage
-
-**Command Line Interface:**
-```bash
-# Deploy via CLI
-cd boilerplate/contract-cli
-npm run cli
-
-# Interactive options:
-# 1. Deploy new contract
-# 2. Join existing contract  
-# 3. Vote on proposals
-# 4. Check results
-```
-
-**Batch Operations:**
-```bash
-# Deploy multiple contracts
-npm run deploy:enhanced
-
-# Automated testing
-npm run test
-
-# Check all balances  
-npm run balance
-```
-
 ## 🔧 Developer Guide
 
 ### Project Structure Deep Dive
@@ -521,123 +483,6 @@ export circuit vote_for(secret_key: Bytes<5>, instance: Bytes<5>, index: Uint<8>
   items.insert(voterHash);              // Mark as voted
   numberOfVoters.increment(1);          // Increment total
   voteCounts.lookup(index).increment(1); // Count the vote
-}
-```
-
-**2. Frontend JavaScript (`zkvote.js`)**
-```javascript
-class ZkVoteApp {
-  constructor() {
-    this.apiBaseUrl = 'http://localhost:3002/api';
-    this.currentContract = null;
-    this.walletData = null;
-  }
-
-  // Deploy new voting contract
-  async deployContract() {
-    const choices = {
-      choiceA: document.getElementById('choiceA').value,
-      choiceB: document.getElementById('choiceB').value,
-      choiceC: document.getElementById('choiceC').value,
-      choiceD: document.getElementById('choiceD').value
-    };
-
-    const response = await fetch(`${this.apiBaseUrl}/contract/deploy`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(choices)
-    });
-
-    const result = await response.json();
-    if (result.success) {
-      this.displayContractAddress(result.contractAddress);
-    }
-  }
-
-  // Join existing contract
-  async joinContract() {
-    const contractAddress = document.getElementById('contractAddress').value;
-    
-    const response = await fetch(`${this.apiBaseUrl}/sessions/${contractAddress}`, {
-      method: 'POST'
-    });
-
-    if (response.ok) {
-      this.currentContract = contractAddress;
-      this.loadVotingInterface();
-    }
-  }
-
-  // Submit private vote
-  async submitVote() {
-    const secretKey = document.getElementById('secretKey').value;
-    const choice = this.selectedChoice;
-
-    const response = await fetch(`${this.apiBaseUrl}/sessions/${this.currentContract}/execute`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        command: 'vote',
-        secretKey: secretKey,
-        choice: choice
-      })
-    });
-
-    if (response.ok) {
-      this.showVoteSuccess();
-      this.refreshResults();
-    }
-  }
-}
-```
-
-**3. Bridge Server (`enhanced-bridge.js`)**
-```javascript
-class EnhancedMidnightBridge {
-  constructor() {
-    this.persistentSessions = new Map(); // Contract sessions
-    this.cliProcesses = new Map();       // Running CLI processes
-    this.processStatus = new Map();      // Process monitoring
-  }
-
-  // Create persistent CLI session for contract
-  async createSession(contractAddress) {
-    const sessionId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
-    
-    // Spawn persistent CLI process
-    const cliProcess = spawn('npm', ['run', 'cli'], {
-      cwd: this.cliPath,
-      env: { 
-        ...process.env, 
-        CONTRACT_ADDRESS: contractAddress,
-        AUTO_DEPLOY: 'true',
-        DEPLOY_MODE: 'join',
-        AUTO_EXIT: 'false'  // Keep process alive
-      }
-    });
-
-    // Store session info
-    this.persistentSessions.set(contractAddress, {
-      sessionId,
-      process: cliProcess,
-      connected: false,
-      lastUsed: Date.now()
-    });
-
-    return sessionId;
-  }
-
-  // Execute command in existing session
-  async executeInSession(contractAddress, command) {
-    const session = this.persistentSessions.get(contractAddress);
-    if (!session) {
-      throw new Error('No active session for contract');
-    }
-
-    // Send command to CLI process
-    session.process.stdin.write(`${command}\n`);
-    return this.waitForResponse(session);
-  }
 }
 ```
 
@@ -717,30 +562,6 @@ GET /api/results/0xabc123...
 - ✅ Contract addresses and voting options
 - ✅ Transaction hashes (but not contents)
 
-### Zero-Knowledge Implementation
-
-```compact
-// The magic: Creating anonymous voter IDs
-circuit public_key_vote(sk: Bytes<5>, instance: Bytes<5>): Bytes<32> {
-  return persistent_hash<Vector<3, Bytes<5>>>([
-    pad(5, "pk:"),    // Prefix for voter identification
-    instance,         // Contract-specific identifier  
-    sk               // User's secret key
-  ]);
-}
-
-// How double-voting prevention works:
-// 1. Alice votes with secret "alice" → generates hash H1
-// 2. Alice tries to vote again with "alice" → generates same hash H1  
-// 3. Contract checks: H1 already exists → REJECT
-// 4. Bob votes with secret "bobby" → generates different hash H2 → ACCEPT
-```
-
-**Security Properties:**
-- **Unlinkability**: Cannot connect votes to identities
-- **Receipt-Freeness**: No way to prove how you voted (prevents coercion)
-- **Verifiability**: Anyone can verify the final tallies are correct
-- **Immutability**: Votes cannot be changed after submission
 
 ### Production Security Considerations
 
@@ -832,119 +653,8 @@ Built a custom Chrome extension that directly interfaces with the Midnight netwo
 
 Privote is open source and welcomes contributions! Here's how you can help:
 
-### Ways to Contribute
 
-**🐛 Bug Reports**
-- Found an issue? [Open a GitHub issue](https://github.com/yourusername/privote/issues)
-- Include error logs, browser info, and steps to reproduce
-- Check existing issues first to avoid duplicates
 
-**💡 Feature Requests**  
-- Have an idea? Share it in the [Discussions](https://github.com/yourusername/privote/discussions)
-- Explain the use case and expected behavior
-- Consider privacy and security implications
-
-**🔧 Code Contributions**
-```bash
-# 1. Fork the repository
-git fork https://github.com/yourusername/privote.git
-
-# 2. Create feature branch
-git checkout -b feature/amazing-improvement
-
-# 3. Make your changes
-# Follow existing code style
-# Add tests for new functionality
-# Update documentation
-
-# 4. Test thoroughly
-npm run test
-npm run test:integration
-
-# 5. Commit with clear messages
-git commit -m "feat: add multi-choice voting support"
-
-# 6. Push and create pull request
-git push origin feature/amazing-improvement
-# Open PR on GitHub with detailed description
-```
-
-**📚 Documentation**
-- Improve setup instructions
-- Add use case examples
-- Translate to other languages
-- Create video tutorials
-
-### Development Setup for Contributors
-
-```bash
-# Clone your fork
-git clone https://github.com/yourusername/privote.git
-cd privote
-
-# Install development dependencies
-npm install
-npm run install:all
-
-# Set up development environment
-cp .env.example .env
-# Edit .env with your wallet seed
-
-# Start development servers
-npm run dev:all
-# This starts bridge server, frontend, and file watchers
-
-# Run tests before submitting PR
-npm run test:all
-npm run lint
-npm run type-check
-```
-
-### Code Style Guidelines
-
-**JavaScript/TypeScript:**
-```javascript
-// Use clear, descriptive names
-const deployVotingContract = async (choices) => { ... }
-
-// Add JSDoc comments for functions
-/**
- * Submits a private vote to the contract
- * @param {string} secretKey - 5-character voter identifier
- * @param {number} choiceIndex - 0-3 for choices A-D
- * @returns {Promise<string>} Transaction ID
- */
-async submitVote(secretKey, choiceIndex) { ... }
-
-// Handle errors gracefully
-try {
-  const result = await contractCall();
-  return { success: true, data: result };
-} catch (error) {
-  console.error('Contract call failed:', error);
-  return { success: false, error: error.message };
-}
-```
-
-**Compact Smart Contracts:**
-```compact
-// Clear variable names and comments
-export ledger voteCounts: Map<Uint<8>, Counter>; // Vote tallies by choice
-export ledger voterHashes: Set<Bytes<32>>;       // Prevents double voting
-
-export circuit vote_for(secret_key: Bytes<5>, choice: Uint<8>): [] {
-  // Validate input parameters
-  assert choice < 4 "Invalid choice index";
-  
-  // Prevent double voting
-  const voterHash = generate_voter_id(secret_key);
-  assert !voterHashes.member(voterHash) "Already voted";
-  
-  // Record vote
-  voterHashes.insert(voterHash);
-  voteCounts.lookup(choice).increment(1);
-}
-```
 
 ## 📄 License
 
@@ -974,42 +684,6 @@ OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 ```
 
-## 🙏 Acknowledgments
-
-**Core Technologies:**
-- **[Midnight Network](https://midnight.network)** - Privacy-preserving blockchain infrastructure
-- **[Compact Language](https://docs.midnight.network/develop/reference/compact/)** - Zero-knowledge smart contract language
-- **[Node.js](https://nodejs.org)** - JavaScript runtime for backend services
-- **[Express.js](https://expressjs.com)** - Web framework for API server
-- **[Vite](https://vitejs.dev)** - Fast frontend build tool
-
-**Community & Support:**
-- **Midnight Developer Community** - Documentation, examples, and support
-- **Zero-Knowledge Cryptography Researchers** - Foundational privacy technology
-- **Open Source Contributors** - Bug reports, feature requests, and improvements
-
-**Special Thanks:**
-- **Midnight Network Team** - For building the privacy-preserving blockchain platform
-- **Compact Language Developers** - For creating an intuitive zero-knowledge programming language
-- **Early Testers & Contributors** - For feedback and improvements during development
-
-## 📞 Support & Community
-
-### Getting Help
-
-**📖 Documentation:**
-- [Midnight Network Docs](https://docs.midnight.network/)
-- [Compact Language Reference](https://docs.midnight.network/develop/reference/compact/)
-- [Zero-Knowledge Proofs Guide](https://docs.midnight.network/learn/concepts/zero-knowledge-proofs/)
-
-**💬 Community:**
-- [GitHub Discussions](https://github.com/yourusername/privote/discussions) - General questions & ideas
-- [Discord](https://discord.gg/midnight-network) - Real-time chat with developers
-- [Telegram](https://t.me/midnight_network) - Community announcements
-
-**🐛 Issue Reporting:**
-- [GitHub Issues](https://github.com/yourusername/privote/issues) - Bug reports & feature requests
-- [Security Issues](mailto:security@privote.dev) - Private security vulnerability reports
 
 ### Project Status
 
@@ -1054,78 +728,4 @@ SOFTWARE.
 **Built with ❤️ using Midnight Network's revolutionary zero-knowledge technology**
 
 *"Making private voting accessible to everyone"*
-
-## 🧪 Testing & Development
-
-### Running Tests
-
-```bash
-# Test smart contract
-cd scaffold-midnight/boilerplate/contract
-npm test
-
-# Test CLI functionality  
-cd ../contract-cli
-npm run test
-
-# Test frontend components
-cd ../../frontend
-npm run test
-
-# Integration testing
-npm run test:integration
-```
-
-### Development Workflow
-
-```bash
-# 1. Start development environment
-npm run dev
-
-# 2. Watch for contract changes
-cd boilerplate/contract
-npm run watch
-
-# 3. Hot reload frontend
-cd ../../frontend  
-npm run dev
-
-# 4. Monitor bridge server
-cd ../chrome-wallet-extension
-npm run dev
-```
-
-### Debugging Tips
-
-**Common Issues & Solutions:**
-
-```bash
-# Bridge server not starting
-lsof -ti:3002 | xargs kill -9  # Kill existing processes
-node enhanced-bridge.js        # Restart server
-
-# CLI sessions not persisting  
-# Check AUTO_EXIT environment variable
-echo $AUTO_EXIT  # Should be 'false'
-
-# Contract deployment failing
-npm run balance  # Check wallet has testnet tokens
-npm run faucet   # Request more tokens if needed
-
-# Extension not loading
-# Check Chrome developer mode is enabled
-# Reload extension after code changes
-```
-
-**Development Console Commands:**
-```javascript
-// Frontend debugging (browser console)
-window.zkVoteApp.walletData     // Check wallet status
-window.zkVoteApp.currentContract // View active contract
-window.zkVoteApp.refreshResults() // Manual refresh
-
-// Backend debugging (server logs)
-curl http://localhost:3002/api/status        // Health check
-curl http://localhost:3002/api/sessions      // Active sessions
-curl http://localhost:3002/api/processes     // Running processes
-```
+![alt text](<photo_2025-06-30 00.28.28.jpeg>)
