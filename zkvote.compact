@@ -1,0 +1,52 @@
+pragma language_version >= 0.14.0;
+
+import CompactStandardLibrary;
+
+export ledger numberOfVoters: Counter;
+export ledger choices: Map<Uint<8>, Bytes<3>>;
+export ledger voteCounts: Map<Uint<8>, Counter>;
+export ledger items: Set<Bytes<32>>;
+
+// Constructor to initialize choices and counters
+constructor(choiceA: Bytes<3>, choiceB: Bytes<3>, choiceC: Bytes<3>, choiceD: Bytes<3>) {
+  // Initialize the choices list properly
+  choices.insert(0, choiceD);
+  choices.insert(1, choiceC);
+  choices.insert(2, choiceB);
+  choices.insert(3, choiceA);
+
+  // Initialize a Counter for each choice
+  for (const i of 0..4) {
+    voteCounts.insert(i, default<Counter>);
+  }
+}
+
+export circuit increment(): [] {
+  numberOfVoters.increment(1);
+}
+
+export circuit vote_for(secret_key: Bytes<5>, instance: Bytes<5>, index: Uint<8>): [] {
+  // Ensure the voter hasn't voted before
+  const instance = "zkvot";
+  assert !items.member(public_key_vote(secret_key, instance)) "Already voted";
+  increment();
+  items.insert(public_key_vote(secret_key, instance));
+
+  // Ensure the index is valid
+  assert index < 4 "Invalid choice index";
+
+  // Increment the vote count for the selected choice
+  voteCounts.lookup(index).increment(1);
+}
+
+export circuit get_vote_count(index: Uint<8>): Uint<64> {
+  if (index < 4) {
+    return voteCounts.lookup(index).read();
+  } else {
+    return 0;
+  }
+}
+
+circuit public_key_vote(sk: Bytes<5>, instance: Bytes<5>): Bytes<32> {
+  return persistent_hash<Vector<3, Bytes<5>>>([pad(5, "pk:"), instance, sk]);
+}
